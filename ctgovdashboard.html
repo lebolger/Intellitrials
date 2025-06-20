@@ -180,7 +180,8 @@
         // --- DATA FETCHING & MAPPING ---
         async function fetchInitialData() {
             setLoadingState(true);
-            const API_URL = 'https://clinicaltrials.gov/api/v2/studies?pageSize=1000&sort=LastUpdatePostDate:desc';
+            // UPDATED API URL to filter for studies starting on or after Jan 1, 2025
+            const API_URL = 'https://clinicaltrials.gov/api/v2/studies?pageSize=1000&query.term=AREA[StartDate]RANGE[2025-01-01,MAX]';
 
             try {
                 const response = await fetch(API_URL);
@@ -206,7 +207,7 @@
                     };
                 });
                 
-                console.log(`Fetched and mapped ${allTrials.length} trials.`);
+                console.log(`Fetched and mapped ${allTrials.length} trials from 2025 onward.`);
                 setLoadingState(false);
                 
             } catch (error) {
@@ -448,19 +449,27 @@
             statusChart.data.datasets[0].data = sortedStatuses.map(s => s[1]);
             statusChart.update();
             
-            // Time Chart
+            // Time Chart (Now shows months for 2025)
             const timeCounts = trials.reduce((acc, trial) => {
                 if(trial.startDate && trial.startDate !== 'N/A') {
-                    const year = new Date(trial.startDate).getFullYear();
-                    if (year > 2000) { // Filter out invalid dates
-                       acc[year] = (acc[year] || 0) + 1;
+                    const date = new Date(trial.startDate);
+                    if (date.getFullYear() >= 2025) { 
+                       const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                       acc[month] = (acc[month] || 0) + 1;
                     }
                 }
                 return acc;
             }, {});
-            const sortedYears = Object.keys(timeCounts).sort();
-            timeChart.data.labels = sortedYears;
-            timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
+
+            const allMonths = Array.from({length: 12}, (_, i) => {
+                const d = new Date(2025, i, 1);
+                return d.toLocaleString('default', { month: 'short', year: 'numeric' });
+            });
+            
+            const sortedMonths = Object.keys(timeCounts).sort((a, b) => new Date(a) - new Date(b));
+            
+            timeChart.data.labels = sortedMonths;
+            timeChart.data.datasets[0].data = sortedMonths.map(month => timeCounts[month] || 0);
             timeChart.update();
 
             // Sponsor Chart
