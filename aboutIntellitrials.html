@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliTrials | Q2 2025 Life Sciences Interactive Review</title>
+    <!-- Chosen Palette: Calm Tech -->
+    <!-- Application Structure Plan: A single-page dashboard application with top navigation to switch between thematic sections: 'Overview', 'Regulatory Radar', 'Clinical Breakthroughs', 'Market Pulse', and 'Future Forward'. This structure breaks down the dense report into digestible, user-centric themes, promoting exploration over linear reading. The 'Overview' acts as a landing page with high-level stats. 'Regulatory Radar' and 'Clinical Breakthroughs' use interactive filters and tables/cards to explore approvals and trial data. 'Market Pulse' visualizes M&A and funding data. 'Future Forward' covers high-level trends like AI and supply chain shifts. This non-linear, task-oriented design enhances usability by allowing users to directly access the information most relevant to them. -->
+    <!-- Visualization & Content Choices: The application uses a mix of interactive elements to achieve different goals. Goal: Inform/Compare (Regulatory): Interactive tables for FDA/EMA approvals, allowing filtering by agency/type. Justification: Handles dense tabular data effectively. Library: HTML/JS. Goal: Explore/Compare (Clinical): Filterable cards for trial results and a Chart.js bar chart showing trials by therapeutic area. Justification: Allows users to focus on specific areas of interest and see a high-level comparison. Library: Chart.js. Goal: Visualize/Understand (Market): A Chart.js bubble chart for M&A deals (size=value) and a bar chart for funding trends. Justification: Provides an immediate visual sense of scale and comparison. Library: Chart.js. Goal: Synthesize (Future Trends): Styled HTML/Tailwind info boxes and accordions. Justification: Presents complex, text-heavy concepts in a structured, clean format. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d4a59;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 4px;
+        }
+        .nav-link.active::after, .nav-link:hover::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: #0d9488;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .stat-card h3 {
+            color: #115e59;
+        }
+        .filter-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .filter-btn.active {
+            background-color: #0d9488;
+            color: white;
+        }
+        .filter-btn:not(.active) {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+        .table-auto th {
+             position: sticky;
+             top: 0;
+             background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">intelli<span class="text-teal-600">trials</span>.com</h1>
+            <p class="text-lg text-gray-500 mt-2">Interactive Report: Q2 2025 Life Sciences Review</p>
+        </header>
+
+        <nav class="flex justify-center items-center border-b-2 border-gray-200 mb-8 flex-wrap">
+            <a href="#overview" class="nav-link text-lg font-medium px-4 py-2 text-gray-600 hover:text-teal-600 active" data-target="overview">Overview</a>
+            <a href="#regulatory" class="nav-link text-lg font-medium px-4 py-2 text-gray-600 hover:text-teal-600" data-target="regulatory">Regulatory Radar</a>
+            <a href="#clinical" class="nav-link text-lg font-medium px-4 py-2 text-gray-600 hover:text-teal-600" data-target="clinical">Clinical Breakthroughs</a>
+            <a href="#market" class="nav-link text-lg font-medium px-4 py-2 text-gray-600 hover:text-teal-600" data-target="market">Market Pulse</a>
+            <a href="#future" class="nav-link text-lg font-medium px-4 py-2 text-gray-600 hover:text-teal-600" data-target="future">Future Forward</a>
+        </nav>
+
+        <main>
+            <!-- Overview Section -->
+            <section id="overview" class="content-section active">
+                 <div class="text-center mb-12 animate-fade-in-up">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Q2 2025 at a Glance</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">This quarter was a wild ride for pharma and biotech. AI is everywhere, cancer research is shining, and the industry is making some big money moves. Here's the 30,000-foot view of the key trends shaping the future of medicine.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-2">🤖</div>
+                        <h3 class="text-xl font-semibold mb-2">AI Integration</h3>
+                        <p class="text-gray-600">AI isn't just hype; it's a core tool from drug discovery to regulatory review. The FDA's new "Elsa" tool is proof it's here to stay.</p>
+                    </div>
+                     <div class="card p-6 text-center">
+                        <div class="text-4xl mb-2">🎯</div>
+                        <h3 class="text-xl font-semibold mb-2">Precision Prevails</h3>
+                        <p class="text-gray-600">Hyper-targeted therapies are the name of the game, with CAR-T making moves in solid tumors and ctDNA guiding treatments.</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-2">🤝</div>
+                        <h3 class="text-xl font-semibold mb-2">Strategic M&A</h3>
+                        <p class="text-gray-600">Big Pharma went shopping to beef up pipelines, with major deals in rare disease and immunology. Total disclosed M&A value topped $13B.</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-2">🏭</div>
+                        <h3 class="text-xl font-semibold mb-2">Reshoring & Resilience</h3>
+                        <p class="text-gray-600">After supply chain nightmares, companies like Novartis and Roche are investing billions in US-based manufacturing.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                     <div class="card p-6">
+                        <h3 class="text-2xl font-bold mb-4 text-center">Key Clinical Readouts</h3>
+                        <p class="text-center text-gray-600 mb-4">This quarter delivered some game-changing results. Dive into the Clinical Breakthroughs section to explore more.</p>
+                        <ul class="space-y-3">
+                           <li class="flex items-start"><span class="text-teal-500 mr-2 mt-1">✓</span><span><span class="font-semibold">J&J's Carvykti</span> continues to dominate in multiple myeloma, showing impressive results even in high-risk patients.</span></li>
+                           <li class="flex items-start"><span class="text-teal-500 mr-2 mt-1">✓</span><span><span class="font-semibold">AstraZeneca's Camizestrant</span> cut breast cancer progression risk by 56% in a trial that used ctDNA to guide treatment.</span></li>
+                           <li class="flex items-start"><span class="text-teal-500 mr-2 mt-1">✓</span><span><span class="font-semibold">CAR-T for Solid Tumors:</span> Satri-cel showed a 22% response rate in tough-to-treat stomach cancer, a huge leap forward.</span></li>
+                        </ul>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-2xl font-bold mb-4 text-center">Funding Landscape</h3>
+                         <p class="text-center text-gray-600 mb-4">Money was a bit up-and-down. Public markets got the jitters, but VC's kept the faith in good science.</p>
+                        <div class="chart-container">
+                            <canvas id="fundingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Regulatory Section -->
+            <section id="regulatory" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Regulatory Radar</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">Regulators are getting with the program. From the FDA getting techy with AI to the EMA greenlighting new meds and the UK rolling out the red carpet for trials, the rulebook got a major refresh this quarter.</p>
+                </div>
+
+                <div class="flex justify-center mb-6 space-x-2">
+                    <button class="filter-btn px-4 py-2 rounded-full font-semibold active" data-filter="all">All</button>
+                    <button class="filter-btn px-4 py-2 rounded-full font-semibold" data-filter="FDA">FDA</button>
+                    <button class="filter-btn px-4 py-2 rounded-full font-semibold" data-filter="EMA">EMA</button>
+                </div>
+                
+                <div class="card p-2 md:p-6">
+                    <div class="overflow-x-auto max-h-[60vh]">
+                         <table class="w-full text-left table-auto">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="p-4 font-semibold">Agency</th>
+                                    <th class="p-4 font-semibold">Drug/Therapy</th>
+                                    <th class="p-4 font-semibold hidden md:table-cell">Company</th>
+                                    <th class="p-4 font-semibold">Indication</th>
+                                    <th class="p-4 font-semibold">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="regulatoryTableBody">
+                                <!-- JS will populate this -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Clinical Section -->
+            <section id="clinical" class="content-section">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Clinical Breakthroughs</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">Science gets real. Q2 was a goldmine for clinical advancements, especially in cancer and gene therapy. Here's a look at the data that got everyone talking at ASCO, AACR, and beyond.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold text-gray-700 mb-4">Filter by Therapeutic Area:</h3>
+                             <div class="flex flex-wrap gap-2">
+                                <button class="clinical-filter-btn px-4 py-2 rounded-full font-semibold active" data-filter="all">All</button>
+                                <button class="clinical-filter-btn px-4 py-2 rounded-full font-semibold" data-filter="Oncology">Oncology</button>
+                                <button class="clinical-filter-btn px-4 py-2 rounded-full font-semibold" data-filter="Cardiovascular/Metabolic">Cardio/Metabolic</button>
+                                <button class="clinical-filter-btn px-4 py-2 rounded-full font-semibold" data-filter="Neurology">Neurology</button>
+                                <button class="clinical-filter-btn px-4 py-2 rounded-full font-semibold" data-filter="Other">Other</button>
+                            </div>
+                        </div>
+                        <div id="clinicalTrialsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- JS will populate this -->
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                         <h3 class="text-2xl font-bold mb-4 text-center">Notable Trials by Area</h3>
+                         <p class="text-center text-gray-600 mb-4">Oncology continues to dominate the clinical landscape, but other areas are seeing significant progress too.</p>
+                         <div class="chart-container">
+                            <canvas id="trialsByAreaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Market Section -->
+            <section id="market" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Market Pulse</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">Follow the money. Q2 saw big fish eating smaller fish in a flurry of M&A activity, while the investment scene was a bit of a rollercoaster. Here's the breakdown of the deals and dollars driving the industry.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-6">
+                        <h3 class="text-2xl font-bold mb-4 text-center">Major M&A Deals</h3>
+                        <p class="text-center text-gray-600 mb-4">Big pharma is spending billions to acquire innovative assets in rare disease and oncology. Bubble size represents deal value.</p>
+                        <div class="chart-container">
+                            <canvas id="mergersChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                        <h3 class="text-2xl font-bold mb-4 text-center">Top Funding Rounds</h3>
+                        <p class="text-center text-gray-600 mb-4">Despite market jitters, good science is still getting funded. Here are some of the biggest VC raises of the quarter.</p>
+                        <div id="fundingRoundsContainer" class="space-y-4">
+                           <!-- JS will populate this -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Future Section -->
+            <section id="future" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Future Forward</h2>
+                    <p class="max-w-3xl mx-auto text-gray-600">So, what's next? This quarter's trends point to a future defined by the robot revolution in AI, a scramble to secure supply chains, and insights from the industry's biggest brain-dumps (aka conferences).</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="card p-6 space-y-6">
+                        <div>
+                           <h3 class="text-2xl font-bold mb-2">The AI Revolution is Here</h3>
+                           <p class="text-gray-600">AI is becoming the industry's secret sauce. From the FDA's "Elsa" tool speeding up reviews to Roche's new AI research hub, it's clear AI is reshaping everything. But with great power comes great responsibility, and the industry is also grappling with the "dual-use" threat and the need for ethical guardrails to prevent misuse.</p>
+                        </div>
+                         <div>
+                           <h3 class="text-2xl font-bold mb-2">Making Drugs Closer to Home</h3>
+                           <p class="text-gray-600">The pandemic was a wake-up call. Now, pharma giants like Novartis ($23B) and Roche ($50B) are investing heavily in US-based manufacturing. This isn't just about patriotism; it's a strategic move to de-risk fragile supply chains and ensure a stable supply of critical medicines. Expect more "Made in the USA" labels on your meds.</p>
+                        </div>
+                    </div>
+                    <div class="card p-6">
+                         <h3 class="text-2xl font-bold mb-4 text-center">Conference Chatter</h3>
+                         <p class="text-center text-gray-600 mb-4">What were the smart kids talking about? Here are the key themes from the quarter's biggest conferences.</p>
+                         <div id="conferenceAccordion" class="space-y-2">
+                             <!-- JS will populate this -->
+                         </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const allData = {
+        regulatory: [
+            { agency: 'FDA', drug: 'Pz-Cel (Zevaskyn)', company: 'Abeona Therapeutics', indication: 'Epidermolysis Bullosa', type: 'Approval' },
+            { agency: 'FDA', drug: 'Vanrafia (atrasentan)', company: 'Novartis', indication: 'IgA nephropathy', type: 'Approval' },
+            { agency: 'FDA', drug: 'Nipocalimab', company: 'Johnson & Johnson', indication: 'Generalized myasthenia gravis', type: 'Approval' },
+            { agency: 'FDA', drug: 'Iopofosine I 131', company: 'Cellectar Biosciences', indication: 'Waldenstrom Macroglobulinemia', type: 'Breakthrough Therapy' },
+            { agency: 'FDA', drug: 'PHST001', company: 'Pheast Therapeutics', indication: 'Ovarian cancer', type: 'Fast Track' },
+            { agency: 'EMA', drug: 'Leqembi (lecanemab)', company: 'Eisai, Biogen, BioArctic', indication: 'Early Alzheimer’s Disease', type: 'Approval' },
+            { agency: 'EMA', drug: 'Lynozyfic (Linvoseltamab)', company: 'Regeneron', indication: 'R/R Multiple Myeloma', type: 'Conditional Approval' },
+            { agency: 'EMA', drug: 'Aucatzyl', company: 'N/A', indication: 'B-cell precursor ALL', type: 'Conditional Approval' },
+            { agency: 'EMA', drug: 'Ezmekly (mirdametinib)', company: 'N/A', indication: 'Neurofibromatosis type 1', type: 'Conditional Approval' },
+            { agency: 'EMA', drug: 'Bomyntra (denosumab)', company: 'Biosimilar', indication: 'Osteoporosis', type: 'Biosimilar' },
+        ],
+        clinical: [
+            { therapy: 'Carvykti', company: 'Johnson & Johnson', area: 'Oncology', finding: 'Superior to standard of care in multiple myeloma, even in high-risk patients.' },
+            { therapy: 'Niraparib Combo', company: 'Johnson & Johnson', area: 'Oncology', finding: 'First PARP-based combo to show clinical improvement in metastatic castration-sensitive prostate cancer.' },
+            { therapy: 'Satricabtagene autoleucel', company: 'CARsgen Therapeutics', area: 'Oncology', finding: 'Showed a 22% response rate in tough-to-treat gastric cancer, a major step for CAR-T in solid tumors.' },
+            { therapy: 'Camizestrant', company: 'AstraZeneca', area: 'Oncology', finding: 'Reduced risk of disease progression by 56% in advanced breast cancer, using ctDNA to guide treatment.' },
+            { therapy: 'Vepdegestrant', company: 'Arvinas & Pfizer', area: 'Oncology', finding: 'Significantly improved progression-free survival for ESR1-Mutant, ER+/HER2- Advanced Breast Cancer.'},
+            { therapy: 'Tebipenem HBr', company: 'GSK & Spero', area: 'Other', finding: 'Oral UTI treatment trial halted early due to overwhelming positive efficacy results.' },
+            { therapy: 'Atacicept', company: 'Vera Therapeutics', area: 'Other', finding: 'Achieved 46% proteinuria reduction in Phase 3 trial for IgA Nephropathy.' },
+            { therapy: 'Fenebrutinib', company: 'Genentech', area: 'Neurology', finding: 'Maintained near-complete suppression of disease activity for up to two years in Relapsing Multiple Sclerosis.' },
+            { therapy: 'Obicetrapib', company: 'NewAmsterdam Pharma', area: 'Cardiovascular/Metabolic', finding: 'Oral, non-statin CETP inhibitor significantly lowered LDL with a good safety profile.'}
+        ],
+        market: {
+            mergers: [
+                { acquirer: 'Sanofi', target: 'Blueprint Medicines', value: 9.5, area: 'Rare Immunology' },
+                { acquirer: 'Merck KGaA', target: 'SpringWorks', value: 3.9, area: 'Rare Disease/Oncology' },
+                { acquirer: 'Sanofi', target: 'Vigil Neuroscience', value: 0.47, area: 'Neurology' },
+                { acquirer: 'Eli Lilly', target: 'SiteOne Tx', value: 0.3, area: 'Non-opioid Pain' } // Value estimated for visualization
+            ],
+            fundingRounds: [
+                { company: 'Atsena Therapeutics', amount: 150, series: 'C' },
+                { company: 'Azafaros', amount: 147, series: 'B' },
+                { company: 'CellCentric', amount: 120, series: 'C' },
+                { company: 'Granite Bio', amount: 100, series: 'A & B' }
+            ]
+        },
+        conferences: [
+            { name: 'ASCO 2025', theme: 'Cancer\'s Big Show', points: ['Precision oncology is now central to trial design, using biomarkers and liquid biopsies.', 'Combining therapies (e.g., ADCs, bispecifics) is the new standard.', 'Global trials are essential for speed and diversity.'] },
+            { name: 'AACR 2025', theme: 'The Science Deep Dive', points: ['Major progress in targeting "undruggable" KRAS mutations with new drugs and vaccines.', 'Radiotheranostics are showing promise for detecting tiny metastases.', 'Spotlight on 12 new cancer agents entering Phase 1 trials.'] },
+            { name: 'BIO 2025', theme: 'The Biotech Super Bowl', points: ['AI in healthcare was a dominant topic.', 'Massive focus on partnerships, with thousands of one-on-one meetings.', 'Advanced therapies like CAR-T and gene editing continue to be hot areas for investment.'] }
+        ]
+    };
+    
+    const activeNavClass = 'active';
+    const activeContentClass = 'active';
+    const navLinks = document.querySelectorAll('.nav-link');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    function switchTab(targetId) {
+        navLinks.forEach(link => {
+            link.classList.toggle(activeNavClass, link.dataset.target === targetId);
+        });
+        contentSections.forEach(section => {
+            section.classList.toggle(activeContentClass, section.id === targetId);
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = e.target.dataset.target;
+            switchTab(targetId);
+            window.location.hash = targetId;
+        });
+    });
+
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+        switchTab(hash);
+    }
+
+    function renderRegulatoryTable(filter) {
+        const tableBody = document.getElementById('regulatoryTableBody');
+        tableBody.innerHTML = '';
+        const filteredData = allData.regulatory.filter(item => filter === 'all' || item.agency === filter);
+        filteredData.forEach(item => {
+            const row = `
+                <tr class="border-b border-gray-200 hover:bg-gray-50 data-row" data-agency="${item.agency}">
+                    <td class="p-4 font-bold text-teal-700">${item.agency}</td>
+                    <td class="p-4 font-semibold">${item.drug}</td>
+                    <td class="p-4 hidden md:table-cell">${item.company}</td>
+                    <td class="p-4">${item.indication}</td>
+                    <td class="p-4"><span class="px-2 py-1 text-xs font-semibold rounded-full ${item.type.includes('Approval') ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">${item.type}</span></td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+    }
+
+    document.querySelectorAll('#regulatory .filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelector('#regulatory .filter-btn.active').classList.remove('active');
+            e.target.classList.add('active');
+            renderRegulatoryTable(e.target.dataset.filter);
+        });
+    });
+
+    function renderClinicalTrials(filter) {
+        const container = document.getElementById('clinicalTrialsContainer');
+        container.innerHTML = '';
+        const filteredData = allData.clinical.filter(item => filter === 'all' || item.area === filter);
+        filteredData.forEach(item => {
+            const card = `
+                <div class="card p-6 clinical-trial-card" data-area="${item.area}">
+                    <h4 class="font-bold text-lg text-teal-700">${item.therapy}</h4>
+                    <p class="text-sm font-medium text-gray-500 mb-2">${item.company}</p>
+                    <p class="text-gray-700">${item.finding}</p>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    }
+
+    document.querySelectorAll('#clinical .clinical-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelector('#clinical .clinical-filter-btn.active').classList.remove('active');
+            e.target.classList.add('active');
+            renderClinicalTrials(e.target.dataset.filter);
+        });
+    });
+
+    function renderFundingRounds() {
+        const container = document.getElementById('fundingRoundsContainer');
+        container.innerHTML = '';
+        allData.market.fundingRounds.forEach(item => {
+            const el = `
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                    <div>
+                        <p class="font-semibold text-gray-800">${item.company}</p>
+                        <p class="text-sm text-gray-500">Series ${item.series}</p>
+                    </div>
+                    <p class="font-bold text-lg text-teal-600">$${item.amount}M</p>
+                </div>
+            `;
+            container.innerHTML += el;
+        });
+    }
+
+    function renderConferenceAccordion() {
+        const container = document.getElementById('conferenceAccordion');
+        container.innerHTML = '';
+        allData.conferences.forEach((conf, index) => {
+            const el = `
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <button class="w-full flex justify-between items-center p-4 text-left font-semibold text-gray-700 focus:outline-none accordion-btn">
+                        <span>${conf.name}: <span class="font-normal text-gray-600">${conf.theme}</span></span>
+                        <span class="transform transition-transform duration-300">▼</span>
+                    </button>
+                    <div class="accordion-content overflow-hidden max-h-0 transition-max-height duration-500 ease-in-out">
+                        <ul class="p-4 pt-0 space-y-2 text-gray-600">
+                           ${conf.points.map(p => `<li class="flex items-start"><span class="text-teal-500 mr-2 mt-1">▪</span><span>${p}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += el;
+        });
+        
+        document.querySelectorAll('.accordion-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const content = button.nextElementSibling;
+                const icon = button.querySelector('span:last-child');
+                
+                if (content.style.maxHeight && content.style.maxHeight !== '0px') {
+                    content.style.maxHeight = '0px';
+                    icon.style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+    }
+
+    function createFundingChart() {
+        const ctx = document.getElementById('fundingChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Venture Capital', 'Public Markets'],
+                datasets: [{
+                    label: 'Funding Decrease Y-o-Y (May)',
+                    data: [12, 62],
+                    backgroundColor: ['#14b8a6', '#f472b6'],
+                    borderColor: ['#0f766e', '#be185d'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'VC Held Up Better Than Public Markets (% Decrease Y-o-Y)'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                         ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createTrialsByAreaChart() {
+        const ctx = document.getElementById('trialsByAreaChart').getContext('2d');
+        const areaCounts = allData.clinical.reduce((acc, trial) => {
+            acc[trial.area] = (acc[trial.area] || 0) + 1;
+            return acc;
+        }, {});
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(areaCounts),
+                datasets: [{
+                    label: 'Number of Notable Trials',
+                    data: Object.values(areaCounts),
+                    backgroundColor: ['#2dd4bf', '#60a5fa', '#c084fc', '#fb923c'],
+                    borderColor: ['#14b8a6', '#3b82f6', '#9333ea', '#ea580c'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+    
+    function createMergersChart() {
+        const ctx = document.getElementById('mergersChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bubble',
+            data: {
+                datasets: allData.market.mergers.map(deal => ({
+                    label: `${deal.acquirer} -> ${deal.target}`,
+                    data: [{
+                        x: Math.random() * 10,
+                        y: Math.random() * 10,
+                        r: deal.value * 3.5 + 5
+                    }],
+                    backgroundColor: `rgba(${Math.floor(Math.random() * 100) + 50}, ${Math.floor(Math.random() * 100) + 150}, ${Math.floor(Math.random() * 100) + 150}, 0.7)`,
+                    borderColor: 'rgba(0,0,0,0.1)'
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const deal = allData.market.mergers[context.datasetIndex];
+                                return [`${deal.acquirer} acquires ${deal.target}`, `Value: $${deal.value}B`, `Area: ${deal.area}`];
+                            }
+                        }
+                    },
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+    }
+
+
+    renderRegulatoryTable('all');
+    renderClinicalTrials('all');
+    renderFundingRounds();
+    renderConferenceAccordion();
+    createFundingChart();
+    createTrialsByAreaChart();
+    createMergersChart();
+});
+</script>
+
+</body>
+</html>
