@@ -196,9 +196,7 @@
                     return {
                         nct: p.identificationModule?.nctId || 'N/A',
                         title: p.identificationModule?.officialTitle || 'No title provided',
-                        // UPDATED to use overallStatus
                         status: p.statusModule?.overallStatus || 'Unknown',
-                        // Handle multiple phases, take the last one as it's often the most relevant
                         phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
                         sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
                         startDate: p.statusModule?.startDateStruct?.date || 'N/A',
@@ -489,12 +487,18 @@
 
             // Conditions Chart
             const conditionCounts = trials.reduce((acc, trial) => {
-                trial.conditions.forEach(c => {
-                    acc[c] = (acc[c] || 0) + 1;
-                });
+                if (Array.isArray(trial.conditions)) {
+                    trial.conditions.forEach(c => {
+                        acc[c] = (acc[c] || 0) + 1;
+                    });
+                }
                 return acc;
             }, {});
-            const topConditions = Object.entries(conditionCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse();
+            const topConditions = Object.entries(conditionCounts)
+                .filter(([condition]) => !condition.toLowerCase().includes('healthy')) // Exclude "Healthy" and "Healthy Volunteers"
+                .sort(([,a],[,b]) => b-a)
+                .slice(0, 10)
+                .reverse();
             conditionsChart.data.labels = topConditions.map(c => c[0]);
             conditionsChart.data.datasets[0].data = topConditions.map(c => c[1]);
             conditionsChart.update();
