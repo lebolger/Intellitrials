@@ -180,7 +180,7 @@
         // --- DATA FETCHING & MAPPING ---
         async function fetchInitialData() {
             setLoadingState(true);
-            // UPDATED API URL to filter for industry-sponsored, interventional trials starting on or after Jan 1, 2025
+            // API URL filters for industry-sponsored, interventional trials starting on or after Jan 1, 2025
             const API_URL = 'https://clinicaltrials.gov/api/v2/studies?pageSize=1000&query.term=AREA[StartDate]RANGE[2025-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
 
             try {
@@ -196,7 +196,8 @@
                     return {
                         nct: p.identificationModule?.nctId || 'N/A',
                         title: p.identificationModule?.officialTitle || 'No title provided',
-                        status: p.statusModule?.lastKnownStatus || 'Unknown',
+                        // UPDATED to use overallStatus
+                        status: p.statusModule?.overallStatus || 'Unknown',
                         // Handle multiple phases, take the last one as it's often the most relevant
                         phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
                         sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
