@@ -180,18 +180,33 @@
         // --- DATA FETCHING & MAPPING ---
         async function fetchInitialData() {
             setLoadingState(true);
-            // API URL filters for industry-sponsored, interventional trials starting on or after Jan 1, 2025
-            const API_URL = 'https://clinicaltrials.gov/api/v2/studies?pageSize=1000&query.term=AREA[StartDate]RANGE[2025-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+            const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
+            const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2025-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+            let nextPageToken = null;
+            let allStudies = [];
+            let page = 1;
 
             try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                
-                // Map the complex API response to our simple, flat structure
-                allTrials = data.studies.map(study => {
+                do {
+                    // Construct the URL for the current page
+                    const paginatedUrl = `${BASE_URL}?pageSize=1000&${QUERY_PARAMS}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
+                    console.log(`Fetching page ${page}: ${paginatedUrl}`);
+                    
+                    const response = await fetch(paginatedUrl);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status} on page ${page}`);
+                    }
+                    const data = await response.json();
+                    
+                    // Add the fetched studies to our main array and get the token for the next page
+                    allStudies.push(...data.studies);
+                    nextPageToken = data.nextPageToken;
+                    page++;
+
+                } while (nextPageToken); // Continue as long as there's a next page token
+
+                // Map the complete, combined API response to our simple, flat structure
+                allTrials = allStudies.map(study => {
                     const p = study.protocolSection;
                     return {
                         nct: p.identificationModule?.nctId || 'N/A',
@@ -206,7 +221,7 @@
                     };
                 });
                 
-                console.log(`Fetched and mapped ${allTrials.length} trials.`);
+                console.log(`Fetched and mapped a total of ${allTrials.length} trials across ${page - 1} pages.`);
                 setLoadingState(false);
                 
             } catch (error) {
@@ -224,7 +239,7 @@
              filters.disabled = isLoading;
 
              if (isLoading) {
-                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching live data from ClinicalTrials.gov...</p></div></td></tr>`;
+                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching all live data from ClinicalTrials.gov...</p></div></td></tr>`;
              } else {
                  tableBody.innerHTML = ''; // Clear loading message
              }
