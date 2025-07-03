@@ -48,6 +48,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Ensure table layout is fixed to respect column widths */
+        .table-fixed {
+            table-layout: fixed;
+        }
     </style>
 </head>
 <body class="text-gray-200 p-4 sm:p-6 lg:p-8">
@@ -59,41 +63,45 @@
                 <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
                 <p class="text-sm sm:text-md text-gray-400">An interactive dashboard for analyzing the clinical trial pipeline.</p>
             </div>
-            <div class="text-yellow-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" fill-rule="evenodd" />
-                </svg>
-            </div>
         </div>
     </header>
 
     <!-- Filters -->
-    <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8 p-4 bg-gray-800 rounded-lg shadow-lg">
-        <div class="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-2">
-            <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-            <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-8">
+        <div id="toggleFiltersHeader" class="flex justify-between items-center p-4 cursor-pointer">
+            <h2 class="text-lg font-semibold text-white">Filters</h2>
+            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
         </div>
-        <div>
-            <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
-            <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Statuses</option>
-            </select>
-        </div>
-        <div>
-            <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
-            <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Phases</option>
-            </select>
-        </div>
-        <div class="xl:col-span-1">
-            <label for="locationFilter" class="text-sm font-medium text-gray-300 block mb-1">Location</label>
-             <input type="text" id="locationFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Durham, NC">
-        </div>
-        <div>
-            <label for="resetFilters" class="text-sm font-medium text-gray-300 block mb-1">&nbsp;</label>
-            <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
-        </div>
-    </fieldset>
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-4 border-t border-gray-700">
+            <div class="sm:col-span-2 lg:col-span-1">
+                <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+            </div>
+            <div>
+                <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
+                <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Statuses</option>
+                </select>
+            </div>
+            <div>
+                <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
+                <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Phases</option>
+                </select>
+            </div>
+            <div>
+                <label for="locationFilter" class="text-sm font-medium text-gray-300 block mb-1">Location</label>
+                 <input type="text" id="locationFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Durham, NC">
+            </div>
+            <div>
+                <label for="resetFilters" class="text-sm font-medium text-gray-300 block mb-1">&nbsp;</label>
+                <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
+            </div>
+        </fieldset>
+    </div>
+
 
     <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -145,16 +153,16 @@
              <h3 class="font-semibold text-white">Trial Details</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-300">
+            <table class="w-full table-fixed text-xs text-left text-gray-300">
                 <thead class="text-xs text-gray-300 uppercase bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3">NCT Number</th>
-                        <th scope="col" class="px-6 py-3">Title</th>
-                        <th scope="col" class="px-6 py-3 text-center">Status</th>
-                        <th scope="col" class="px-6 py-3">Phase</th>
-                        <th scope="col" class="px-6 py-3">Sponsor</th>
-                        <th scope="col" class="px-6 py-3">Start Date</th>
-                        <th scope="col" class="px-6 py-3 text-right">Enrollment</th>
+                        <th scope="col" class="px-4 py-2 w-[12%]">NCT Number</th>
+                        <th scope="col" class="px-4 py-2 w-[30%]">Title</th>
+                        <th scope="col" class="px-4 py-2 text-center w-[12%]">Status</th>
+                        <th scope="col" class="px-4 py-2 w-[8%]">Phase</th>
+                        <th scope="col" class="px-4 py-2 w-[20%]">Sponsor</th>
+                        <th scope="col" class="px-4 py-2 w-[10%]">Start Date</th>
+                        <th scope="col" class="px-4 py-2 text-right w-[8%]">Enrollment</th>
                     </tr>
                 </thead>
                 <tbody id="trialsTableBody">
@@ -236,7 +244,9 @@
              const tableBody = document.getElementById('trialsTableBody');
              const filters = document.getElementById('filters');
              
-             filters.disabled = isLoading;
+             if (filters) {
+                filters.disabled = isLoading;
+             }
 
              if (isLoading) {
                  tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching all live data from ClinicalTrials.gov...</p></div></td></tr>`;
@@ -304,6 +314,14 @@
                 document.getElementById('phaseFilter').value = '';
                 document.getElementById('locationFilter').value = '';
                 updateDashboard();
+            });
+            
+            // Listener for the collapsible filter section
+            document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
+                const filters = document.getElementById('filters');
+                const icon = document.getElementById('toggleIcon');
+                filters.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
             });
         }
 
@@ -536,15 +554,15 @@
                 const statusCellStyle = getStatusColor(trial.status);
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-blue-400 whitespace-nowrap">
+                    <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
                         <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
                     </td>
-                    <td class="px-6 py-4">${trial.title}</td>
-                    <td class="px-4 py-2 font-semibold text-center whitespace-nowrap rounded-md" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</td>
-                    <td class="px-6 py-4">${trial.phase}</td>
-                    <td class="px-6 py-4">${trial.sponsor}</td>
-                    <td class="px-6 py-4">${trial.startDate}</td>
-                    <td class="px-6 py-4 text-right font-semibold">${(trial.enrollment || 0).toLocaleString()}</td>
+                    <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
+                    <td class="px-4 py-3 text-center whitespace-normal break-words" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</td>
+                    <td class="px-4 py-3">${trial.phase}</td>
+                    <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
+                    <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
                 `;
                 tableBody.appendChild(row);
             });
