@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/date-fns/"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -37,8 +36,8 @@
             background: #6b7280; /* bg-gray-500 */
         }
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #00ACFF;
+            border: 4px solid #374151; /* bg-gray-700 */
+            border-top: 4px solid #3b82f6; /* blue-500 */
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -48,51 +47,68 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .table-fixed {
+            table-layout: fixed;
+        }
+        #filters[disabled] {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="text-gray-200 p-4 sm:p-6 lg:p-8">
 
+    <!-- Header -->
     <header class="mb-8">
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
-                <p class="text-sm sm:text-md text-gray-400">An interactive dashboard for analyzing the clinical trial pipeline.</p>
+                <p class="text-sm sm:text-md text-gray-400">An interactive dashboard for analyzing industry-sponsored clinical trials. Source: <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
             </div>
-            <div class="text-yellow-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" fill-rule="evenodd" />
-                </svg>
+             <div class="flex items-center space-x-4 mt-4 md:mt-0">
+                 <img src="https://placehold.co/80x80/facc15/4a4a4a?text=Claudia" alt="CEO of Joy" class="w-14 h-14 rounded-full shadow-lg border-2 border-gray-700" title="Claudia, CEO of Joy" />
             </div>
         </div>
     </header>
 
-    <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-4 mb-8 p-4 bg-gray-800 rounded-lg shadow-lg">
-        <div class="sm:col-span-2 md:col-span-3 lg:col-span-2 xl:col-span-2">
-            <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-            <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+    <!-- Filters -->
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-8">
+        <div id="toggleFiltersHeader" class="flex justify-between items-center p-4 cursor-pointer">
+            <h2 class="text-lg font-semibold text-white">Filters</h2>
+            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
         </div>
-        <div>
-            <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
-            <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Statuses</option>
-            </select>
-        </div>
-        <div>
-            <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
-            <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">All Phases</option>
-            </select>
-        </div>
-        <div class="xl:col-span-1">
-            <label for="locationFilter" class="text-sm font-medium text-gray-300 block mb-1">Location</label>
-             <input type="text" id="locationFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Durham, NC">
-        </div>
-        <div>
-            <label for="resetFilters" class="text-sm font-medium text-gray-300 block mb-1">&nbsp;</label>
-            <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
-        </div>
-    </fieldset>
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 p-4 border-t border-gray-700">
+            <div class="sm:col-span-2 lg:col-span-1">
+                <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+            </div>
+            <div>
+                <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
+                <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Statuses</option>
+                </select>
+            </div>
+            <div>
+                <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
+                <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Phases</option>
+                </select>
+            </div>
+            <div>
+                <label for="locationFilter" class="text-sm font-medium text-gray-300 block mb-1">Location</label>
+                 <input type="text" id="locationFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Durham, NC">
+            </div>
+            <div>
+                <label for="resetFilters" class="text-sm font-medium text-gray-300 block mb-1">&nbsp;</label>
+                <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
+            </div>
+        </fieldset>
+    </div>
 
+
+    <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
             <h3 class="text-gray-400 text-sm font-medium">Total Trials</h3>
@@ -112,6 +128,7 @@
         </div>
     </div>
 
+    <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
             <h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3>
@@ -135,25 +152,27 @@
         </div>
     </div>
 
+    <!-- Data Table -->
     <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
         <div class="p-4">
-              <h3 class="font-semibold text-white">Trial Details</h3>
+             <h3 class="font-semibold text-white">Trial Details</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-sm text-left text-gray-300">
+            <table class="w-full table-fixed text-xs text-left text-gray-300">
                 <thead class="text-xs text-gray-300 uppercase bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-6 py-3">NCT Number</th>
-                        <th scope="col" class="px-6 py-3">Title</th>
-                        <th scope="col" class="px-6 py-3 text-center">Status</th>
-                        <th scope="col" class="px-6 py-3">Phase</th>
-                        <th scope="col" class="px-6 py-3">Sponsor</th>
-                        <th scope="col" class="px-6 py-3">Start Date</th>
-                        <th scope="col" class="px-6 py-3 text-right">Enrollment</th>
+                        <th scope="col" class="px-4 py-2 w-[12%]">NCT Number</th>
+                        <th scope="col" class="px-4 py-2 w-[30%]">Title</th>
+                        <th scope="col" class="px-4 py-2 text-center w-[12%]">Status</th>
+                        <th scope="col" class="px-4 py-2 w-[8%]">Phase</th>
+                        <th scope="col" class="px-4 py-2 w-[20%]">Sponsor</th>
+                        <th scope="col" class="px-4 py-2 w-[10%]">Start Date</th>
+                        <th scope="col" class="px-4 py-2 text-right w-[8%]">Enrollment</th>
                     </tr>
                 </thead>
                 <tbody id="trialsTableBody">
-                    </tbody>
+                    <!-- JS will populate this -->
+                </tbody>
             </table>
         </div>
     </div>
@@ -164,25 +183,30 @@
         let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
         
         const newPalette = {
-            dodgerBlue: '#00ACFF',
-            robinsEggBlue: '#00DAC8',
-            deepSapphire: '#001E63',
-            sulu: '#CAFF5E',
-            malibu: '#6EC3FA'
+            dodgerBlue: '#3b82f6',
+            robinsEggBlue: '#22d3ee',
+            deepSapphire: '#0c2f6e',
+            sulu: '#a3e635',
+            malibu: '#60a5fa'
         };
 
         // --- DATA FETCHING & MAPPING ---
         async function fetchInitialData() {
             setLoadingState(true);
             const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
-            const QUERY_PARAMS = 'query.term=AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+            
+            // --- FIX: Changed date range to the last year to ensure data is returned ---
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            const formattedDate = oneYearAgo.toISOString().split('T')[0];
+            const QUERY_PARAMS = `query.term=AREA[StartDate]RANGE[${formattedDate},MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL`;
+
             let nextPageToken = null;
             let allStudies = [];
             let page = 1;
 
             try {
                 do {
-                    // Construct the URL for the current page
                     const paginatedUrl = `${BASE_URL}?pageSize=1000&${QUERY_PARAMS}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
                     console.log(`Fetching page ${page}: ${paginatedUrl}`);
                     
@@ -192,28 +216,27 @@
                     }
                     const data = await response.json();
                     
-                    // Add the fetched studies to our main array and get the token for the next page
                     allStudies.push(...data.studies);
                     nextPageToken = data.nextPageToken;
                     page++;
 
-                } while (nextPageToken); // Continue as long as there's a next page token
+                } while (nextPageToken);
 
-                // Map the complete, combined API response to our simple, flat structure
                 allTrials = allStudies.map(study => {
                     const p = study.protocolSection;
+                    if (!p) return null; // Safeguard against studies with no protocol section
                     return {
                         nct: p.identificationModule?.nctId || 'N/A',
-                        title: p.identificationModule?.officialTitle || 'No title provided',
+                        title: p.identificationModule?.briefTitle || p.identificationModule?.officialTitle || 'No title provided',
                         status: p.statusModule?.overallStatus || 'Unknown',
-                        phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
+                        phase: p.designModule?.phases?.join(', ') || 'Not Applicable',
                         sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
                         startDate: p.statusModule?.startDateStruct?.date || 'N/A',
                         enrollment: p.designModule?.enrollmentInfo?.count || 0,
                         conditions: p.conditionsModule?.conditions || [],
                         locations: p.contactsLocationsModule?.locations?.map(l => `${l.city}, ${l.state || l.country}`) || []
                     };
-                });
+                }).filter(Boolean); // Filter out any null entries
                 
                 console.log(`Fetched and mapped a total of ${allTrials.length} trials across ${page - 1} pages.`);
                 setLoadingState(false);
@@ -221,7 +244,7 @@
             } catch (error) {
                 console.error("Failed to fetch clinical trials data:", error);
                 const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data. Please check the console for details.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data. The ClinicalTrials.gov API might be temporarily unavailable. Please check the console for details.</td></tr>`;
                 setLoadingState(false);
             }
         }
@@ -230,10 +253,12 @@
              const tableBody = document.getElementById('trialsTableBody');
              const filters = document.getElementById('filters');
              
-             filters.disabled = isLoading;
+             if (filters) {
+                filters.disabled = isLoading;
+             }
 
              if (isLoading) {
-                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching all live data from ClinicalTrials.gov...</p></div></td></tr>`;
+                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching live data from ClinicalTrials.gov...</p><p class="text-sm text-gray-400">This may take a moment as we pull all industry trials.</p></div></td></tr>`;
              } else {
                  tableBody.innerHTML = ''; // Clear loading message
              }
@@ -241,21 +266,21 @@
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // Register the datalabels plugin globally
             Chart.register(ChartDataLabels);
             
             initializeCharts();
             setupEventListeners();
             
-            await fetchInitialData(); // This now fetches REAL data
+            await fetchInitialData();
             
-            // Only proceed if data was successfully fetched
             if(allTrials.length > 0) {
-             populateFilters();
-             updateDashboard();
+              populateFilters();
+              updateDashboard();
             } else {
-                const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria (Industry-sponsored, Interventional).</td></tr>`;
+               const tableBody = document.getElementById('trialsTableBody');
+               if(tableBody.innerHTML === '') { // Only update if not already showing an error
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+               }
             }
         });
         
@@ -288,10 +313,10 @@
 
         // --- EVENT LISTENERS ---
         function setupEventListeners() {
-            document.getElementById('keywordSearch').addEventListener('input', updateDashboard);
+            document.getElementById('keywordSearch').addEventListener('input', () => debounce(updateDashboard, 300)());
             document.getElementById('statusFilter').addEventListener('change', updateDashboard);
             document.getElementById('phaseFilter').addEventListener('change', updateDashboard);
-            document.getElementById('locationFilter').addEventListener('input', updateDashboard);
+            document.getElementById('locationFilter').addEventListener('input', () => debounce(updateDashboard, 300)());
             document.getElementById('resetFilters').addEventListener('click', () => {
                 document.getElementById('keywordSearch').value = '';
                 document.getElementById('statusFilter').value = '';
@@ -299,6 +324,23 @@
                 document.getElementById('locationFilter').value = '';
                 updateDashboard();
             });
+            
+            document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
+                const filters = document.getElementById('filters');
+                const icon = document.getElementById('toggleIcon');
+                filters.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180');
+            });
+        }
+        
+        let debounceTimer;
+        function debounce(func, delay) {
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => func.apply(context, args), delay);
+            };
         }
 
         // --- CHART INITIALIZATION ---
@@ -307,22 +349,12 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        labels: {
-                            color: '#d1d5db' // text-gray-300
-                        }
-                    },
+                    legend: { labels: { color: '#d1d5db' } },
                     datalabels: { display: false }
                 },
                 scales: {
-                    x: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    },
-                    y: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    }
+                    x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
                 }
             };
             
@@ -331,15 +363,7 @@
 
             phaseChart = new Chart(document.getElementById('phaseChart'), {
                 type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: phasePalette,
-                        borderColor: '#1f2937',
-                        borderWidth: 3,
-                    }]
-                },
+                data: { labels: [], datasets: [{ data: [], backgroundColor: phasePalette, borderColor: '#1f2937', borderWidth: 3 }] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -350,20 +374,13 @@
                             formatter: (value, ctx) => {
                                 const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 const percentage = value / total * 100;
-                                if (percentage < 3) return ''; // Hide labels for tiny slices
+                                if (percentage < 3) return '';
                                 let label = ctx.chart.data.labels[ctx.dataIndex];
-                                if (label.includes('Applicable')) label = 'N/A';
-                                if (label.includes('Phase')) label = label.replace('Phase ', 'P');
-                                return `${label}\n${percentage.toFixed(1)}%`;
+                                return `${label}\n${percentage.toFixed(0)}%`;
                             },
-                            color: (ctx) => {
-                                const bgColor = ctx.dataset.backgroundColor[ctx.dataIndex];
-                                if (!bgColor) {
-                                    return '#FFFFFF'; // Default to white if no color is found
-                                }
-                                const r = parseInt(bgColor.slice(1, 3), 16), g = parseInt(bgColor.slice(3, 5), 16), b = parseInt(bgColor.slice(5, 7), 16);
-                                return (r * 299 + g * 587 + b * 114) / 1000 > 155 ? newPalette.deepSapphire : '#FFFFFF';
-                            },
+                            color: '#fff',
+                            textShadowColor: 'rgba(0,0,0,0.5)',
+                            textShadowBlur: 4,
                             textAlign: 'center',
                             font: { weight: 'bold', size: 12, family: 'Inter' }
                         }
@@ -385,26 +402,20 @@
             
             timeChart = new Chart(document.getElementById('timeChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: newPalette.robinsEggBlue, tension: 0.1, fill: false }] },
+                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(34, 211, 238, 0.2)', tension: 0.2, fill: true }] },
                 options: defaultOptions
             });
             
             conditionsChart = new Chart(document.getElementById('conditionsChart'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.sulu }] },
-                options: {
-                    ...horizontalOptions,
-                    scales: {
-                        x: { ticks: { color: newPalette.deepSapphire }, grid: { color: 'rgba(0, 30, 99, 0.1)' } },
-                        y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-                    }
-                }
+                options: { ...horizontalOptions, scales: { y: { ticks: { color: '#d1d5db' } } } }
             });
         }
         
         // --- CORE LOGIC: DASHBOARD UPDATE ---
         function updateDashboard() {
-            if (allTrials.length === 0) return; // Don't run if there's no data
+            if (allTrials.length === 0) return;
 
             const keyword = document.getElementById('keywordSearch').value.toLowerCase();
             const status = document.getElementById('statusFilter').value;
@@ -441,7 +452,8 @@
         function updateCharts(trials) {
             // Phase Chart
             const phaseCounts = trials.reduce((acc, trial) => {
-                acc[trial.phase] = (acc[trial.phase] || 0) + 1;
+                const phaseKey = trial.phase || 'N/A';
+                acc[phaseKey] = (acc[phaseKey] || 0) + 1;
                 return acc;
             }, {});
             const sortedPhases = Object.entries(phaseCounts).sort(([,a],[,b]) => b-a);
@@ -454,30 +466,31 @@
                 acc[trial.status] = (acc[trial.status] || 0) + 1;
                 return acc;
             }, {});
-            const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a);
+            const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a).slice(0, 10);
             statusChart.data.labels = sortedStatuses.map(s => s[0].replace(/_/g, ' '));
             statusChart.data.datasets[0].data = sortedStatuses.map(s => s[1]);
             statusChart.update();
             
-            // Time Chart (by Year)
+            // Time Chart
             const timeCounts = trials.reduce((acc, trial) => {
-                if (trial.startDate && trial.startDate !== 'N/A') {
-                    const year = trial.startDate.substring(0, 4);
-                    if (!isNaN(parseInt(year))) {
-                        acc[year] = (acc[year] || 0) + 1;
+                if(trial.startDate && trial.startDate !== 'N/A') {
+                    const date = new Date(trial.startDate);
+                    if (!isNaN(date)) {
+                       const month = date.toLocaleString('default', { month: 'short', year: 'numeric' });
+                       acc[month] = (acc[month] || 0) + 1;
                     }
                 }
                 return acc;
             }, {});
-            const sortedYears = Object.keys(timeCounts).sort((a, b) => parseInt(a) - parseInt(b));
-            timeChart.data.labels = sortedYears;
-            timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
+            const sortedMonths = Object.keys(timeCounts).sort((a, b) => new Date(a) - new Date(b));
+            timeChart.data.labels = sortedMonths;
+            timeChart.data.datasets[0].data = sortedMonths.map(month => timeCounts[month] || 0);
             timeChart.update();
 
             // Sponsor Chart
             const sponsorCounts = trials.reduce((acc, trial) => {
                 if (trial.sponsor && trial.sponsor !== 'N/A') {
-                    acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1;
+                   acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1;
                 }
                 return acc;
             }, {});
@@ -496,7 +509,7 @@
                 return acc;
             }, {});
             const topConditions = Object.entries(conditionCounts)
-                .filter(([condition]) => !condition.toLowerCase().includes('healthy')) // Exclude "Healthy" and "Healthy Volunteers"
+                .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
                 .sort(([,a],[,b]) => b-a)
                 .slice(0, 10)
                 .reverse();
@@ -514,23 +527,23 @@
                 return;
             }
 
-            const trialsToDisplay = trials.slice(0, 100); // Display top 100 results to avoid performance issues
+            const trialsToDisplay = trials.slice(0, 100);
             trialsToDisplay.forEach(trial => {
                 const row = document.createElement('tr');
-                row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50';
+                row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50 transition-colors duration-200';
                 
                 const statusCellStyle = getStatusColor(trial.status);
                 
                 row.innerHTML = `
-                    <td class="px-6 py-4 font-medium text-blue-400 whitespace-nowrap">
+                    <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
                         <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
                     </td>
-                    <td class="px-6 py-4">${trial.title}</td>
-                    <td class="px-4 py-2 font-semibold text-center whitespace-nowrap rounded-md" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</td>
-                    <td class="px-6 py-4">${trial.phase}</td>
-                    <td class="px-6 py-4">${trial.sponsor}</td>
-                    <td class="px-6 py-4">${trial.startDate}</td>
-                    <td class="px-6 py-4 text-right font-semibold">${(trial.enrollment || 0).toLocaleString()}</td>
+                    <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
+                    <td class="px-4 py-3 text-center whitespace-normal break-words font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</td>
+                    <td class="px-4 py-3">${trial.phase}</td>
+                    <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
+                    <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -545,9 +558,9 @@
                 case 'ACTIVE_NOT_RECRUITING': 
                     return `background-color:${newPalette.robinsEggBlue}; color:${newPalette.deepSapphire};`;
                 case 'TERMINATED': 
-                    return `background-color:#F87171; color:#7f1d1d;`; // Red-400, Red-900
+                    return `background-color:#f87171; color:#450a0a;`;
                 default: 
-                    return `background-color:#4B5563; color:#F9FAFB;`; // Gray-600, Gray-50
+                    return `background-color:#4b5563; color:#f9fafb;`;
             }
         }
 
