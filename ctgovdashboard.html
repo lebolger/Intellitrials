@@ -84,11 +84,18 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
         </div>
-        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4 border-t border-gray-700">
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 border-t border-gray-700">
             <!-- Keyword Search -->
-            <div class="sm:col-span-2 lg:col-span-3 xl:col-span-2">
+            <div class="lg:col-span-2">
                 <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT, Pfizer...">
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+            </div>
+            <!-- Sponsor Filter -->
+            <div class="lg:col-span-2">
+                <label for="sponsorFilter" class="text-sm font-medium text-gray-300 block mb-1">Sponsor</label>
+                <select id="sponsorFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Sponsors</option>
+                </select>
             </div>
             <!-- Status Filter -->
             <div>
@@ -112,8 +119,7 @@
                 </select>
             </div>
             <!-- Reset Button -->
-            <div>
-                <label class="text-sm font-medium text-gray-300 block mb-1">&nbsp;</label>
+            <div class="flex items-end">
                 <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
             </div>
         </fieldset>
@@ -360,11 +366,13 @@
             const statusFilter = document.getElementById('statusFilter');
             const phaseFilter = document.getElementById('phaseFilter');
             const yearFilter = document.getElementById('yearFilter');
+            const sponsorFilter = document.getElementById('sponsorFilter');
 
             // Clear existing options except the first one
             statusFilter.length = 1;
             phaseFilter.length = 1;
             yearFilter.length = 1;
+            sponsorFilter.length = 1;
 
             const uniqueStatuses = [...new Set(allTrials.map(t => t.status))].sort();
             const uniquePhases = [...new Set(allTrials.map(t => t.phase))].sort((a,b) => {
@@ -375,6 +383,7 @@
             const uniqueYears = [...new Set(allTrials.map(t => t.startDate ? new Date(t.startDate).getFullYear() : null))]
                 .filter(y => y) // remove null/invalid years
                 .sort((a,b) => b-a); // Sort descending
+            const uniqueSponsors = [...new Set(allTrials.map(t => t.sponsor).filter(s => s && s !== 'N/A'))].sort();
 
             uniqueStatuses.forEach(s => {
                 const option = document.createElement('option');
@@ -396,6 +405,13 @@
                 option.textContent = y;
                 yearFilter.appendChild(option);
             });
+            
+            uniqueSponsors.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s;
+                option.textContent = s;
+                sponsorFilter.appendChild(option);
+            });
         }
 
         // --- EVENT LISTENERS ---
@@ -408,12 +424,14 @@
             document.getElementById('statusFilter').addEventListener('change', updateDashboard);
             document.getElementById('phaseFilter').addEventListener('change', updateDashboard);
             document.getElementById('yearFilter').addEventListener('change', updateDashboard);
+            document.getElementById('sponsorFilter').addEventListener('change', updateDashboard);
 
             document.getElementById('resetFilters').addEventListener('click', () => {
                 document.getElementById('keywordSearch').value = '';
                 document.getElementById('statusFilter').value = '';
                 document.getElementById('phaseFilter').value = '';
                 document.getElementById('yearFilter').value = '';
+                document.getElementById('sponsorFilter').value = '';
                 updateDashboard();
             });
             
@@ -439,7 +457,8 @@
                     legend: {
                         labels: { color: '#d1d5db' }
                     },
-                    datalabels: { display: false }
+                    datalabels: { display: false },
+                    tooltip: { enabled: true }
                 },
                 scales: {
                     x: {
@@ -510,7 +529,7 @@
             
             timeChart = new Chart(document.getElementById('timeChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: newPalette.robinsEggBlue, tension: 0.1, fill: false }] },
+                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: false }] },
                 options: defaultOptions
             });
             
@@ -544,6 +563,7 @@
             const status = document.getElementById('statusFilter').value;
             const phase = document.getElementById('phaseFilter').value;
             const year = document.getElementById('yearFilter').value;
+            const sponsor = document.getElementById('sponsorFilter').value;
 
             const filteredTrials = allTrials.filter(trial => {
                 const keywordMatch = keyword === '' || 
@@ -555,8 +575,9 @@
                 const statusMatch = status === '' || trial.status === status;
                 const phaseMatch = phase === '' || trial.phase === phase;
                 const yearMatch = year === '' || (trial.startDate && new Date(trial.startDate).getFullYear() == year);
+                const sponsorMatch = sponsor === '' || trial.sponsor === sponsor;
 
-                return keywordMatch && statusMatch && phaseMatch && yearMatch;
+                return keywordMatch && statusMatch && phaseMatch && yearMatch && sponsorMatch;
             });
             
             updateKPIs(filteredTrials);
@@ -604,6 +625,16 @@
                 return acc;
             }, {});
             const sortedYears = Object.keys(timeCounts).sort((a, b) => a - b);
+            
+            // Dynamically change chart type based on number of data points
+            if (sortedYears.length === 1) {
+                timeChart.config.type = 'bar';
+                timeChart.options.plugins.tooltip.enabled = false;
+            } else {
+                timeChart.config.type = 'line';
+                timeChart.options.plugins.tooltip.enabled = true;
+            }
+
             timeChart.data.labels = sortedYears;
             timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
             timeChart.update();
