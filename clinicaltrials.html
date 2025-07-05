@@ -59,16 +59,9 @@
 <body class="text-gray-200 p-4 sm:p-6 lg:p-8">
 
     <!-- Header -->
-    <header class="mb-8">
-        <div class="flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
-                <p class="text-sm sm:text-md text-gray-400">An interactive dashboard for analyzing industry-sponsored clinical trials. Source: <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
-            </div>
-             <div class="flex items-center space-x-4 mt-4 md:mt-0">
-                 <img src="https://placehold.co/80x80/facc15/4a4a4a?text=Claudia" alt="CEO of Joy" class="w-14 h-14 rounded-full shadow-lg border-2 border-gray-700" title="Claudia, CEO of Joy" />
-            </div>
-        </div>
+    <header class="mb-8 text-center sm:text-left">
+        <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
+        <p class="text-sm sm:text-md text-gray-400">An interactive dashboard for analyzing industry-sponsored clinical trials. Source: <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
     </header>
 
     <!-- Filters -->
@@ -158,19 +151,19 @@
              <h3 class="font-semibold text-white">Trial Details</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full table-fixed text-xs text-left text-gray-300">
+            <table class="w-full table-fixed text-left text-gray-300">
                 <thead class="text-xs text-gray-300 uppercase bg-gray-700">
                     <tr>
-                        <th scope="col" class="px-4 py-2 w-[12%]">NCT Number</th>
-                        <th scope="col" class="px-4 py-2 w-[30%]">Title</th>
-                        <th scope="col" class="px-4 py-2 text-center w-[12%]">Status</th>
-                        <th scope="col" class="px-4 py-2 w-[8%]">Phase</th>
-                        <th scope="col" class="px-4 py-2 w-[20%]">Sponsor</th>
-                        <th scope="col" class="px-4 py-2 w-[10%]">Start Date</th>
-                        <th scope="col" class="px-4 py-2 text-right w-[8%]">Enrollment</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 w-[12%]">NCT Number</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 w-[30%]">Title</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 text-center w-[12%]">Status</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 w-[8%]">Phase</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 w-[20%]">Sponsor</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 w-[10%]">Start Date</th>
+                        <th scope="col" class="px-2 sm:px-4 py-3 text-right w-[8%]">Enrollment</th>
                     </tr>
                 </thead>
-                <tbody id="trialsTableBody">
+                <tbody id="trialsTableBody" class="text-sm">
                     <!-- JS will populate this -->
                 </tbody>
             </table>
@@ -250,18 +243,18 @@
         }
         
         function setLoadingState(isLoading) {
-             const tableBody = document.getElementById('trialsTableBody');
-             const filters = document.getElementById('filters');
-             
-             if (filters) {
-                filters.disabled = isLoading;
-             }
+              const tableBody = document.getElementById('trialsTableBody');
+              const filters = document.getElementById('filters');
+              
+              if (filters) {
+                  filters.disabled = isLoading;
+              }
 
-             if (isLoading) {
-                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching live data from ClinicalTrials.gov...</p><p class="text-sm text-gray-400">This may take a moment as we pull all industry trials.</p></div></td></tr>`;
-             } else {
-                 tableBody.innerHTML = ''; // Clear loading message
-             }
+              if (isLoading) {
+                  tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching live data from ClinicalTrials.gov...</p><p class="text-sm text-gray-400">This may take a moment as we pull all industry trials.</p></div></td></tr>`;
+              } else {
+                  tableBody.innerHTML = ''; // Clear loading message
+              }
         }
 
         // --- INITIALIZATION ---
@@ -274,13 +267,13 @@
             await fetchInitialData();
             
             if(allTrials.length > 0) {
-              populateFilters();
-              updateDashboard();
+             populateFilters();
+             updateDashboard();
             } else {
-               const tableBody = document.getElementById('trialsTableBody');
-               if(tableBody.innerHTML === '') { // Only update if not already showing an error
-                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
-               }
+                const tableBody = document.getElementById('trialsTableBody');
+                if(tableBody.innerHTML === '') { // Only update if not already showing an error
+                     tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+                }
             }
         });
         
@@ -532,35 +525,35 @@
                 const row = document.createElement('tr');
                 row.className = 'bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50 transition-colors duration-200';
                 
-                const statusCellStyle = getStatusColor(trial.status);
+                const statusClasses = getStatusClasses(trial.status);
                 
                 row.innerHTML = `
-                    <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
+                    <td class="px-2 sm:px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
                         <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
                     </td>
-                    <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
-                    <td class="px-4 py-3 text-center whitespace-normal break-words font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</td>
-                    <td class="px-4 py-3">${trial.phase}</td>
-                    <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
-                    <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
-                    <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
+                    <td class="px-2 sm:px-4 py-3 whitespace-normal break-words">${trial.title}</td>
+                    <td class="px-2 sm:px-4 py-3 text-center whitespace-normal break-words font-semibold rounded-md ${statusClasses}">${trial.status.replace(/_/g, ' ')}</td>
+                    <td class="px-2 sm:px-4 py-3">${trial.phase}</td>
+                    <td class="px-2 sm:px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
+                    <td class="px-2 sm:px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
+                    <td class="px-2 sm:px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
                 `;
                 tableBody.appendChild(row);
             });
         }
         
-        function getStatusColor(status) {
+        function getStatusClasses(status) {
             switch(status) {
                 case 'RECRUITING': 
-                    return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
+                    return 'bg-lime-400 text-slate-800';
                 case 'COMPLETED': 
-                    return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
+                    return 'bg-sky-400 text-slate-800';
                 case 'ACTIVE_NOT_RECRUITING': 
-                    return `background-color:${newPalette.robinsEggBlue}; color:${newPalette.deepSapphire};`;
+                    return 'bg-cyan-400 text-slate-800';
                 case 'TERMINATED': 
-                    return `background-color:#f87171; color:#450a0a;`;
+                    return 'bg-red-500 text-white';
                 default: 
-                    return `background-color:#4b5563; color:#f9fafb;`;
+                    return 'bg-gray-600 text-gray-100';
             }
         }
 
