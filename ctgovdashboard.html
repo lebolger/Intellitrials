@@ -641,3 +641,69 @@
     </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<!-- ... (rest of your HTML and JavaScript as it was) ... -->
+
+<script>
+// --- GLOBAL VARIABLES ---
+let allTrials = [];
+let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
+let currentPage = 1;
+const rowsPerPage = 50;
+
+// --- NEW PAGINATION FUNCTION ---
+function renderTablePage(trials, page = 1) {
+    currentPage = page;
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const trialsToDisplay = trials.slice(start, end);
+
+    const tableBody = document.getElementById('trialsTableBody');
+    let tableHTML = '';
+    trialsToDisplay.forEach(trial => {
+        const statusCellStyle = getStatusColor(trial.status);
+        tableHTML += `
+            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
+                <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
+                    <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
+                </td>
+                <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
+                <td class="px-4 py-3 text-center whitespace-nowrap">
+                    <span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span>
+                </td>
+                <td class="px-4 py-3">${trial.phase}</td>
+                <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
+                <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
+                <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
+            </tr>
+        `;
+    });
+    tableBody.innerHTML = tableHTML;
+    updatePaginationControls(trials.length);
+}
+
+function updatePaginationControls(totalRecords) {
+    const paginationContainer = document.getElementById('paginationControls');
+    const totalPages = Math.ceil(totalRecords / rowsPerPage);
+
+    if (!paginationContainer) return;
+
+    let paginationHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `<button onclick="renderTablePage(allFilteredTrials, ${i})" class="px-3 py-1 mx-1 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}">${i}</button>`;
+    }
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+let allFilteredTrials = [];
+function updateTable(trials) {
+    allFilteredTrials = trials;
+    renderTablePage(trials, 1);
+    const recordCountEl = document.getElementById('tableRecordCount');
+    recordCountEl.textContent = `Showing ${Math.min(trials.length, rowsPerPage)} of ${trials.length.toLocaleString()} records`;
+}
+</script>
+
+<!-- ADD THIS BELOW THE TABLE -->
+<div id="paginationControls" class="mt-4 flex flex-wrap justify-center"></div>
