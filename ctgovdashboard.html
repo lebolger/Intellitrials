@@ -580,6 +580,13 @@
                 return keywordMatch && statusMatch && phaseMatch && yearMatch && sponsorMatch;
             });
             
+            // Sort by start date (newest first) after filtering
+            filteredTrials.sort((a, b) => {
+                const dateA = a.startDate && a.startDate !== 'N/A' ? new Date(a.startDate) : new Date(0);
+                const dateB = b.startDate && b.startDate !== 'N/A' ? new Date(b.startDate) : new Date(0);
+                return dateB - dateA;
+            });
+
             updateKPIs(filteredTrials);
             updateCharts(filteredTrials);
             updateTable(filteredTrials);
