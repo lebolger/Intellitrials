@@ -56,6 +56,11 @@
         input[type='number'] {
             -moz-appearance: textfield;
         }
+        /* Ensure filters are disabled visually */
+        fieldset:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="text-gray-200 p-4 sm:p-6 lg:p-8">
@@ -216,76 +221,91 @@
             };
         }
 
-        // --- DATA FETCHING & MAPPING ---
-        async function fetchInitialData() {
-            setLoadingState(true);
-            // Updated to fetch data from 2020 onwards
-            const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
-            const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
-            let nextPageToken = null;
-            let allStudies = [];
-            let page = 1;
-
-            try {
-                do {
-                    const paginatedUrl = `${BASE_URL}?pageSize=1000&${QUERY_PARAMS}${nextPageToken ? `&pageToken=${nextPageToken}` : ''}`;
-                    console.log(`Fetching page ${page}: ${paginatedUrl}`);
-                    
-                    const response = await fetch(paginatedUrl);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status} on page ${page}`);
-                    }
-                    const data = await response.json();
-                    
-                    allStudies.push(...data.studies);
-                    nextPageToken = data.nextPageToken;
-                    page++;
-
-                } while (nextPageToken);
-
-                // Map the complete API response to our simpler, flat structure
-                allTrials = allStudies.map(study => {
-                    const p = study.protocolSection;
-                    return {
-                        nct: p.identificationModule?.nctId || 'N/A',
-                        title: p.identificationModule?.officialTitle || 'No title provided',
-                        status: p.statusModule?.overallStatus || 'Unknown',
-                        phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
-                        sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
-                        startDate: p.statusModule?.startDateStruct?.date || 'N/A',
-                        enrollment: p.designModule?.enrollmentInfo?.count || 0,
-                        conditions: p.conditionsModule?.conditions || [],
-                    };
-                });
-                
-                console.log(`Fetched and mapped a total of ${allTrials.length} trials across ${page - 1} pages.`);
-                setLoadingState(false);
-                
-            } catch (error) {
-                console.error("Failed to fetch clinical trials data:", error);
-                const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data. Please check the console for details.</td></tr>`;
-                setLoadingState(false);
-            }
-        }
-        
-        function setLoadingState(isLoading) {
+        /**
+         * Manages the loading state of the UI, disabling filters and showing a message.
+         * @param {boolean} isLoading - Whether the app is in a loading state.
+         * @param {string} message - The message to display.
+         */
+        function setLoadingState(isLoading, message = '') {
             const tableBody = document.getElementById('trialsTableBody');
             const filters = document.getElementById('filters');
             
-            if (filters) {
-                filters.disabled = isLoading;
-            }
+            filters.disabled = isLoading;
 
             if (isLoading) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">Fetching all live data from ClinicalTrials.gov...</p></div></td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`;
             } else {
                 tableBody.innerHTML = ''; // Clear loading message
             }
         }
+        
+        // --- WEB WORKER ---
+        // The entire data fetching logic is moved into this worker string.
+        // This allows the slow network requests to happen in a separate thread,
+        // keeping the main UI responsive.
+        const dataWorkerScript = `
+            async function fetchAllTrials() {
+                const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
+                const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+                let nextPageToken = null;
+                let allStudies = [];
+                let page = 1;
+                const maxPages = 50; // Safety break to avoid infinite loops during development
+
+                try {
+                    do {
+                        // Use simple string concatenation to avoid template literal issues inside the worker string.
+                        let paginatedUrl = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS;
+                        if (nextPageToken) {
+                            paginatedUrl += '&pageToken=' + nextPageToken;
+                        }
+                        
+                        // Post progress updates to the main thread
+                        postMessage({ type: 'progress', page: page });
+
+                        const response = await fetch(paginatedUrl);
+                        if (!response.ok) {
+                            // Use simple string concatenation for the error message as well.
+                            throw new Error('HTTP error! status: ' + response.status + ' on page ' + page);
+                        }
+                        const data = await response.json();
+                        
+                        allStudies.push(...data.studies);
+                        nextPageToken = data.nextPageToken;
+                        page++;
+
+                    } while (nextPageToken && page < maxPages);
+
+                    // Map the complete API response to our simpler, flat structure
+                    const mappedTrials = allStudies.map(study => {
+                        const p = study.protocolSection;
+                        return {
+                            nct: p.identificationModule?.nctId || 'N/A',
+                            title: p.identificationModule?.officialTitle || 'No title provided',
+                            status: p.statusModule?.overallStatus || 'Unknown',
+                            phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
+                            sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
+                            startDate: p.statusModule?.startDateStruct?.date || 'N/A',
+                            enrollment: p.designModule?.enrollmentInfo?.count || 0,
+                            conditions: p.conditionsModule?.conditions || [],
+                        };
+                    });
+                    
+                    // Send the final, processed data back to the main thread
+                    postMessage({ type: 'complete', data: mappedTrials });
+                    
+                } catch (error) {
+                    // Send any errors back to the main thread for display
+                    postMessage({ type: 'error', error: error.message });
+                }
+            }
+
+            // Start the fetching process as soon as the worker is initialized.
+            fetchAllTrials();
+        `;
 
         // --- INITIALIZATION ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             // Register the datalabels plugin globally
             Chart.register(ChartDataLabels);
             
@@ -294,15 +314,45 @@
             initializeCharts();
             setupEventListeners();
             
-            await fetchInitialData();
+            // --- Start the Data Fetching in the Background ---
+            setLoadingState(true, 'Initializing data fetch...');
+
+            // Create a worker from the script string using a Blob
+            const workerBlob = new Blob([dataWorkerScript], { type: 'application/javascript' });
+            const dataWorker = new Worker(URL.createObjectURL(workerBlob));
+
+            // Handle messages from the worker
+            dataWorker.onmessage = function(e) {
+                const { type, page, data, error } = e.data;
+
+                if (type === 'progress') {
+                    setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
+                } else if (type === 'complete') {
+                    setLoadingState(false);
+                    allTrials = data;
+                    if(allTrials.length > 0) {
+                        console.log(`Successfully fetched and mapped ${allTrials.length} trials.`);
+                        populateFilters();
+                        updateDashboard();
+                    } else {
+                        const tableBody = document.getElementById('trialsTableBody');
+                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+                    }
+                } else if (type === 'error') {
+                    console.error("Error from data worker:", error);
+                    const tableBody = document.getElementById('trialsTableBody');
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
+                    setLoadingState(false);
+                }
+            };
             
-            if(allTrials.length > 0) {
-                populateFilters();
-                updateDashboard();
-            } else {
+            // Handle errors from the worker itself
+            dataWorker.onerror = function(error) {
+                console.error("An error occurred in the data worker:", error);
                 const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
-            }
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred in the data worker. See console for details.</td></tr>`;
+                setLoadingState(false);
+            };
         });
         
         // --- FILTER POPULATION ---
@@ -310,6 +360,11 @@
             const statusFilter = document.getElementById('statusFilter');
             const phaseFilter = document.getElementById('phaseFilter');
             const yearFilter = document.getElementById('yearFilter');
+
+            // Clear existing options except the first one
+            statusFilter.length = 1;
+            phaseFilter.length = 1;
+            yearFilter.length = 1;
 
             const uniqueStatuses = [...new Set(allTrials.map(t => t.status))].sort();
             const uniquePhases = [...new Set(allTrials.map(t => t.phase))].sort((a,b) => {
@@ -365,12 +420,12 @@
             document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
                 const filters = document.getElementById('filters');
                 const icon = document.getElementById('toggleIcon');
-                filters.classList.toggle('hidden');
-                // Check if it's hidden to rotate the icon correctly
-                if (filters.classList.contains('hidden')) {
-                   icon.classList.remove('rotate-180');
+                const isHidden = filters.classList.toggle('hidden');
+                
+                if (isHidden) {
+                    icon.classList.remove('rotate-180');
                 } else {
-                   icon.classList.add('rotate-180');
+                    icon.classList.add('rotate-180');
                 }
             });
         }
@@ -469,13 +524,13 @@
                         y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
                     },
                      plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            color: newPalette.deepSapphire,
-                            anchor: 'end',
-                            align: 'end',
-                            font: { weight: 'bold' }
-                        }
+                         legend: { display: false },
+                         datalabels: {
+                             color: newPalette.deepSapphire,
+                             anchor: 'end',
+                             align: 'end',
+                             font: { weight: 'bold' }
+                         }
                     }
                 }
             });
@@ -641,69 +696,3 @@
     </script>
 </body>
 </html>
-
-<!DOCTYPE html>
-<!-- ... (rest of your HTML and JavaScript as it was) ... -->
-
-<script>
-// --- GLOBAL VARIABLES ---
-let allTrials = [];
-let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
-let currentPage = 1;
-const rowsPerPage = 50;
-
-// --- NEW PAGINATION FUNCTION ---
-function renderTablePage(trials, page = 1) {
-    currentPage = page;
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const trialsToDisplay = trials.slice(start, end);
-
-    const tableBody = document.getElementById('trialsTableBody');
-    let tableHTML = '';
-    trialsToDisplay.forEach(trial => {
-        const statusCellStyle = getStatusColor(trial.status);
-        tableHTML += `
-            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
-                    <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
-                </td>
-                <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
-                <td class="px-4 py-3 text-center whitespace-nowrap">
-                    <span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span>
-                </td>
-                <td class="px-4 py-3">${trial.phase}</td>
-                <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
-                <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
-                <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
-            </tr>
-        `;
-    });
-    tableBody.innerHTML = tableHTML;
-    updatePaginationControls(trials.length);
-}
-
-function updatePaginationControls(totalRecords) {
-    const paginationContainer = document.getElementById('paginationControls');
-    const totalPages = Math.ceil(totalRecords / rowsPerPage);
-
-    if (!paginationContainer) return;
-
-    let paginationHTML = '';
-    for (let i = 1; i <= totalPages; i++) {
-        paginationHTML += `<button onclick="renderTablePage(allFilteredTrials, ${i})" class="px-3 py-1 mx-1 rounded ${i === currentPage ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}">${i}</button>`;
-    }
-    paginationContainer.innerHTML = paginationHTML;
-}
-
-let allFilteredTrials = [];
-function updateTable(trials) {
-    allFilteredTrials = trials;
-    renderTablePage(trials, 1);
-    const recordCountEl = document.getElementById('tableRecordCount');
-    recordCountEl.textContent = `Showing ${Math.min(trials.length, rowsPerPage)} of ${trials.length.toLocaleString()} records`;
-}
-</script>
-
-<!-- ADD THIS BELOW THE TABLE -->
-<div id="paginationControls" class="mt-4 flex flex-wrap justify-center"></div>
