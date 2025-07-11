@@ -63,7 +63,7 @@
         }
     </style>
 </head>
-<body class="text-gray-200 p-4 sm:p-6 lg:p-8">
+<body class="text-gray-200 p-4 sm:p-4 lg:p-4">
 
     <!-- Header -->
     <header class="mb-8">
@@ -77,22 +77,22 @@
     </header>
 
     <!-- Filters -->
-    <div class="bg-gray-800 rounded-lg shadow-lg mb-8">
-        <div id="toggleFiltersHeader" class="flex justify-between items-center p-4 cursor-pointer">
-            <h2 class="text-lg font-semibold text-white">Filters</h2>
-            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-4">
+        <div id="toggleFiltersHeader" class="flex justify-between items-center p-2 cursor-pointer">
+            <h2 class="text-sm font-semibold text-white">Filters</h2>
+            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
         </div>
-        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 border-t border-gray-700">
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 p-4 border-t border-gray-700">
             <!-- Keyword Search -->
             <div class="lg:col-span-2">
                 <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Oncology, NCT...">
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="">
             </div>
             <!-- Sponsor Filter -->
             <div class="lg:col-span-2">
-                <label for="sponsorFilter" class="text-sm font-medium text-gray-300 block mb-1">Sponsor</label>
+                <label for="sponsorFilter" class="text-sm font-normal text-gray-300 block mb-1">Sponsor</label>
                 <select id="sponsorFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Sponsors</option>
                 </select>
@@ -127,20 +127,20 @@
 
 
     <!-- KPIs -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="text-gray-400 text-sm font-medium">Total Trials</h3>
             <p id="totalTrials" class="text-3xl font-bold text-white">0</p>
         </div>
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="text-gray-400 text-sm font-medium">Recruiting</h3>
             <p id="recruitingTrials" class="text-3xl font-bold text-green-400">0</p>
         </div>
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="text-gray-400 text-sm font-medium">Completed</h3>
             <p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p>
         </div>
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="text-gray-400 text-sm font-medium">Total Participants</h3>
             <p id="totalParticipants" class="text-3xl font-bold text-white">0</p>
         </div>
@@ -653,7 +653,7 @@
                 }
                 return acc;
             }, {});
-            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse();
+            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10);
             sponsorChart.data.labels = topSponsors.map(s => s[0]);
             sponsorChart.data.datasets[0].data = topSponsors.map(s => s[1]);
             sponsorChart.update();
@@ -670,8 +670,7 @@
             const topConditions = Object.entries(conditionCounts)
                 .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
                 .sort(([,a],[,b]) => b-a)
-                .slice(0, 10)
-                .reverse();
+                .slice(0, 10);
             conditionsChart.data.labels = topConditions.map(c => c[0]);
             conditionsChart.data.datasets[0].data = topConditions.map(c => c[1]);
             conditionsChart.update();
@@ -688,9 +687,10 @@
             }
 
             // Performance Improvement: Display top 200 results to keep the DOM fast
+            // NOTE: This limit is hardcoded for maintainability and to ensure the table remains responsive.
+            // If you need to show more records, increase this value, but be aware of potential performance issues.
             const displayLimit = 200;
             const trialsToDisplay = trials.slice(0, displayLimit);
-            
             // Performance Improvement: Build HTML string and set innerHTML once
             let tableHTML = '';
             trialsToDisplay.forEach(trial => {
@@ -722,8 +722,8 @@
                     return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
                 case 'COMPLETED': 
                     return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
-                case 'ACTIVE_NOT_RECRUITING': 
-                    return `background-color:${newPalette.robinsEggBlue}; color:${newPalette.deepSapphire};`;
+                case 'TERMINATED': 
+                    return `background-color:${newPalette.robinsEggBlue}; color:${newPalette.deepSapphire};`; // Consistent palette
                 case 'TERMINATED': 
                     return `background-color:#F87171; color:#7f1d1d;`; // Red-400, Red-900
                 default: 
