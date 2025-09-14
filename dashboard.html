@@ -255,60 +255,59 @@
             async function fetchAllTrials() {
                 const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
                 const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+                const PAGE_SIZE = 500;
+                const MAX_PAGES = 5; // Reduce dataset for faster load
                 let nextPageToken = null;
-                let allStudies = [];
+                let allTrials = [];
                 let page = 1;
-                const maxPages = 50; // Safety break to avoid infinite loops during development
 
                 try {
                     do {
-                        // Use simple string concatenation to avoid template literal issues inside the worker string.
-                        let paginatedUrl = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS;
+                        let paginatedUrl = BASE_URL + '?pageSize=' + PAGE_SIZE + '&' + QUERY_PARAMS;
                         if (nextPageToken) {
                             paginatedUrl += '&pageToken=' + nextPageToken;
                         }
-                        
+
                         // Post progress updates to the main thread
                         postMessage({ type: 'progress', page: page });
 
                         const response = await fetch(paginatedUrl);
                         if (!response.ok) {
-                            // Use simple string concatenation for the error message as well.
                             throw new Error('HTTP error! status: ' + response.status + ' on page ' + page);
                         }
                         const data = await response.json();
-                        
-                        allStudies.push(...data.studies);
+
+                        // Map the page immediately and send it back so UI can update incrementally
+                        const mappedPage = data.studies.map(study => {
+                            const p = study.protocolSection;
+                            return {
+                                nct: p.identificationModule?.nctId || 'N/A',
+                                title: p.identificationModule?.officialTitle || 'No title provided',
+                                status: p.statusModule?.overallStatus || 'Unknown',
+                                phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
+                                sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
+                                startDate: p.statusModule?.startDateStruct?.date || 'N/A',
+                                enrollment: p.designModule?.enrollmentInfo?.count || 0,
+                                conditions: p.conditionsModule?.conditions || [],
+                            };
+                        });
+
+                        allTrials.push(...mappedPage);
+                        postMessage({ type: 'partial', data: mappedPage, page: page });
+
                         nextPageToken = data.nextPageToken;
                         page++;
 
-                    } while (nextPageToken && page < maxPages);
+                    } while (nextPageToken && page <= MAX_PAGES);
 
-                    // Map the complete API response to our simpler, flat structure
-                    const mappedTrials = allStudies.map(study => {
-                        const p = study.protocolSection;
-                        return {
-                            nct: p.identificationModule?.nctId || 'N/A',
-                            title: p.identificationModule?.officialTitle || 'No title provided',
-                            status: p.statusModule?.overallStatus || 'Unknown',
-                            phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
-                            sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
-                            startDate: p.statusModule?.startDateStruct?.date || 'N/A',
-                            enrollment: p.designModule?.enrollmentInfo?.count || 0,
-                            conditions: p.conditionsModule?.conditions || [],
-                        };
-                    });
-                    
                     // Send the final, processed data back to the main thread
-                    postMessage({ type: 'complete', data: mappedTrials });
-                    
+                    postMessage({ type: 'complete', data: allTrials });
+
                 } catch (error) {
-                    // Send any errors back to the main thread for display
                     postMessage({ type: 'error', error: error.message });
                 }
             }
 
-            // Start the fetching process as soon as the worker is initialized.
             fetchAllTrials();
         `;
 
@@ -334,18 +333,21 @@
                 const { type, page, data, error } = e.data;
 
                 if (type === 'progress') {
-                    setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
-                } else if (type === 'complete') {
-                    setLoadingState(false);
-                    allTrials = data;
-                    if(allTrials.length > 0) {
-                        console.log(`Successfully fetched and mapped ${allTrials.length} trials.`);
-                        populateFilters();
-                        updateDashboard();
-                    } else {
-                        const tableBody = document.getElementById('trialsTableBody');
-                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+                    if (allTrials.length === 0) {
+                        setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
                     }
+                } else if (type === 'partial') {
+                    const isFirstLoad = allTrials.length === 0;
+                    allTrials.push(...data);
+                    if (isFirstLoad) {
+                        setLoadingState(false);
+                        populateFilters();
+                    }
+                    updateDashboard();
+                } else if (type === 'complete') {
+                    allTrials = data; // ensure we have the full dataset
+                    populateFilters();
+                    updateDashboard();
                 } else if (type === 'error') {
                     console.error("Error from data worker:", error);
                     const tableBody = document.getElementById('trialsTableBody');
