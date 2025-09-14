@@ -54,6 +54,7 @@
             margin: 0;
         }
         input[type='number'] {
+            appearance: textfield;
             -moz-appearance: textfield;
         }
         /* Style for date picker icon */
@@ -149,24 +150,24 @@
     </div>
 
     <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3>
-            <div class="chart-container"><canvas id="phaseChart"></canvas></div>
+            <div class="chart-container !h-[350px]"><canvas id="phaseChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="font-semibold text-white mb-4 text-center">Trials by Status</h3>
-            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+            <div class="chart-container !h-[350px]"><canvas id="statusChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-3">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="font-semibold text-white mb-4 text-center">Trials Started Over Time</h3>
             <div class="chart-container !h-[350px]"><canvas id="timeChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg lg:col-span-2">
             <h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3>
             <div class="chart-container !h-[400px]"><canvas id="sponsorChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 class="font-semibold text-white mb-4 text-center">Top Conditions</h3>
             <div class="chart-container !h-[400px]"><canvas id="conditionsChart"></canvas></div>
         </div>
@@ -202,7 +203,7 @@
 
     <script>
         // --- GLOBAL VARIABLES ---
-        let allTrials = [];
+        let dataWorker; // The single web worker instance
         let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
         
         const newPalette = {
@@ -216,9 +217,6 @@
         // --- UTILITY FUNCTIONS ---
         /**
          * Debounce function to limit the rate at which a function gets called.
-         * @param {Function} func The function to debounce.
-         * @param {number} delay The delay in milliseconds.
-         * @returns {Function} The debounced function.
          */
         function debounce(func, delay) {
             let timeout;
@@ -230,9 +228,7 @@
         }
 
         /**
-         * Manages the loading state of the UI, disabling filters and showing a message.
-         * @param {boolean} isLoading - Whether the app is in a loading state.
-         * @param {string} message - The message to display.
+         * Manages the loading state of the UI.
          */
         function setLoadingState(isLoading, message = '') {
             const tableBody = document.getElementById('trialsTableBody');
@@ -242,50 +238,125 @@
 
             if (isLoading) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`;
-            } else {
-                tableBody.innerHTML = ''; // Clear loading message
+            } else if (tableBody.innerHTML.includes('loader')) {
+                tableBody.innerHTML = ''; 
             }
         }
         
-        // --- WEB WORKER ---
-        // The entire data fetching logic is moved into this worker string.
-        // This allows the slow network requests to happen in a separate thread,
-        // keeping the main UI responsive.
+        // --- WEB WORKER SCRIPT ---
+        // This script runs in a separate thread. It fetches ALL data initially, then holds it in memory.
+        // It listens for messages from the main thread containing filter values, performs all calculations,
+        // and sends back a payload of ready-to-render data. This is the core performance optimization.
         const dataWorkerScript = `
-            async function fetchAllTrials() {
+            let allTrials = []; // Keep all trial data in the worker's memory
+
+            // --- Main calculation function: runs all filtering and aggregation ---
+            function processDataForDashboard(filters) {
+                const { keyword, status, phase, startDateString, sponsorQuery } = filters;
+
+                // 1. Filter the main dataset based on active filters
+                const filteredTrials = allTrials.filter(trial => {
+                    const keywordMatch = keyword === '' || 
+                        (trial.nct && trial.nct.toLowerCase().includes(keyword)) || 
+                        (trial.title && trial.title.toLowerCase().includes(keyword)) ||
+                        (trial.sponsor && trial.sponsor.toLowerCase().includes(keyword)) ||
+                        (trial.conditions && trial.conditions.some(c => c.toLowerCase().includes(keyword)));
+                    
+                    const statusMatch = status === '' || trial.status === status;
+                    const phaseMatch = phase === '' || trial.phase === phase;
+                    const startDateMatch = startDateString === '' || (trial.startDate && trial.startDate !== 'N/A' && trial.startDate >= startDateString);
+                    const sponsorMatch = sponsorQuery === '' || (trial.sponsor && trial.sponsor.toLowerCase().includes(sponsorQuery));
+
+                    return keywordMatch && statusMatch && phaseMatch && startDateMatch && sponsorMatch;
+                });
+                
+                // 2. Sort the filtered results
+                filteredTrials.sort((a, b) => {
+                    if (a.startDate === 'N/A' || !a.startDate) return 1;
+                    if (b.startDate === 'N/A' || !b.startDate) return -1;
+                    return b.startDate.localeCompare(a.startDate);
+                });
+
+                // 3. Calculate KPIs from the filtered data
+                const kpis = {
+                    totalTrials: filteredTrials.length,
+                    recruitingTrials: filteredTrials.filter(t => t.status === 'RECRUITING').length,
+                    completedTrials: filteredTrials.filter(t => t.status === 'COMPLETED').length,
+                    totalParticipants: filteredTrials.reduce((sum, t) => sum + (t.enrollment || 0), 0)
+                };
+
+                // 4. Aggregate data for all charts
+                const phaseCounts = filteredTrials.reduce((acc, { phase }) => { acc[phase] = (acc[phase] || 0) + 1; return acc; }, {});
+                const sortedPhases = Object.entries(phaseCounts).sort(([,a],[,b]) => b-a);
+                
+                const statusCounts = filteredTrials.reduce((acc, { status }) => { acc[status] = (acc[status] || 0) + 1; return acc; }, {});
+                const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a);
+
+                const timeCounts = filteredTrials.reduce((acc, { startDate }) => {
+                    if(startDate && startDate !== 'N/A') {
+                        const year = startDate.substring(0, 4);
+                        acc[year] = (acc[year] || 0) + 1;
+                    }
+                    return acc;
+                }, {});
+                const sortedYears = Object.keys(timeCounts).sort((a, b) => a - b);
+                
+                const sponsorCounts = filteredTrials.reduce((acc, { sponsor }) => {
+                    if (sponsor && sponsor !== 'N/A') acc[sponsor] = (acc[sponsor] || 0) + 1;
+                    return acc;
+                }, {});
+                const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse();
+                
+                const conditionCounts = filteredTrials.reduce((acc, { conditions }) => {
+                    if (Array.isArray(conditions)) conditions.forEach(c => { acc[c] = (acc[c] || 0) + 1; });
+                    return acc;
+                }, {});
+                const topConditions = Object.entries(conditionCounts)
+                    .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
+                    .sort(([,a],[,b]) => b-a)
+                    .slice(0, 10).reverse();
+
+                const charts = {
+                    phase: { labels: sortedPhases.map(p => p[0]), data: sortedPhases.map(p => p[1]) },
+                    status: { labels: sortedStatuses.map(s => s[0]), data: sortedStatuses.map(s => s[1]) },
+                    time: { labels: sortedYears, data: sortedYears.map(year => timeCounts[year]) },
+                    sponsor: { labels: topSponsors.map(s => s[0]), data: topSponsors.map(s => s[1]) },
+                    conditions: { labels: topConditions.map(c => c[0]), data: topConditions.map(c => c[1]) }
+                };
+
+                // 5. Prepare the data for the details table, applying the display limit
+                const DISPLAY_LIMIT = 200;
+                const table = {
+                    rows: filteredTrials.slice(0, DISPLAY_LIMIT),
+                    totalCount: filteredTrials.length
+                };
+
+                // 6. Return a single payload object
+                return { kpis, charts, table };
+            }
+
+            // --- Initial data fetch, runs only once when the worker starts ---
+            async function fetchAndProcessInitialData() {
                 const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
                 const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
                 let nextPageToken = null;
                 let allStudies = [];
                 let page = 1;
-                const maxPages = 50; // Safety break to avoid infinite loops during development
+                const maxPages = 50;
 
                 try {
                     do {
-                        // Use simple string concatenation to avoid template literal issues inside the worker string.
-                        let paginatedUrl = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS;
-                        if (nextPageToken) {
-                            paginatedUrl += '&pageToken=' + nextPageToken;
-                        }
-                        
-                        // Post progress updates to the main thread
+                        let url = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS + (nextPageToken ? '&pageToken=' + nextPageToken : '');
                         postMessage({ type: 'progress', page: page });
-
-                        const response = await fetch(paginatedUrl);
-                        if (!response.ok) {
-                            // Use simple string concatenation for the error message as well.
-                            throw new Error('HTTP error! status: ' + response.status + ' on page ' + page);
-                        }
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
                         const data = await response.json();
-                        
-                        allStudies.push(...data.studies);
+                        if (data.studies) allStudies.push(...data.studies);
                         nextPageToken = data.nextPageToken;
                         page++;
-
                     } while (nextPageToken && page < maxPages);
 
-                    // Map the complete API response to our simpler, flat structure
-                    const mappedTrials = allStudies.map(study => {
+                    allTrials = allStudies.map(study => {
                         const p = study.protocolSection;
                         return {
                             nct: p.identificationModule?.nctId || 'N/A',
@@ -299,121 +370,117 @@
                         };
                     });
                     
-                    // Send the final, processed data back to the main thread
-                    postMessage({ type: 'complete', data: mappedTrials });
-                    
+                    const initialDashboardData = processDataForDashboard({
+                        keyword: '',
+                        status: '',
+                        phase: '',
+                        startDateString: '',
+                        sponsorQuery: ''
+                    });
+                    const filterOptions = {
+                        statuses: [...new Set(allTrials.map(t => t.status))].sort(),
+                        phases: [...new Set(allTrials.map(t => t.phase))].sort((a,b) => {
+                            if (a.includes('Not Applicable')) return -1; if (b.includes('Not Applicable')) return 1; return a.localeCompare(b);
+                        }),
+                        sponsors: [...new Set(allTrials.map(t => t.sponsor).filter(Boolean).filter(s => s !== 'N/A'))].sort()
+                    };
+
+                    postMessage({ type: 'complete', payload: { initialDashboardData, filterOptions } });
+
                 } catch (error) {
-                    // Send any errors back to the main thread for display
                     postMessage({ type: 'error', error: error.message });
                 }
             }
 
-            // Start the fetching process as soon as the worker is initialized.
-            fetchAllTrials();
+            // --- Worker message handler to respond to filter changes ---
+            self.onmessage = (e) => {
+                if (e.data.type === 'filter') {
+                    const dashboardData = processDataForDashboard(e.data.filters);
+                    postMessage({ type: 'update', payload: dashboardData });
+                }
+            };
+
+            fetchAndProcessInitialData();
         `;
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Register the datalabels plugin globally
             Chart.register(ChartDataLabels);
-            
             document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-
             initializeCharts();
             setupEventListeners();
             
-            // --- Start the Data Fetching in the Background ---
+            // --- Start the Data Fetching and Processing in the Background Worker ---
             setLoadingState(true, 'Initializing data fetch...');
+            try {
+                const workerBlob = new Blob([dataWorkerScript], { type: 'application/javascript' });
+                dataWorker = new Worker(URL.createObjectURL(workerBlob));
+                
+                // --- Central message handler for all worker communication ---
+                dataWorker.onmessage = function(e) {
+                    const { type, payload, page, error } = e.data;
 
-            // Create a worker from the script string using a Blob
-            const workerBlob = new Blob([dataWorkerScript], { type: 'application/javascript' });
-            const dataWorker = new Worker(URL.createObjectURL(workerBlob));
-
-            // Handle messages from the worker
-            dataWorker.onmessage = function(e) {
-                const { type, page, data, error } = e.data;
-
-                if (type === 'progress') {
-                    setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
-                } else if (type === 'complete') {
-                    setLoadingState(false);
-                    allTrials = data;
-                    if(allTrials.length > 0) {
-                        console.log(`Successfully fetched and mapped ${allTrials.length} trials.`);
-                        populateFilters();
-                        updateDashboard();
-                    } else {
-                        const tableBody = document.getElementById('trialsTableBody');
-                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+                    if (type === 'progress') {
+                        setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
+                    } else if (type === 'complete') {
+                        console.log(`Successfully fetched and processed initial data.`);
+                        populateFilters(payload.filterOptions);
+                        const initialData = payload.initialDashboardData;
+                        updateKPIs(initialData.kpis);
+                        updateCharts(initialData.charts);
+                        updateTable(initialData.table);
+                        setLoadingState(false);
+                    } else if (type === 'update') {
+                        updateKPIs(payload.kpis);
+                        updateCharts(payload.charts);
+                        updateTable(payload.table);
+                        setLoadingState(false);
+                    } else if (type === 'error') {
+                        console.error("Error from data worker:", error);
+                        document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
+                        setLoadingState(false);
+                        dataWorker.terminate(); 
                     }
-                } else if (type === 'error') {
-                    console.error("Error from data worker:", error);
-                    const tableBody = document.getElementById('trialsTableBody');
-                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
+                };
+                
+                dataWorker.onerror = function(err) {
+                    console.error("A critical error occurred in the data worker:", err);
+                    document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred. See console for details.</td></tr>`;
                     setLoadingState(false);
-                }
-            };
-            
-            // Handle errors from the worker itself
-            dataWorker.onerror = function(error) {
-                console.error("An error occurred in the data worker:", error);
-                const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred in the data worker. See console for details.</td></tr>`;
-                setLoadingState(false);
-            };
+                };
+            } catch (e) {
+                 console.error("Failed to initialize Web Worker:", e);
+                 document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Could not initialize the data fetching process. Your browser may not support Web Workers.</td></tr>`;
+                 setLoadingState(false);
+            }
         });
         
         // --- FILTER POPULATION ---
-        function populateFilters() {
+        function populateFilters({ statuses, phases, sponsors }) {
             const statusFilter = document.getElementById('statusFilter');
             const phaseFilter = document.getElementById('phaseFilter');
             const sponsorList = document.getElementById('sponsorList');
 
-            // Clear existing options except the first one
-            statusFilter.length = 1;
-            phaseFilter.length = 1;
-            sponsorList.innerHTML = '';
+            statusFilter.length = 1; phaseFilter.length = 1; sponsorList.innerHTML = '';
 
-            const uniqueStatuses = [...new Set(allTrials.map(t => t.status))].sort();
-            const uniquePhases = [...new Set(allTrials.map(t => t.phase))].sort((a,b) => {
-                if (a.includes('Not Applicable')) return -1;
-                if (b.includes('Not Applicable')) return 1;
-                return a.localeCompare(b);
-            });
-            const uniqueSponsors = [...new Set(allTrials.map(t => t.sponsor).filter(s => s && s !== 'N/A'))].sort();
-
-            uniqueStatuses.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s;
-                option.textContent = s.replace(/_/g, ' ');
-                statusFilter.appendChild(option);
-            });
-
-            uniquePhases.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p;
-                option.textContent = p;
-                phaseFilter.appendChild(option);
-            });
+            statuses.forEach(s => statusFilter.add(new Option(s.replace(/_/g, ' '), s)));
+            phases.forEach(p => phaseFilter.add(new Option(p, p)));
             
-            uniqueSponsors.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s;
-                sponsorList.appendChild(option);
-            });
+            const sponsorFragment = document.createDocumentFragment();
+            sponsors.forEach(s => sponsorFragment.appendChild(new Option(s,s)));
+            sponsorList.appendChild(sponsorFragment);
         }
 
         // --- EVENT LISTENERS ---
         function setupEventListeners() {
-            // Use debounce for text inputs to improve performance
-            const debouncedUpdate = debounce(updateDashboard, 300);
-            document.getElementById('keywordSearch').addEventListener('input', debouncedUpdate);
-            document.getElementById('sponsorFilter').addEventListener('input', debouncedUpdate);
-            
-            // Use change event for select dropdowns and date input
-            document.getElementById('statusFilter').addEventListener('change', updateDashboard);
-            document.getElementById('phaseFilter').addEventListener('change', updateDashboard);
-            document.getElementById('startDateFilter').addEventListener('change', updateDashboard);
+            const debouncedHandler = debounce(updateDashboard, 300);
+            const immediateHandler = updateDashboard;
+
+            document.getElementById('keywordSearch').addEventListener('input', debouncedHandler);
+            document.getElementById('sponsorFilter').addEventListener('input', debouncedHandler);
+            document.getElementById('statusFilter').addEventListener('change', immediateHandler);
+            document.getElementById('phaseFilter').addEventListener('change', immediateHandler);
+            document.getElementById('startDateFilter').addEventListener('change', immediateHandler);
 
             document.getElementById('resetFilters').addEventListener('click', () => {
                 document.getElementById('keywordSearch').value = '';
@@ -427,310 +494,107 @@
             document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
                 const filters = document.getElementById('filters');
                 const icon = document.getElementById('toggleIcon');
-                const isHidden = filters.classList.toggle('hidden');
-                
-                if (isHidden) {
-                    icon.classList.remove('rotate-180');
-                } else {
-                    icon.classList.add('rotate-180');
-                }
+                icon.classList.toggle('rotate-180', !filters.classList.toggle('hidden'));
             });
         }
 
         // --- CHART INITIALIZATION ---
         function initializeCharts() {
-            const defaultOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#d1d5db' }
-                    },
-                    datalabels: { display: false },
-                    tooltip: { enabled: true }
-                },
-                scales: {
-                    x: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    },
-                    y: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    }
-                }
-            };
-            
+            const defaultOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#d1d5db' }}, datalabels: { display: false }, tooltip: { enabled: true }}, scales: { x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }}, y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }}}};
             const horizontalOptions = { ...defaultOptions, indexAxis: 'y' };
             const phasePalette = [newPalette.dodgerBlue, newPalette.robinsEggBlue, newPalette.sulu, newPalette.malibu, newPalette.deepSapphire];
 
-            phaseChart = new Chart(document.getElementById('phaseChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: phasePalette,
-                        borderColor: '#1f2937',
-                        borderWidth: 3,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: true,
-                            formatter: (value, ctx) => {
-                                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                const percentage = value / total * 100;
-                                if (percentage < 3) return '';
-                                let label = ctx.chart.data.labels[ctx.dataIndex];
-                                if (label.includes('Applicable')) label = 'N/A';
-                                if (label.includes('Phase')) label = label.replace('Phase ', 'P');
-                                return `${label}\n${percentage.toFixed(0)}%`;
-                            },
-                            color: (ctx) => {
-                                const bgColor = ctx.dataset.backgroundColor[ctx.dataIndex];
-                                if (!bgColor) return '#FFFFFF';
-                                const r = parseInt(bgColor.slice(1, 3), 16), g = parseInt(bgColor.slice(3, 5), 16), b = parseInt(bgColor.slice(5, 7), 16);
-                                return (r * 299 + g * 587 + b * 114) / 1000 > 155 ? newPalette.deepSapphire : '#FFFFFF';
-                            },
-                            textAlign: 'center',
-                            font: { weight: 'bold', size: 12, family: 'Inter' }
-                        }
-                    }
-                }
-            });
-
-            statusChart = new Chart(document.getElementById('statusChart'), {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.dodgerBlue }] },
-                options: defaultOptions
-            });
-            
-            sponsorChart = new Chart(document.getElementById('sponsorChart'), {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.malibu }] },
-                options: {
-                    ...horizontalOptions,
-                     plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: true,
-                            color: newPalette.deepSapphire,
-                            anchor: 'end',
-                            align: 'end',
-                            font: { weight: 'bold' }
-                        }
-                    }
-                }
-            });
-            
-            timeChart = new Chart(document.getElementById('timeChart'), {
-                type: 'line',
-                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: false }] },
-                options: defaultOptions
-            });
-            
-            conditionsChart = new Chart(document.getElementById('conditionsChart'), {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.sulu }] },
-                options: {
-                    ...horizontalOptions,
-                    scales: {
-                        x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                        y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-                    },
-                     plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: true,
-                            color: newPalette.deepSapphire,
-                            anchor: 'end',
-                            align: 'end',
-                            font: { weight: 'bold' }
-                        }
-                    }
-                }
-            });
+            phaseChart = new Chart(document.getElementById('phaseChart'), { type: 'doughnut', data: { labels: [], datasets: [{ data: [], backgroundColor: phasePalette, borderColor: '#1f2937', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: true, formatter: (v, ctx) => { const p = v / ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0) * 100; if (p < 3) return ''; let l = ctx.chart.data.labels[ctx.dataIndex]; if (l.includes('Applicable')) l = 'N/A'; if (l.includes('Phase')) l = l.replace('Phase ', 'P'); return `${l}\n${p.toFixed(0)}%`; }, color: (ctx) => { const c = ctx.dataset.backgroundColor[ctx.dataIndex] || '#FFFFFF'; const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16); return (r*299+g*587+b*114)/1000 > 155 ? newPalette.deepSapphire : '#FFFFFF'; }, textAlign: 'center', font: { weight: 'bold', size: 12, family: 'Inter' }}}}});
+            statusChart = new Chart(document.getElementById('statusChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.dodgerBlue }] }, options: defaultOptions });
+            sponsorChart = new Chart(document.getElementById('sponsorChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.malibu }] }, options: { ...horizontalOptions, plugins: { legend: { display: false }, datalabels: { display: true, color: '#FFFFFF', anchor: 'end', align: 'end', font: { weight: 'bold' } }}}});
+            timeChart = new Chart(document.getElementById('timeChart'), { type: 'line', data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: false }] }, options: { ...defaultOptions, plugins: { ...defaultOptions.plugins, legend: { display: false } } } });
+            conditionsChart = new Chart(document.getElementById('conditionsChart'), { type: 'bar', data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.sulu }] }, options: { ...horizontalOptions, plugins: { legend: { display: false }, datalabels: { display: true, color: '#FFFFFF', anchor: 'end', align: 'end', font: { weight: 'bold' } }}}});
         }
         
-        // --- CORE LOGIC: DASHBOARD UPDATE ---
+        // --- CORE LOGIC: Gathers filters and tells the worker to update ---
         function updateDashboard() {
-            if (allTrials.length === 0) return;
-
-            const keyword = document.getElementById('keywordSearch').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            const phase = document.getElementById('phaseFilter').value;
-            const startDateString = document.getElementById('startDateFilter').value;
-            const sponsorQuery = document.getElementById('sponsorFilter').value.toLowerCase();
-
-            const filteredTrials = allTrials.filter(trial => {
-                const keywordMatch = keyword === '' || 
-                    (trial.nct && trial.nct.toLowerCase().includes(keyword)) || 
-                    (trial.title && trial.title.toLowerCase().includes(keyword)) ||
-                    (trial.sponsor && trial.sponsor.toLowerCase().includes(keyword)) ||
-                    (trial.conditions && trial.conditions.some(c => c.toLowerCase().includes(keyword)));
-                
-                const statusMatch = status === '' || trial.status === status;
-                const phaseMatch = phase === '' || trial.phase === phase;
-                const startDateMatch = startDateString === '' || (trial.startDate && trial.startDate !== 'N/A' && new Date(trial.startDate) >= new Date(startDateString));
-                const sponsorMatch = sponsorQuery === '' || (trial.sponsor && trial.sponsor.toLowerCase().includes(sponsorQuery));
-
-                return keywordMatch && statusMatch && phaseMatch && startDateMatch && sponsorMatch;
-            });
-            
-            // Sort by start date (newest first) after filtering
-            filteredTrials.sort((a, b) => {
-                const dateA = a.startDate && a.startDate !== 'N/A' ? new Date(a.startDate) : new Date(0);
-                const dateB = b.startDate && b.startDate !== 'N/A' ? new Date(b.startDate) : new Date(0);
-                return dateB - dateA;
-            });
-
-            updateKPIs(filteredTrials);
-            updateCharts(filteredTrials);
-            updateTable(filteredTrials);
+            if (!dataWorker) return;
+            setLoadingState(true, 'Filtering data...');
+            const filters = {
+                keyword: document.getElementById('keywordSearch').value.toLowerCase(),
+                status: document.getElementById('statusFilter').value,
+                phase: document.getElementById('phaseFilter').value,
+                startDateString: document.getElementById('startDateFilter').value,
+                sponsorQuery: document.getElementById('sponsorFilter').value.toLowerCase()
+            };
+            dataWorker.postMessage({ type: 'filter', filters: filters });
         }
 
-        function updateKPIs(trials) {
-            document.getElementById('totalTrials').textContent = trials.length.toLocaleString();
-            document.getElementById('recruitingTrials').textContent = trials.filter(t => t.status === 'RECRUITING').length.toLocaleString();
-            document.getElementById('completedTrials').textContent = trials.filter(t => t.status === 'COMPLETED').length.toLocaleString();
-            const totalParticipants = trials.reduce((sum, t) => sum + (t.enrollment || 0), 0);
+        // --- "Dumb" Renderer Functions: They just update the UI with data from the worker ---
+        function updateKPIs({ totalTrials, recruitingTrials, completedTrials, totalParticipants }) {
+            document.getElementById('totalTrials').textContent = totalTrials.toLocaleString();
+            document.getElementById('recruitingTrials').textContent = recruitingTrials.toLocaleString();
+            document.getElementById('completedTrials').textContent = completedTrials.toLocaleString();
             document.getElementById('totalParticipants').textContent = totalParticipants.toLocaleString();
         }
         
-        function updateCharts(trials) {
-            // Phase Chart
-            const phaseCounts = trials.reduce((acc, trial) => {
-                acc[trial.phase] = (acc[trial.phase] || 0) + 1;
-                return acc;
-            }, {});
-            const sortedPhases = Object.entries(phaseCounts).sort(([,a],[,b]) => b-a);
-            phaseChart.data.labels = sortedPhases.map(p => p[0]);
-            phaseChart.data.datasets[0].data = sortedPhases.map(p => p[1]);
+        function updateCharts(charts) {
+            phaseChart.data.labels = charts.phase.labels;
+            phaseChart.data.datasets[0].data = charts.phase.data;
             phaseChart.update();
             
-            // Status Chart
-            const statusCounts = trials.reduce((acc, trial) => {
-                acc[trial.status] = (acc[trial.status] || 0) + 1;
-                return acc;
-            }, {});
-            const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a);
-            statusChart.data.labels = sortedStatuses.map(s => s[0].replace(/_/g, ' '));
-            statusChart.data.datasets[0].data = sortedStatuses.map(s => s[1]);
+            statusChart.data.labels = charts.status.labels.map(s => s.replace(/_/g, ' '));
+            statusChart.data.datasets[0].data = charts.status.data;
             statusChart.update();
             
-            // Time Chart (Grouped by Year)
-            const timeCounts = trials.reduce((acc, trial) => {
-                if(trial.startDate && trial.startDate !== 'N/A') {
-                    const year = new Date(trial.startDate).getFullYear();
-                    if (year) {
-                        acc[year] = (acc[year] || 0) + 1;
-                    }
-                }
-                return acc;
-            }, {});
-            const sortedYears = Object.keys(timeCounts).sort((a, b) => a - b);
-            
-            // Dynamically change chart type based on number of data points
-            if (sortedYears.length === 1) {
-                timeChart.config.type = 'bar';
-                timeChart.options.plugins.tooltip.enabled = false;
-            } else {
-                timeChart.config.type = 'line';
-                timeChart.options.plugins.tooltip.enabled = true;
-            }
-
-            timeChart.data.labels = sortedYears;
-            timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
+            timeChart.data.labels = charts.time.labels;
+            timeChart.data.datasets[0].data = charts.time.data;
             timeChart.update();
 
-            // Sponsor Chart
-            const sponsorCounts = trials.reduce((acc, trial) => {
-                if (trial.sponsor && trial.sponsor !== 'N/A') {
-                    acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1;
-                }
-                return acc;
-            }, {});
-            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse(); // reverse for horizontal chart
-            sponsorChart.data.labels = topSponsors.map(s => s[0]);
-            sponsorChart.data.datasets[0].data = topSponsors.map(s => s[1]);
+            sponsorChart.data.labels = charts.sponsor.labels;
+            sponsorChart.data.datasets[0].data = charts.sponsor.data;
             sponsorChart.update();
 
-            // Conditions Chart
-            const conditionCounts = trials.reduce((acc, trial) => {
-                if (Array.isArray(trial.conditions)) {
-                    trial.conditions.forEach(c => {
-                        acc[c] = (acc[c] || 0) + 1;
-                    });
-                }
-                return acc;
-            }, {});
-            const topConditions = Object.entries(conditionCounts)
-                .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
-                .sort(([,a],[,b]) => b-a)
-                .slice(0, 10).reverse(); // reverse for horizontal chart
-            conditionsChart.data.labels = topConditions.map(c => c[0]);
-            conditionsChart.data.datasets[0].data = topConditions.map(c => c[1]);
+            conditionsChart.data.labels = charts.conditions.labels;
+            conditionsChart.data.datasets[0].data = charts.conditions.data;
             conditionsChart.update();
         }
 
-        function updateTable(trials) {
+        function updateTable({ rows, totalCount }) {
             const tableBody = document.getElementById('trialsTableBody');
             const recordCountEl = document.getElementById('tableRecordCount');
             
-            if (trials.length === 0) {
+            if (rows.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials match the current filters.</td></tr>`;
                 recordCountEl.textContent = 'Showing 0 records';
                 return;
             }
 
-            // Performance Improvement: Display top 200 results to keep the DOM fast
-            const displayLimit = 200;
-            const trialsToDisplay = trials.slice(0, displayLimit);
-            // Performance Improvement: Build HTML string and set innerHTML once
             let tableHTML = '';
-            trialsToDisplay.forEach(trial => {
+            rows.forEach(trial => {
                 const statusCellStyle = getStatusColor(trial.status);
-                tableHTML += `
-                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                        <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
-                            <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
-                        </td>
+                tableHTML += `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
+                        <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a></td>
                         <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
-                            <span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span>
-                        </td>
+                        <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span></td>
                         <td class="px-4 py-3">${trial.phase}</td>
                         <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
                         <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
                         <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
             
             tableBody.innerHTML = tableHTML;
-            recordCountEl.textContent = `Showing ${trialsToDisplay.length} of ${trials.length.toLocaleString()} records`;
+            recordCountEl.textContent = `Showing ${rows.length} of ${totalCount.toLocaleString()} records`;
         }
         
         function getStatusColor(status) {
             switch(status) {
-                case 'RECRUITING': 
-                    return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
-                case 'COMPLETED': 
-                    return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
-                case 'TERMINATED': 
-                    return `background-color:#F87171; color:#7f1d1d;`; // Red-400, Red-900
-                case 'NOT_YET_RECRUITING':
-                    return `background-color:#FBBF24; color:#78350f;`; // Amber-400, Amber-900
-                default: 
-                    return `background-color:#4B5563; color:#F9FAFB;`; // Gray-600, Gray-50
+                case 'RECRUITING': return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
+                case 'COMPLETED': return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
+                case 'TERMINATED': return `background-color:#F87171; color:#7f1d1d;`;
+                case 'NOT_YET_RECRUITING': return `background-color:#FBBF24; color:#78350f;`;
+                default: return `background-color:#4B5563; color:#F9FAFB;`;
             }
         }
-
     </script>
 </body>
 </html>
+
+
+
