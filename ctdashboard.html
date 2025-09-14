@@ -1,573 +1,654 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Interactive Clinical Trials Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body{font-family:'Inter',sans-serif;background-color:#111827}
-    .chart-container{position:relative;margin:auto;height:300px;width:100%}
-    ::-webkit-scrollbar{width:8px;height:8px}
-    ::-webkit-scrollbar-track{background:#1f2937}
-    ::-webkit-scrollbar-thumb{background:#4b5563;border-radius:4px}
-    ::-webkit-scrollbar-thumb:hover{background:#6b7280}
-    .loader{border:4px solid #f3f3f3;border-top:4px solid #00ACFF;border-radius:50%;width:40px;height:40px;animation:spin 1s linear infinite}
-    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-    input[type='number']::-webkit-inner-spin-button,input[type='number']::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-    input[type='number']{-moz-appearance:textfield}
-    input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.8);cursor:pointer}
-    fieldset:disabled{opacity:.5;cursor:not-allowed}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Clinical Trials Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 300px;
+            width: 100%;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937; /* bg-gray-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* bg-gray-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* bg-gray-500 */
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00ACFF;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type='number'] {
+            -moz-appearance: textfield;
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
+            cursor: pointer;
+        }
+        fieldset:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body class="text-gray-200 p-4 sm:p-4 lg:p-4">
-  <!-- Header -->
-  <header class="mb-8">
-    <div class="flex flex-col sm:flex-row justify-between sm:items-center">
-      <div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
-        <p class="text-sm sm:text-md text-gray-400 mt-1">An interactive dashboard for analyzing industry-sponsored clinical trials. Source:
-          <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
-      </div>
-      <div class="text-sm text-gray-400 mt-2 sm:mt-0">Updated: <span id="lastUpdated"></span></div>
-    </div>
-  </header>
 
-  <!-- Filters -->
-  <div class="bg-gray-800 rounded-lg shadow-lg mb-4">
-    <div id="toggleFiltersHeader" class="flex justify-between items-center p-2 cursor-pointer">
-      <h2 class="text-sm font-semibold text-white">Filters</h2>
-      <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-      </svg>
-    </div>
-    <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 p-4 border-t border-gray-700">
-      <div class="lg:col-span-2">
-        <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-        <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search NCT, Title, Sponsor, Condition...">
-      </div>
-      <div class="lg:col-span-2">
-        <label for="sponsorFilter" class="text-sm font-normal text-gray-300 block mb-1">Sponsor</label>
-        <input type="text" id="sponsorFilter" list="sponsorList" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type or select a sponsor">
-        <datalist id="sponsorList"></datalist>
-      </div>
-      <div>
-        <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
-        <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">All Statuses</option>
-        </select>
-      </div>
-      <div>
-        <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
-        <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">All Phases</option>
-        </select>
-      </div>
-      <div>
-        <label for="startDateFilter" class="text-sm font-medium text-gray-300 block mb-1">Start Date From</label>
-        <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-      </div>
-      <div class="flex items-end">
-        <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
-      </div>
-    </fieldset>
-  </div>
-
-  <!-- KPIs -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Total Trials</h3><p id="totalTrials" class="text-3xl font-bold text-white">0</p></div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Recruiting</h3><p id="recruitingTrials" class="text-3xl font-bold text-green-400">0</p></div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Comped</h3><p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p></div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Total Participants</h3><p id="totalParticipants" class="text-3xl font-bold text-white">0</p></div>
-  </div>
-
-  <!-- Charts -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
-      <h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3>
-      <div class="chart-container"><canvas id="phaseChart"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
-      <h3 class="font-semibold text-white mb-4 text-center">Trials by Status</h3>
-      <div class="chart-container"><canvas id="statusChart"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-3">
-      <h3 class="font-semibold text-white mb-4 text-center">Trials Started Over Time</h3>
-      <div class="chart-container !h-[350px]"><canvas id="timeChart"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
-      <h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3>
-      <div class="chart-container !h-[400px]"><canvas id="sponsorChart"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
-      <h3 class="font-semibold text-white mb-4 text-center">Top Conditions</h3>
-      <div class="chart-container !h-[400px]"><canvas id="conditionsChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Data Table -->
-  <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-    <div class="p-4 flex flex-wrap gap-2 justify-between items-center">
-      <h3 class="font-semibold text-white">Trial Details</h3>
-      <div class="flex items-center gap-2 text-sm">
-        <span id="tableRecordCount" class="text-gray-400"></span>
-        <label class="text-gray-400">Rows/page
-          <select id="pageSize" class="ml-1 bg-gray-700 border border-gray-600 rounded px-1 py-0.5 text-gray-100">
-            <option>50</option><option selected>100</option><option>150</option><option>200</option>
-          </select>
-        </label>
-        <div class="flex items-center gap-1">
-          <button id="prevPage" class="bg-gray-700 hover:bg-gray-600 rounded px-2 py-1">Prev</button>
-          <span id="pageInfo" class="text-gray-300 mx-1"></span>
-          <button id="nextPage" class="bg-gray-700 hover:bg-gray-600 rounded px-2 py-1">Next</button>
+    <header class="mb-8">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
+                <p class="text-sm sm:text-md text-gray-400 mt-1">An interactive dashboard for analyzing industry-sponsored clinical trials. Source: <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
+            </div>
+            <div class="text-sm text-gray-400 mt-2 sm:mt-0">Updated: <span id="lastUpdated"></span></div>
         </div>
-      </div>
+    </header>
+
+    <div class="bg-gray-800 rounded-lg shadow-lg mb-4">
+        <div id="toggleFiltersHeader" class="flex justify-between items-center p-2 cursor-pointer">
+            <h2 class="text-sm font-semibold text-white">Filters</h2>
+            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-t border-gray-700 hidden">
+            <div class="lg:col-span-2">
+                <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search NCT, Title, Condition...">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="sponsorFilter" class="text-sm font-normal text-gray-300 block mb-1">Sponsor</label>
+                <input type="text" id="sponsorFilter" list="sponsorList" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type or select a sponsor">
+                <datalist id="sponsorList"></datalist>
+            </div>
+            <div>
+                <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
+                <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Statuses</option>
+                </select>
+            </div>
+            <div>
+                <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
+                <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Phases</option>
+                </select>
+            </div>
+            <div>
+                <label for="startDateFilter" class="text-sm font-medium text-gray-300 block mb-1">Start Date From</label>
+                <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-1.5 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex items-end">
+                <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
+            </div>
+        </fieldset>
     </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-xs text-left text-gray-300">
-        <thead class="text-xs text-gray-300 uppercase bg-gray-700">
-          <tr>
-            <th class="px-4 py-3" style="min-width:120px;">NCT Number</th>
-            <th class="px-4 py-3" style="min-width:300px;">Title</th>
-            <th class="px-4 py-3 text-center" style="min-width:150px;">Status</th>
-            <th class="px-4 py-3" style="min-width:100px;">Phase</th>
-            <th class="px-4 py-3" style="min-width:200px;">Sponsor</th>
-            <th class="px-4 py-3" style="min-width:100px;">Start Date</th>
-            <th class="px-4 py-3 text-right" style="min-width:100px;">Enrollment</th>
-          </tr>
-        </thead>
-        <tbody id="trialsTableBody"></tbody>
-      </table>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-sm font-medium">Total Trials</h3>
+            <p id="totalTrials" class="text-3xl font-bold text-white">0</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-sm font-medium">Recruiting</h3>
+            <p id="recruitingTrials" class="text-3xl font-bold text-green-400">0</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-sm font-medium">Completed</h3>
+            <p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-sm font-medium">Total Participants</h3>
+            <p id="totalParticipants" class="text-3xl font-bold text-white">0</p>
+        </div>
     </div>
-  </div>
 
-<script>
-/* ===== GLOBALS ===== */
-let allTrials = [];    // preprocessed
-let filtered = [];     // filtered set
-let currentPage = 1;
-let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
-const ensureCharts = () => (phaseChart && statusChart && sponsorChart && timeChart && conditionsChart);
-const newPalette = { dodgerBlue:'#00ACFF', robinsEggBlue:'#00DAC8', deepSapphire:'#001E63', sulu:'#CAFF5E', malibu:'#6EC3FA' };
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+            <h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3>
+            <div class="chart-container"><canvas id="phaseChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+            <h3 class="font-semibold text-white mb-4 text-center">Trials by Status</h3>
+            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+            <h3 class="font-semibold text-white mb-4 text-center">Trials Started Over Time</h3>
+            <div class="chart-container"><canvas id="timeChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
+            <h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3>
+            <div class="chart-container !h-[400px]"><canvas id="sponsorChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+            <h3 class="font-semibold text-white mb-4 text-center">Top 10 Conditions</h3>
+            <div class="chart-container !h-[400px]"><canvas id="conditionsChart"></canvas></div>
+        </div>
+    </div>
 
-/* ===== UTIL ===== */
-const debounce=(fn,d=250)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),d);}};
+    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <div class="p-4 flex justify-between items-center">
+            <h3 class="font-semibold text-white">Trial Details</h3>
+            <span id="tableRecordCount" class="text-sm text-gray-400"></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left text-gray-300">
+                <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                    <tr>
+                        <th scope="col" class="px-4 py-3" style="min-width: 120px;">NCT Number</th>
+                        <th scope="col" class="px-4 py-3" style="min-width: 300px;">Title</th>
+                        <th scope="col" class="px-4 py-3 text-center" style="min-width: 150px;">Status</th>
+                        <th scope="col" class="px-4 py-3" style="min-width: 100px;">Phase</th>
+                        <th scope="col" class="px-4 py-3" style="min-width: 200px;">Sponsor</th>
+                        <th scope="col" class="px-4 py-3" style="min-width: 100px;">Start Date</th>
+                        <th scope="col" class="px-4 py-3 text-right" style="min-width: 100px;">Enrollment</th>
+                    </tr>
+                </thead>
+                <tbody id="trialsTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 
-function setLoadingState(isLoading, message=''){
-  const tableBody=document.getElementById('trialsTableBody');
-  const filters=document.getElementById('filters');
-  filters.disabled=isLoading;
-  tableBody.innerHTML = isLoading
-    ? `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`
-    : '';
-}
+    <script>
+        // --- GLOBAL VARIABLES ---
+        let allTrials = [];
+        let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
+        let dataWorker;
+        
+        const newPalette = {
+            dodgerBlue: '#00ACFF',
+            robinsEggBlue: '#00DAC8',
+            deepSapphire: '#001E63',
+            sulu: '#CAFF5E',
+            malibu: '#6EC3FA'
+        };
 
-function safeDateMs(s){
-  if(!s||s==='N/A') return NaN;
-  const d=new Date(s);
-  return isNaN(d)?NaN:d.getTime();
-}
-
-/* ===== CACHE ===== */
-const CACHE_KEY='ctgov_industry_interventional_v1';
-const CACHE_TTL=24*60*60*1000;
-
-function readCache(){
-  try{
-    const raw=localStorage.getItem(CACHE_KEY);
-    if(!raw) return null;
-    const obj=JSON.parse(raw);
-    if(!obj||!obj.time||!obj.data) return null;
-    if(Date.now()-obj.time>CACHE_TTL) return null;
-    return obj.data;
-  }catch{ return null; }
-}
-function writeCache(data){
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({time:Date.now(), data})); }catch{}
-}
-
-/* ===== WORKER FETCH ===== */
-const dataWorkerScript = `
-  async function fetchAllTrials(){
-    const BASE='https://clinicaltrials.gov/api/v2/studies';
-    const QUERY='query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
-    let token=null, page=1, all=[];
-    try{
-      do{
-        postMessage({type:'progress',page});
-        let url=BASE+'?pageSize=500&'+QUERY+(token?('&pageToken='+token):'');
-        const res=await fetch(url);
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const j=await res.json();
-        const studies=(j.studies||[]).map(s=>{
-          const p=s.protocolSection||{};
-          const id=p.identificationModule||{};
-          const st=p.statusModule||{};
-          const dm=p.designModule||{};
-          const sc=p.sponsorCollaboratorsModule||{};
-          const cm=p.conditionsModule||{};
-          return {
-            nct: id.nctId || 'N/A',
-            title: id.officialTitle || 'No title provided',
-            status: st.overallStatus || 'UNKNOWN',
-            phase: (dm.phases && dm.phases.length ? dm.phases[dm.phases.length-1] : 'Not Applicable'),
-            sponsor: (sc.leadSponsor && sc.leadSponsor.name) ? sc.leadSponsor.name : 'N/A',
-            startDate: (st.startDateStruct && st.startDateStruct.date) ? st.startDateStruct.date : 'N/A',
-            enrollment: (dm.enrollmentInfo && dm.enrollmentInfo.count) ? dm.enrollmentInfo.count : 0,
-            conditions: Array.isArray(cm.conditions)?cm.conditions:[]
-          };
-        });
-        all.push(...studies);
-        token=j.nextPageToken || null;
-        page++;
-      }while(token && page<60);
-      postMessage({type:'complete',data:all});
-    }catch(e){
-      postMessage({type:'error',error:String(e)});
-    }
-  }
-  fetchAllTrials();
-`;
-
-/* ===== INIT ===== */
-document.addEventListener('DOMContentLoaded', ()=>{
-  Chart.register(ChartDataLabels);
-  document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-
-  initializeCharts();        // 1) create all charts
-  setupEventListeners();     // 2) wire up UI
-
-  const cached = readCache();
-  if (cached && cached.length){
-    preprocess(cached);
-    populateFilters();
-    updateAll();             // 3) this calls updateCharts(...) safely
-    setTimeout(startWorker,0);
-  } else {
-    setLoadingState(true,'Initializing data fetch…');
-    startWorker();
-  }
-});
-
-
-/* ===== PREPROCESS ===== */
-function preprocess(raw){
-  allTrials = raw.map(t=>{
-    const startTs = safeDateMs(t.startDate);
-    return {
-      ...t,
-      _nct: (t.nct||'').toLowerCase(),
-      _title: (t.title||'').toLowerCase(),
-      _sponsor: (t.sponsor||'').toLowerCase(),
-      _status: (t.status||'').toUpperCase(),
-      _conditions: Array.isArray(t.conditions) ? t.conditions.map(c=>String(c||'').toLowerCase()) : [],
-      startTs
-    };
-  });
-}
-
-/* ===== WORKER START ===== */
-function startWorker(){
-  const blob=new Blob([dataWorkerScript],{type:'application/javascript'});
-  const w=new Worker(URL.createObjectURL(blob));
-  w.onmessage=(e)=>{
-    const {type,page,data,error}=e.data;
-    if(type==='progress') setLoadingState(true,`Fetching page ${page} from ClinicalTrials.gov…`);
-    if(type==='complete'){
-      setLoadingState(false);
-      writeCache(data);
-      preprocess(data);
-      populateFilters();
-      updateAll();
-      w.terminate();
-    }
-    if(type==='error'){
-      setLoadingState(false);
-      const tb=document.getElementById('trialsTableBody');
-      tb.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
-      w.terminate();
-    }
-  };
-  w.onerror=(err)=>{ console.error(err); setLoadingState(false); w.terminate(); };
-}
-
-/* ===== FILTERS / EVENTS ===== */
-function setupEventListeners(){
-  const debounced = debounce(updateAll,300);
-  document.getElementById('keywordSearch').addEventListener('input', debounced);
-  document.getElementById('sponsorFilter').addEventListener('input', debounced);
-  document.getElementById('statusFilter').addEventListener('change', debounced);
-  document.getElementById('phaseFilter').addEventListener('change', debounced);
-  document.getElementById('startDateFilter').addEventListener('change', debounced);
-
-  document.getElementById('resetFilters').addEventListener('click', ()=>{
-    ['keywordSearch','sponsorFilter','statusFilter','phaseFilter','startDateFilter'].forEach(id=>document.getElementById(id).value='');
-    updateAll();
-  });
-
-  const filters = document.getElementById('filters');
-  const icon = document.getElementById('toggleIcon');
-  document.getElementById('toggleFiltersHeader').addEventListener('click', ()=>{
-    const hidden = filters.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180', !hidden);
-  });
-
-  document.getElementById('pageSize').addEventListener('change', ()=>{ currentPage=1; renderTable(); });
-  document.getElementById('prevPage').addEventListener('click', ()=>{ setPage(currentPage-1); renderTable(); });
-  document.getElementById('nextPage').addEventListener('click', ()=>{ setPage(currentPage+1); renderTable(); });
-}
-
-function populateFilters(){
-  const statusFilter=document.getElementById('statusFilter');
-  const phaseFilter=document.getElementById('phaseFilter');
-  const sponsorList=document.getElementById('sponsorList');
-
-  statusFilter.length=1; phaseFilter.length=1; sponsorList.innerHTML='';
-
-  const statuses=[...new Set(allTrials.map(t=>t.status))].sort();
-  const phases=[...new Set(allTrials.map(t=>t.phase))].sort((a,b)=>{
-    if(a.includes('Not Applicable')) return -1;
-    if(b.includes('Not Applicable')) return 1;
-    return a.localeCompare(b);
-  });
-
-  const sponsorCounts=allTrials.reduce((acc,t)=>{ if(t.sponsor && t.sponsor!=='N/A') acc[t.sponsor]=(acc[t.sponsor]||0)+1; return acc; },{});
-  const sponsorsTop=Object.entries(sponsorCounts).sort(([,a],[,b])=>b-a).slice(0,500).map(([s])=>s);
-
-  statuses.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s.replace(/_/g,' '); statusFilter.appendChild(o); });
-  phases.forEach(p=>{ const o=document.createElement('option'); o.value=p; o.textContent=p; phaseFilter.appendChild(o); });
-  sponsorsTop.forEach(s=>{ const o=document.createElement('option'); o.value=s; sponsorList.appendChild(o); });
-}
-
-/* ===== FILTER LOGIC ===== */
-function readFilters(){
-  return {
-    keyword: document.getElementById('keywordSearch').value.trim().toLowerCase(),
-    sponsor: document.getElementById('sponsorFilter').value.trim().toLowerCase(),
-    status: document.getElementById('statusFilter').value,
-    phase: document.getElementById('phaseFilter').value,
-    startFrom: document.getElementById('startDateFilter').value
-  };
-}
-
-function applyFilters(){
-  if(!allTrials.length) return [];
-  const f = readFilters();
-  const startMs = f.startFrom ? safeDateMs(f.startFrom) : NaN;
-
-  const out = allTrials.filter(t=>{
-    if (f.keyword && !(t._nct.includes(f.keyword) || t._title.includes(f.keyword) || t._sponsor.includes(f.keyword) || t._conditions.some(c=>c.includes(f.keyword)))) return false;
-    if (f.status && t.status !== f.status) return false;
-    if (f.phase && t.phase !== f.phase) return false;
-    if (f.sponsor && !t._sponsor.includes(f.sponsor)) return false;
-    if (!isNaN(startMs) && !(t.startTs >= startMs)) return false;
-    return true;
-  });
-
-  out.sort((a,b)=>( (b.startTs||0) - (a.startTs||0) ));
-  return out;
-}
-
-/* ===== PAGINATION ===== */
-function pageSize(){ return parseInt(document.getElementById('pageSize').value,10)||100; }
-function totalPages(){ return Math.max(1, Math.ceil(filtered.length / pageSize())); }
-function setPage(n){ currentPage = Math.max(1, Math.min(n, totalPages())); }
-function getPageSlice(){
-  const size=pageSize();
-  const start=(currentPage-1)*size;
-  return filtered.slice(start,start+size);
-}
-
-/* ===== CHARTS ===== */
-function initializeCharts(){
-  const defaultOptions = {
-    responsive:true, maintainAspectRatio:false, animation:false,
-    plugins:{ legend:{labels:{color:'#d1d5db'}}, datalabels:{display:false}, tooltip:{enabled:true} },
-    scales:{ x:{ticks:{color:'#d1d5db'}, grid:{color:'rgba(255,255,255,0.1)'}},
-             y:{ticks:{color:'#d1d5db'}, grid:{color:'rgba(255,255,255,0.1)'}} }
-  };
-  const horizontalOptions = { ...defaultOptions, indexAxis:'y' };
-  const phasePalette=[newPalette.dodgerBlue,newPalette.robinsEggBlue,newPalette.sulu,newPalette.malibu,newPalette.deepSapphire];
-
-  phaseChart = new Chart(document.getElementById('phaseChart'), {
-    type:'doughnut',
-    data:{ labels:[], datasets:[{ data:[], backgroundColor:phasePalette, borderColor:'#1f2937', borderWidth:3 }] },
-    options:{
-      responsive:true, maintainAspectRatio:false, animation:false,
-      plugins:{
-        legend:{display:false},
-        datalabels:{
-          display:(ctx)=> (ctx.chart.data.labels.length<=8),
-          formatter:(value,ctx)=>{
-            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0)||1;
-            const pct = value/total*100;
-            let label = ctx.chart.data.labels[ctx.dataIndex]||'';
-            if(label.includes('Applicable')) label='N/A';
-            if(label.startsWith('Phase ')) label=label.replace('Phase ','P');
-            return pct<3?'':`${label}\n${pct.toFixed(0)}%`;
-          },
-          color:(ctx)=>{
-            const bg=ctx.dataset.backgroundColor[ctx.dataIndex]||'#000';
-            const r=parseInt(bg.slice(1,3),16), g=parseInt(bg.slice(3,5),16), b=parseInt(bg.slice(5,7),16);
-            return (r*299+g*587+b*114)/1000>155 ? newPalette.deepSapphire : '#FFF';
-          },
-          textAlign:'center', font:{weight:'bold',size:12,family:'Inter'}
+        // --- UTILITY FUNCTIONS ---
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
         }
-      }
-    }
-  });
 
-  statusChart = new Chart(document.getElementById('statusChart'), {
-    type:'bar',
-    data:{ labels:[], datasets:[{ label:'Number of Trials', data:[], backgroundColor:newPalette.dodgerBlue }] },
-    options: defaultOptions
-  });
+        function setLoadingState(isLoading, message = '') {
+            const tableBody = document.getElementById('trialsTableBody');
+            const filters = document.getElementById('filters');
+            
+            filters.disabled = isLoading;
 
-  timeChart = new Chart(document.getElementById('timeChart'), {
-    type:'line',
-    data:{ labels:[], datasets:[{ label:'Trials Started', data:[], borderColor:newPalette.robinsEggBlue, backgroundColor:'rgba(0,218,200,0.5)', tension:0.12, fill:false, pointRadius:2 }] },
-    options: defaultOptions
-  });
+            if (isLoading) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`;
+            }
+        }
+        
+        // --- WEB WORKER SCRIPT ---
+        const dataWorkerScript = `
+            let controller = new AbortController();
 
-  sponsorChart = new Chart(document.getElementById('sponsorChart'), {
-    type:'bar',
-    data:{ labels:[], datasets:[{ label:'Number of Trials', data:[], backgroundColor:newPalette.malibu }] },
-    options:{
-      ...horizontalOptions,
-      plugins:{ legend:{display:false}, datalabels:{display:true,color:newPalette.deepSapphire,anchor:'end',align:'end',font:{weight:'bold'}} }
-    }
-  });
+            // Function to build the API query string from filter values
+            function buildQuery(filters) {
+                let queryParts = ['AREA[OrgClass]INDUSTRY', 'AREA[StudyType]INTERVENTIONAL'];
 
-  conditionsChart = new Chart(document.getElementById('conditionsChart'), {
-    type:'bar',
-    data:{ labels:[], datasets:[{ label:'Number of Trials', data:[], backgroundColor:newPalette.sulu }] },
-    options:{
-      ...horizontalOptions,
-      plugins:{ legend:{display:false}, datalabels:{display:true,color:newPalette.deepSapphire,anchor:'end',align:'end',font:{weight:'bold'}} }
-    }
-  });
-}
+                if (filters.keyword) {
+                    queryParts.push(filters.keyword);
+                }
+                if (filters.status) {
+                    queryParts.push(\`AREA[OverallStatus]\${filters.status}\`);
+                }
+                if (filters.phase) {
+                    queryParts.push(\`AREA[Phase]\${filters.phase}\`);
+                }
+                if (filters.sponsor) {
+                    queryParts.push(\`AREA[LeadSponsorName]\${filters.sponsor}\`);
+                }
+                if (filters.startDate) {
+                    queryParts.push(\`AREA[StartDate]RANGE[\${filters.startDate},MAX]\`);
+                } else {
+                    queryParts.push('AREA[StartDate]RANGE[2020-01-01,MAX]');
+                }
 
-function updateCharts(trials){
-  if (!ensureCharts()) return; // charts not initialized yet
+                return queryParts.join(' AND ');
+            }
 
-  // Phase
-  const phaseCounts = trials.reduce((acc,t)=>{acc[t.phase]=(acc[t.phase]||0)+1;return acc;}, {});
-  const phases = Object.entries(phaseCounts).sort(([,a],[,b])=>b-a);
-  phaseChart.data.labels = phases.map(([k])=>k);
-  phaseChart.data.datasets[0].data = phases.map(([,v])=>v);
-  phaseChart.update('none');
+            async function fetchTrials(filters) {
+                controller.abort();
+                controller = new AbortController();
+                const signal = controller.signal;
 
-  // Status
-  const statusCounts = trials.reduce((acc,t)=>{acc[t.status]=(acc[t.status]||0)+1;return acc;}, {});
-  const statuses = Object.entries(statusCounts).sort(([,a],[,b])=>b-a);
-  statusChart.data.labels = statuses.map(([k])=>k.replace(/_/g,' '));
-  statusChart.data.datasets[0].data = statuses.map(([,v])=>v);
-  statusChart.update('none');
+                const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
+                const queryTerm = buildQuery(filters);
+                const query = \`query.term=\${encodeURIComponent(queryTerm)}\`;
 
-  // Time (by year)
-  const timeCounts = trials.reduce((acc,t)=>{
-    if (!isNaN(t.startTs)) {
-      const y = new Date(t.startTs).getFullYear();
-      acc[y]=(acc[y]||0)+1;
-    }
-    return acc;
-  },{});
-  const years = Object.keys(timeCounts).map(Number).sort((a,b)=>a-b);
-  timeChart.data.labels = years;
-  timeChart.data.datasets[0].data = years.map(y=>timeCounts[y]);
-  timeChart.data.datasets[0].pointRadius = years.length>30?0:2;
-  timeChart.update('none');
+                let nextPageToken = null;
+                let allStudies = [];
+                let page = 1;
+                const maxPages = 5; 
 
-  // Sponsors (top 10)
-  const sponsorCounts = trials.reduce((acc,t)=>{ if(t.sponsor && t.sponsor!=='N/A') acc[t.sponsor]=(acc[t.sponsor]||0)+1; return acc; },{});
-  const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
-  sponsorChart.data.labels = topSponsors.map(([k])=>k);
-  sponsorChart.data.datasets[0].data = topSponsors.map(([,v])=>v);
-  sponsorChart.update('none');
+                try {
+                    do {
+                        let paginatedUrl = \`\${BASE_URL}?pageSize=1000&\${query}\`;
+                        if (nextPageToken) {
+                            paginatedUrl += \`&pageToken=\${nextPageToken}\`;
+                        }
+                        
+                        postMessage({ type: 'progress', page: page });
 
-// Conditions (top 10, skip “healthy”)
-const condCounts = trials.reduce((acc,t)=>{
-  (t.conditions||[]).forEach(c=>{
-    const lc = String(c||'').toLowerCase();
-    if (!lc.includes('healthy')) acc[c]=(acc[c]||0)+1;
-  });
-  return acc;
-}, {});
-const topConds = Object.entries(condCounts).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
-conditionsChart.data.labels = topConds.map(([k])=>k);
-conditionsChart.data.datasets[0].data = topConds.map(([,v])=>v);
-conditionsChart.update('none');
+                        const response = await fetch(paginatedUrl, { signal });
+                        if (!response.ok) {
+                            throw new Error('HTTP error! status: ' + response.status);
+                        }
+                        const data = await response.json();
+                        
+                        allStudies.push(...data.studies);
+                        nextPageToken = data.nextPageToken;
+                        page++;
 
-/* ===== KPIs ===== */
-function updateKPIs(trials){
-  document.getElementById('totalTrials').textContent = trials.length.toLocaleString();
-  document.getElementById('recruitingTrials').textContent = trials.filter(t=>t._status==='RECRUITING').length.toLocaleString();
-  document.getElementById('completedTrials').textContent = trials.filter(t=>t._status==='COMPLETED').length.toLocaleString();
-  const totalParticipants = trials.reduce((sum,t)=>sum+(t.enrollment||0),0);
-  document.getElementById('totalParticipants').textContent = totalParticipants.toLocaleString();
-}
+                    } while (nextPageToken && page <= maxPages);
 
-/* ===== TABLE ===== */
-function statusStyle(status){
-  switch(status){
-    case 'RECRUITING': return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
-    case 'COMPLETED': return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
-    case 'TERMINATED': return `background-color:#F87171; color:#7f1d1d;`;
-    case 'NOT_YET_RECRUITING': return `background-color:#FBBF24; color:#78350f;`;
-    default: return `background-color:#4B5563; color:#F9FAFB;`;
-  }
-}
+                    const mappedTrials = allStudies.map(study => {
+                        const p = study.protocolSection;
+                        return {
+                            nct: p.identificationModule?.nctId || 'N/A',
+                            title: p.identificationModule?.officialTitle || 'No title provided',
+                            status: p.statusModule?.overallStatus || 'Unknown',
+                            phase: p.designModule?.phases?.join(', ') || 'Not Applicable',
+                            sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
+                            startDate: p.statusModule?.startDateStruct?.date || 'N/A',
+                            enrollment: p.designModule?.enrollmentInfo?.count || 0,
+                            conditions: p.conditionsModule?.conditions || [],
+                        };
+                    });
+                    
+                    postMessage({ type: 'complete', data: mappedTrials });
+                    
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('Fetch error:', error);
+                        postMessage({ type: 'error', error: error.message });
+                    }
+                }
+            }
 
-function renderTable(){
-  const tbody=document.getElementById('trialsTableBody');
-  const recordCountEl=document.getElementById('tableRecordCount');
-  const pageInfo=document.getElementById('pageInfo');
+            self.onmessage = function(e) {
+                if (e.data.type === 'fetch') {
+                    fetchTrials(e.data.filters);
+                }
+            };
+        `;
 
-  if (!filtered.length){
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials match the current filters.</td></tr>`;
-    recordCountEl.textContent='Showing 0 records';
-    pageInfo.textContent='0 / 0';
-    return;
-  }
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            Chart.register(ChartDataLabels);
+            
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
-  const size=pageSize();
-  const start=(currentPage-1)*size;
-  const rows = filtered.slice(start,start+size).map(trial=>`
-    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-      <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
-        <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
-      </td>
-      <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
-      <td class="px-4 py-3 text-center whitespace-nowrap">
-        <span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusStyle(trial.status)}">${trial.status.replace(/_/g,' ')}</span>
-      </td>
-      <td class="px-4 py-3">${trial.phase}</td>
-      <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
-      <td class="px-4 py-3 whitespace-nowrap">${trial.startDate||''}</td>
-      <td class="px-4 py-3 text-right">${(trial.enrollment||0).toLocaleString()}</td>
-    </tr>
-  `).join('');
-  tbody.innerHTML = rows;
+            initializeCharts();
+            setupEventListeners();
+            
+            setLoadingState(true, 'Initializing data fetch...');
+            const workerBlob = new Blob([dataWorkerScript], { type: 'application/javascript' });
+            dataWorker = new Worker(URL.createObjectURL(workerBlob));
 
-  const shown = Math.min(size, filtered.length - start);
-  recordCountEl.textContent = `Showing ${shown} of ${filtered.length.toLocaleString()} records`;
-  pageInfo.textContent = `${currentPage} / ${totalPages()}`;
-}
+            dataWorker.onmessage = function(e) {
+                const { type, data, error } = e.data;
 
-/* ===== UPDATE PIPELINE ===== */
-function updateAll(){
-  filtered = applyFilters();
-  currentPage = 1;
-  updateKPIs(filtered);
-  updateCharts(filtered);
-  renderTable();
-}
+                if (type === 'progress') {
+                    setLoadingState(true, `Fetching data...`);
+                } else if (type === 'complete') {
+                    setLoadingState(false);
+                    allTrials = data;
+                    if (document.getElementById('statusFilter').length <= 1) {
+                        populateFilters();
+                    }
+                    updateDashboardUI(allTrials);
+                } else if (type === 'error') {
+                    console.error("Error from data worker:", error);
+                    const tableBody = document.getElementById('trialsTableBody');
+                    tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
+                    setLoadingState(false);
+                }
+            };
+            
+            dataWorker.onerror = function(error) {
+                console.error("A critical error occurred in the data worker:", error);
+                const tableBody = document.getElementById('trialsTableBody');
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred. See console for details.</td></tr>`;
+                setLoadingState(false);
+            };
 
+            fetchDataWithCurrentFilters();
+        });
+        
+        function populateFilters() {
+            const statusFilter = document.getElementById('statusFilter');
+            const phaseFilter = document.getElementById('phaseFilter');
+            const sponsorList = document.getElementById('sponsorList');
+
+            const commonStatuses = ['RECRUITING', 'NOT_YET_RECRUITING', 'ACTIVE_NOT_RECRUITING', 'COMPLETED', 'TERMINATED', 'ENROLLING_BY_INVITATION'];
+            const commonPhases = ['Not Applicable', 'Early Phase 1', 'Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'];
+            const uniqueSponsors = [...new Set(allTrials.map(t => t.sponsor).filter(s => s && s !== 'N/A'))].sort();
+
+            commonStatuses.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s;
+                option.textContent = s.replace(/_/g, ' ');
+                statusFilter.appendChild(option);
+            });
+
+            commonPhases.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p;
+                option.textContent = p;
+                phaseFilter.appendChild(option);
+            });
+            
+            uniqueSponsors.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s;
+                sponsorList.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            const debouncedFetch = debounce(fetchDataWithCurrentFilters, 400);
+            document.getElementById('keywordSearch').addEventListener('input', debouncedFetch);
+            document.getElementById('sponsorFilter').addEventListener('input', debouncedFetch);
+            
+            document.getElementById('statusFilter').addEventListener('change', fetchDataWithCurrentFilters);
+            document.getElementById('phaseFilter').addEventListener('change', fetchDataWithCurrentFilters);
+            document.getElementById('startDateFilter').addEventListener('change', fetchDataWithCurrentFilters);
+
+            document.getElementById('resetFilters').addEventListener('click', () => {
+                document.getElementById('keywordSearch').value = '';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('phaseFilter').value = '';
+                document.getElementById('startDateFilter').value = '';
+                document.getElementById('sponsorFilter').value = '';
+                fetchDataWithCurrentFilters();
+            });
+            
+            document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
+                const filters = document.getElementById('filters');
+                const icon = document.getElementById('toggleIcon');
+                const isHidden = filters.classList.toggle('hidden');
+                icon.classList.toggle('rotate-180', !isHidden);
+            });
+        }
+
+        function initializeCharts() {
+            const defaultOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#d1d5db' } },
+                    datalabels: { display: false },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                }
+            };
+            
+            const horizontalOptions = { ...defaultOptions, indexAxis: 'y' };
+            const phasePalette = [newPalette.dodgerBlue, newPalette.robinsEggBlue, newPalette.sulu, newPalette.malibu, newPalette.deepSapphire];
+
+            phaseChart = new Chart(document.getElementById('phaseChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{ data: [], backgroundColor: phasePalette, borderColor: '#1f2937', borderWidth: 3 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            display: true,
+                            formatter: (value, ctx) => {
+                                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (total === 0) return '';
+                                const percentage = value / total * 100;
+                                if (percentage < 3) return '';
+                                let label = ctx.chart.data.labels[ctx.dataIndex];
+                                if (label.includes('Applicable')) label = 'N/A';
+                                if (label.includes('Phase')) label = label.replace('Phase ', 'P');
+                                return `${label}\n${percentage.toFixed(0)}%`;
+                            },
+                            color: (ctx) => {
+                                const bgColor = ctx.dataset.backgroundColor[ctx.dataIndex];
+                                if (!bgColor) return '#FFFFFF';
+                                const r = parseInt(bgColor.slice(1, 3), 16), g = parseInt(bgColor.slice(3, 5), 16), b = parseInt(bgColor.slice(5, 7), 16);
+                                return (r * 299 + g * 587 + b * 114) / 1000 > 155 ? newPalette.deepSapphire : '#FFFFFF';
+                            },
+                            textAlign: 'center',
+                            font: { weight: 'bold', size: 12, family: 'Inter' }
+                        }
+                    }
+                }
+            });
+
+            statusChart = new Chart(document.getElementById('statusChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.dodgerBlue }] },
+                options: defaultOptions
+            });
+            
+            sponsorChart = new Chart(document.getElementById('sponsorChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.malibu }] },
+                options: {
+                    ...horizontalOptions,
+                     plugins: {
+                         legend: { display: false },
+                         datalabels: {
+                             display: true,
+                             color: '#FFFFFF',
+                             anchor: 'center',
+                             align: 'center',
+                             font: { weight: 'bold' }
+                         }
+                     }
+                }
+            });
+            
+            timeChart = new Chart(document.getElementById('timeChart'), {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: true }] },
+                options: defaultOptions
+            });
+            
+            conditionsChart = new Chart(document.getElementById('conditionsChart'), {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.sulu }] },
+                options: {
+                    ...horizontalOptions,
+                     plugins: {
+                         legend: { display: false },
+                         datalabels: {
+                             display: true,
+                             color: '#FFFFFF',
+                             anchor: 'center',
+                             align: 'center',
+                             font: { weight: 'bold' }
+                         }
+                     }
+                }
+            });
+        }
+        
+        function fetchDataWithCurrentFilters() {
+            setLoadingState(true, 'Applying filters and fetching new data...');
+            const filters = {
+                keyword: document.getElementById('keywordSearch').value,
+                status: document.getElementById('statusFilter').value,
+                phase: document.getElementById('phaseFilter').value,
+                startDate: document.getElementById('startDateFilter').value,
+                sponsor: document.getElementById('sponsorFilter').value
+            };
+            dataWorker.postMessage({ type: 'fetch', filters: filters });
+        }
+
+        function updateDashboardUI(trials) {
+            trials.sort((a, b) => {
+                const dateA = a.startDate && a.startDate !== 'N/A' ? new Date(a.startDate) : new Date(0);
+                const dateB = b.startDate && b.startDate !== 'N/A' ? new Date(b.startDate) : new Date(0);
+                return dateB - dateA;
+            });
+
+            updateKPIs(trials);
+            updateCharts(trials);
+            updateTable(trials);
+        }
+
+        function updateKPIs(trials) {
+            document.getElementById('totalTrials').textContent = trials.length.toLocaleString();
+            document.getElementById('recruitingTrials').textContent = trials.filter(t => t.status === 'RECRUITING').length.toLocaleString();
+            document.getElementById('completedTrials').textContent = trials.filter(t => t.status === 'COMPLETED').length.toLocaleString();
+            const totalParticipants = trials.reduce((sum, t) => sum + (t.enrollment || 0), 0);
+            document.getElementById('totalParticipants').textContent = totalParticipants.toLocaleString();
+        }
+        
+        function updateCharts(trials) {
+            const phaseCounts = trials.reduce((acc, trial) => {
+                acc[trial.phase] = (acc[trial.phase] || 0) + 1; return acc; }, {});
+            const sortedPhases = Object.entries(phaseCounts).sort(([,a],[,b]) => b-a);
+            phaseChart.data.labels = sortedPhases.map(p => p[0]);
+            phaseChart.data.datasets[0].data = sortedPhases.map(p => p[1]);
+            phaseChart.update();
+            
+            const statusCounts = trials.reduce((acc, trial) => {
+                acc[trial.status] = (acc[trial.status] || 0) + 1; return acc; }, {});
+            const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a);
+            statusChart.data.labels = sortedStatuses.map(s => s[0].replace(/_/g, ' '));
+            statusChart.data.datasets[0].data = sortedStatuses.map(s => s[1]);
+            statusChart.update();
+            
+            const timeCounts = trials.reduce((acc, trial) => {
+                if(trial.startDate && trial.startDate !== 'N/A') {
+                    const year = new Date(trial.startDate).getFullYear();
+                    if (year) { acc[year] = (acc[year] || 0) + 1; }
+                }
+                return acc;
+            }, {});
+            const sortedYears = Object.keys(timeCounts).sort((a, b) => a - b);
+            
+            timeChart.config.type = sortedYears.length > 1 ? 'line' : 'bar';
+            timeChart.data.labels = sortedYears;
+            timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
+            timeChart.update();
+
+            const sponsorCounts = trials.reduce((acc, trial) => {
+                if (trial.sponsor && trial.sponsor !== 'N/A') { acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1; }
+                return acc;
+            }, {});
+            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse();
+            sponsorChart.data.labels = topSponsors.map(s => s[0]);
+            sponsorChart.data.datasets[0].data = topSponsors.map(s => s[1]);
+            sponsorChart.update();
+
+            const conditionCounts = trials.reduce((acc, trial) => {
+                if (Array.isArray(trial.conditions)) {
+                    trial.conditions.forEach(c => { acc[c] = (acc[c] || 0) + 1; });
+                }
+                return acc;
+            }, {});
+            const topConditions = Object.entries(conditionCounts)
+                .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
+                .sort(([,a],[,b]) => b-a)
+                .slice(0, 10).reverse();
+            conditionsChart.data.labels = topConditions.map(c => c[0]);
+            conditionsChart.data.datasets[0].data = topConditions.map(c => c[1]);
+            conditionsChart.update();
+        }
+
+        function updateTable(trials) {
+            const tableBody = document.getElementById('trialsTableBody');
+            const recordCountEl = document.getElementById('tableRecordCount');
+            
+            if (trials.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials match the current filters.</td></tr>`;
+                recordCountEl.textContent = 'Showing 0 records';
+                return;
+            }
+
+            const displayLimit = 200;
+            const trialsToDisplay = trials.slice(0, displayLimit);
+            let tableHTML = '';
+            trialsToDisplay.forEach(trial => {
+                const statusCellStyle = getStatusColor(trial.status);
+                tableHTML += `
+                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
+                        <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">
+                            <a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a>
+                        </td>
+                        <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
+                        <td class="px-4 py-3 text-center whitespace-nowrap">
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span>
+                        </td>
+                        <td class="px-4 py-3">${trial.phase}</td>
+                        <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
+                        <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
+                        <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = tableHTML;
+            recordCountEl.textContent = `Showing ${trialsToDisplay.length} of ${trials.length.toLocaleString()} records`;
+        }
+        
+        function getStatusColor(status) {
+            switch(status) {
+                case 'RECRUITING': 
+                    return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
+                case 'COMPLETED': 
+                    return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
+                case 'TERMINATED': 
+                    return `background-color:#F87171; color:#7f1d1d;`; // Red-400, Red-900
+                case 'NOT_YET_RECRUITING':
+                    return `background-color:#FBBF24; color:#78350f;`; // Amber-400, Amber-900
+                default: 
+                    return `background-color:#4B5563; color:#F9FAFB;`; // Gray-600, Gray-50
+            }
+        }
+    </script>
 </body>
 </html>
