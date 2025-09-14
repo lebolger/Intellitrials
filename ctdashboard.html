@@ -47,7 +47,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Hide the up/down arrows on number inputs */
         input[type='number']::-webkit-inner-spin-button,
         input[type='number']::-webkit-outer-spin-button {
             -webkit-appearance: none;
@@ -57,12 +56,10 @@
             appearance: textfield;
             -moz-appearance: textfield;
         }
-        /* Style for date picker icon */
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(0.8);
             cursor: pointer;
         }
-        /* Ensure filters are disabled visually */
         fieldset:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -71,7 +68,6 @@
 </head>
 <body class="text-gray-200 p-4 sm:p-4 lg:p-4">
 
-    <!-- Header -->
     <header class="mb-8">
         <div class="flex flex-col sm:flex-row justify-between sm:items-center">
             <div>
@@ -82,7 +78,6 @@
         </div>
     </header>
 
-    <!-- Filters -->
     <div class="bg-gray-800 rounded-lg shadow-lg mb-4">
         <div id="toggleFiltersHeader" class="flex justify-between items-center p-2 cursor-pointer">
             <h2 class="text-sm font-semibold text-white">Filters</h2>
@@ -90,49 +85,41 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
         </div>
-        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-4 lg:grid-cols-4 gap-3 p-4 border-t border-gray-700">
-            <!-- Keyword Search -->
+        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 border-t border-gray-700 hidden">
             <div class="lg:col-span-2">
                 <label for="keywordSearch" class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search NCT, Title, Sponsor, Condition...">
+                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search NCT, Title, Condition...">
             </div>
-            <!-- Sponsor Filter -->
             <div class="lg:col-span-2">
                 <label for="sponsorFilter" class="text-sm font-normal text-gray-300 block mb-1">Sponsor</label>
                 <input type="text" id="sponsorFilter" list="sponsorList" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type or select a sponsor">
                 <datalist id="sponsorList"></datalist>
             </div>
-            <!-- Status Filter -->
             <div>
                 <label for="statusFilter" class="text-sm font-medium text-gray-300 block mb-1">Status</label>
                 <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Statuses</option>
                 </select>
             </div>
-            <!-- Phase Filter -->
             <div>
                 <label for="phaseFilter" class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
                 <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Phases</option>
                 </select>
             </div>
-            <!-- Start Date Filter -->
             <div>
                 <label for="startDateFilter" class="text-sm font-medium text-gray-300 block mb-1">Start Date From</label>
-                <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-1.5 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-            <!-- Reset Button -->
             <div class="flex items-end">
                 <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 px-3 text-white font-semibold transition-colors">Reset</button>
             </div>
         </fieldset>
     </div>
 
-
-    <!-- KPIs -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-            <h3 class="text-gray-400 text-sm font-medium">Total Trials</h3>
+            <h3 class="text-gray-400 text-sm font-medium">Total Trials Loaded</h3>
             <p id="totalTrials" class="text-3xl font-bold text-white">0</p>
         </div>
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
@@ -149,42 +136,35 @@
         </div>
     </div>
 
-    <!-- Charts -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
-            <h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3>
             <div class="chart-container"><canvas id="phaseChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
-            <h3 class="font-semibold text-white mb-4 text-center">Trials by Status</h3>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
             <div class="chart-container"><canvas id="statusChart"></canvas></div>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-3">
-            <h3 class="font-semibold text-white mb-4 text-center">Trials Started Over Time</h3>
-            <div class="chart-container !h-[350px]"><canvas id="timeChart"></canvas></div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
+            <div class="chart-container"><canvas id="timeChart"></canvas></div>
         </div>
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-2">
-            <h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3>
+             <h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3>
             <div class="chart-container !h-[400px]"><canvas id="sponsorChart"></canvas></div>
         </div>
         <div class="bg-gray-800 p-4 rounded-lg shadow-lg xl:col-span-1">
-            <h3 class="font-semibold text-white mb-4 text-center">Top Conditions</h3>
+            <h3 class="font-semibold text-white mb-4 text-center">Top 10 Conditions</h3>
             <div class="chart-container !h-[400px]"><canvas id="conditionsChart"></canvas></div>
         </div>
     </div>
 
-    <!-- Data Table -->
     <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
         <div class="p-4 flex justify-between items-center">
             <h3 class="font-semibold text-white">Trial Details</h3>
             <span id="tableRecordCount" class="text-sm text-gray-400"></span>
         </div>
-        <!-- This div makes the table scrollable on small screens -->
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left text-gray-300">
                 <thead class="text-xs text-gray-300 uppercase bg-gray-700">
                     <tr>
-                        <!-- Using min-width instead of fixed width for better responsiveness -->
                         <th scope="col" class="px-4 py-3" style="min-width: 120px;">NCT Number</th>
                         <th scope="col" class="px-4 py-3" style="min-width: 300px;">Title</th>
                         <th scope="col" class="px-4 py-3 text-center" style="min-width: 150px;">Status</th>
@@ -195,19 +175,15 @@
                     </tr>
                 </thead>
                 <tbody id="trialsTableBody">
-                    <!-- JS will populate this -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
 
     <script>
         // --- GLOBAL VARIABLES ---
-        let allTrials = [];
         let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
-
-        // Configurable display limit for table rows
-        const DISPLAY_LIMIT = 200;
+        let dataWorker;
         
         const newPalette = {
             dodgerBlue: '#00ACFF',
@@ -218,12 +194,6 @@
         };
 
         // --- UTILITY FUNCTIONS ---
-        /**
-         * Debounce function to limit the rate at which a function gets called.
-         * @param {Function} func The function to debounce.
-         * @param {number} delay The delay in milliseconds.
-         * @returns {Function} The debounced function.
-         */
         function debounce(func, delay) {
             let timeout;
             return function(...args) {
@@ -233,11 +203,6 @@
             };
         }
 
-        /**
-         * Manages the loading state of the UI, disabling filters and showing a message.
-         * @param {boolean} isLoading - Whether the app is in a loading state.
-         * @param {string} message - The message to display.
-         */
         function setLoadingState(isLoading, message = '') {
             const tableBody = document.getElementById('trialsTableBody');
             const filters = document.getElementById('filters');
@@ -246,58 +211,77 @@
 
             if (isLoading) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`;
-            } else {
-                tableBody.innerHTML = ''; // Clear loading message
             }
         }
         
-        // --- WEB WORKER ---
-        // The entire data fetching logic is moved into this worker string.
-        // This allows the slow network requests to happen in a separate thread,
-        // keeping the main UI responsive.
+        // --- WEB WORKER SCRIPT ---
         const dataWorkerScript = `
-            async function fetchAllTrials() {
+            let controller = new AbortController();
+
+            function buildQuery(filters) {
+                let queryParts = ['AREA[OrgClass]INDUSTRY', 'AREA[StudyType]INTERVENTIONAL'];
+
+                if (filters.keyword) {
+                    queryParts.push(filters.keyword);
+                }
+                if (filters.status) {
+                    queryParts.push(\`AREA[OverallStatus]\${filters.status}\`);
+                }
+                if (filters.phase) {
+                    queryParts.push(\`AREA[Phase]\${filters.phase}\`);
+                }
+                if (filters.sponsor) {
+                    queryParts.push(\`AREA[LeadSponsorName]\${filters.sponsor}\`);
+                }
+                if (filters.startDate) {
+                    queryParts.push(\`AREA[StartDate]RANGE[\${filters.startDate},MAX]\`);
+                } else {
+                    queryParts.push('AREA[StartDate]RANGE[2020-01-01,MAX]');
+                }
+
+                return queryParts.join(' AND ');
+            }
+
+            async function fetchData(filters) {
+                controller.abort();
+                controller = new AbortController();
+                const signal = controller.signal;
+
+                const queryTerm = buildQuery(filters);
+                const query = \`query.term=\${encodeURIComponent(queryTerm)}\`;
                 const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
-                const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+
                 let nextPageToken = null;
                 let allStudies = [];
                 let page = 1;
-                const maxPages = 50; // Safety break to avoid infinite loops during development
+                const maxPages = 5; // Fetch up to 5000 records for a large, stable sample
 
                 try {
                     do {
-                        // Use simple string concatenation to avoid template literal issues inside the worker string.
-                        let paginatedUrl = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS;
+                        let paginatedUrl = \`\${BASE_URL}?pageSize=1000&\${query}\`;
                         if (nextPageToken) {
-                            paginatedUrl += '&pageToken=' + nextPageToken;
+                            paginatedUrl += \`&pageToken=\${nextPageToken}\`;
                         }
                         
-                        // Post progress updates to the main thread
                         postMessage({ type: 'progress', page: page });
 
-                        const response = await fetch(paginatedUrl);
-                        if (!response.ok) {
-                            // Use simple string concatenation for the error message as well.
-                            throw new Error('HTTP error! status: ' + response.status + ' on page ' + page);
-                        }
-                        const data = await response.json();
+                        const response = await fetch(paginatedUrl, { signal });
+                        if (!response.ok) throw new Error(\`Data fetch failed: \${response.status}\`);
                         
-                        if (data.studies && Array.isArray(data.studies)) {
-                            allStudies.push(...data.studies);
-                        }
+                        const data = await response.json();
+                        allStudies.push(...data.studies);
                         nextPageToken = data.nextPageToken;
                         page++;
 
-                    } while (nextPageToken && page < maxPages);
+                    } while (nextPageToken && page <= maxPages);
 
-                    // Map the complete API response to our simpler, flat structure
                     const mappedTrials = allStudies.map(study => {
                         const p = study.protocolSection;
                         return {
                             nct: p.identificationModule?.nctId || 'N/A',
                             title: p.identificationModule?.officialTitle || 'No title provided',
                             status: p.statusModule?.overallStatus || 'Unknown',
-                            phase: p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
+                            phase: p.designModule?.phases?.join(', ') || 'Not Applicable',
                             sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
                             startDate: p.statusModule?.startDateStruct?.date || 'N/A',
                             enrollment: p.designModule?.enrollmentInfo?.count || 0,
@@ -305,57 +289,70 @@
                         };
                     });
                     
-                    // Send the final, processed data back to the main thread
                     postMessage({ type: 'complete', data: mappedTrials });
                     
                 } catch (error) {
-                    // Send any errors back to the main thread for display
-                    postMessage({ type: 'error', error: error.message });
+                    if (error.name !== 'AbortError') {
+                        console.error('Fetch error:', error);
+                        postMessage({ type: 'error', error: error.message });
+                    }
                 }
             }
 
-            // Start the fetching process as soon as the worker is initialized.
-            fetchAllTrials();
+            self.onmessage = function(e) {
+                if (e.data.type === 'fetch') {
+                    fetchData(e.data.filters);
+                }
+            };
         `;
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Register the datalabels plugin globally
-            Chart.register(ChartDataLabels);
+            const doughnutCenterText = {
+                id: 'doughnutCenterText',
+                afterDraw: (chart) => {
+                    if (chart.config.type === 'doughnut' && chart.options.plugins.centerText) {
+                        const { ctx } = chart;
+                        const { text, color, font } = chart.options.plugins.centerText;
+                        const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
+                        const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
+                        
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = font || 'bold 30px Inter';
+                        ctx.fillStyle = color || '#FFFFFF';
+                        
+                        ctx.fillText(text, centerX, centerY);
+                        ctx.font = '14px Inter';
+                        ctx.fillStyle = '#9CA3AF';
+                        ctx.fillText('Trials Loaded', centerX, centerY + 30);
+                        ctx.restore();
+                    }
+                }
+            };
+            Chart.register(ChartDataLabels, doughnutCenterText);
             
             document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
             initializeCharts();
             setupEventListeners();
             
-            // --- Start the Data Fetching in the Background ---
-            setLoadingState(true, 'Initializing data fetch...');
-
-            // Cache the Blob URL to avoid memory leaks on frequent reloads
-            if (window.dataWorkerBlobUrl) {
-                URL.revokeObjectURL(window.dataWorkerBlobUrl);
-            }
+            setLoadingState(true, 'Initializing...');
             const workerBlob = new Blob([dataWorkerScript], { type: 'application/javascript' });
-            window.dataWorkerBlobUrl = URL.createObjectURL(workerBlob);
-            const dataWorker = new Worker(window.dataWorkerBlobUrl);
+            dataWorker = new Worker(URL.createObjectURL(workerBlob));
 
-            // Handle messages from the worker
             dataWorker.onmessage = function(e) {
-                const { type, page, data, error } = e.data;
+                const { type, data, error } = e.data;
 
                 if (type === 'progress') {
-                    setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
+                    setLoadingState(true, `Fetching page \${e.data.page}...`);
                 } else if (type === 'complete') {
                     setLoadingState(false);
-                    allTrials = data;
-                    if(allTrials.length > 0) {
-                        console.log(`Successfully fetched and mapped ${allTrials.length} trials.`);
-                        populateFilters();
-                        updateDashboard();
-                    } else {
-                        const tableBody = document.getElementById('trialsTableBody');
-                        tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials found matching the initial criteria.</td></tr>`;
+                    if (document.getElementById('statusFilter').length <= 1 && data.length > 0) {
+                        populateFilters(data);
                     }
+                    updateDashboardUI(data);
                 } else if (type === 'error') {
                     console.error("Error from data worker:", error);
                     const tableBody = document.getElementById('trialsTableBody');
@@ -364,42 +361,33 @@
                 }
             };
             
-            // Handle errors from the worker itself
             dataWorker.onerror = function(error) {
-                console.error("An error occurred in the data worker:", error);
+                console.error("A critical error occurred in the data worker:", error);
                 const tableBody = document.getElementById('trialsTableBody');
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred in the data worker. See console for details.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred. See console for details.</td></tr>`;
                 setLoadingState(false);
             };
+
+            fetchDataWithCurrentFilters();
         });
         
-        // --- FILTER POPULATION ---
-        function populateFilters() {
+        function populateFilters(trialsSample) {
             const statusFilter = document.getElementById('statusFilter');
             const phaseFilter = document.getElementById('phaseFilter');
             const sponsorList = document.getElementById('sponsorList');
 
-            // Clear existing options except the first one
-            statusFilter.length = 1;
-            phaseFilter.length = 1;
-            sponsorList.innerHTML = '';
+            const commonStatuses = ['RECRUITING', 'NOT_YET_RECRUITING', 'ACTIVE_NOT_RECRUITING', 'COMPLETED', 'TERMINATED', 'ENROLLING_BY_INVITATION'];
+            const commonPhases = ['Not Applicable', 'Early Phase 1', 'Phase 1', 'Phase 2', 'Phase 3', 'Phase 4'];
+            const uniqueSponsors = [...new Set(trialsSample.map(t => t.sponsor).filter(s => s && s !== 'N/A'))].sort();
 
-            const uniqueStatuses = [...new Set(allTrials.map(t => t.status))].sort();
-            const uniquePhases = [...new Set(allTrials.map(t => t.phase))].sort((a,b) => {
-                if (a.includes('Not Applicable')) return -1;
-                if (b.includes('Not Applicable')) return 1;
-                return a.localeCompare(b);
-            });
-            const uniqueSponsors = [...new Set(allTrials.map(t => t.sponsor).filter(s => s && s !== 'N/A'))].sort();
-
-            uniqueStatuses.forEach(s => {
+            commonStatuses.forEach(s => {
                 const option = document.createElement('option');
                 option.value = s;
                 option.textContent = s.replace(/_/g, ' ');
                 statusFilter.appendChild(option);
             });
 
-            uniquePhases.forEach(p => {
+            commonPhases.forEach(p => {
                 const option = document.createElement('option');
                 option.value = p;
                 option.textContent = p;
@@ -413,17 +401,14 @@
             });
         }
 
-        // --- EVENT LISTENERS ---
         function setupEventListeners() {
-            // Use debounce for text inputs to improve performance
-            const debouncedUpdate = debounce(updateDashboard, 300);
-            document.getElementById('keywordSearch').addEventListener('input', debouncedUpdate);
-            document.getElementById('sponsorFilter').addEventListener('input', debouncedUpdate);
+            const debouncedFetch = debounce(fetchDataWithCurrentFilters, 400);
+            document.getElementById('keywordSearch').addEventListener('input', debouncedFetch);
+            document.getElementById('sponsorFilter').addEventListener('input', debouncedFetch);
             
-            // Use change event for select dropdowns and date input
-            document.getElementById('statusFilter').addEventListener('change', updateDashboard);
-            document.getElementById('phaseFilter').addEventListener('change', updateDashboard);
-            document.getElementById('startDateFilter').addEventListener('change', updateDashboard);
+            document.getElementById('statusFilter').addEventListener('change', fetchDataWithCurrentFilters);
+            document.getElementById('phaseFilter').addEventListener('change', fetchDataWithCurrentFilters);
+            document.getElementById('startDateFilter').addEventListener('change', fetchDataWithCurrentFilters);
 
             document.getElementById('resetFilters').addEventListener('click', () => {
                 document.getElementById('keywordSearch').value = '';
@@ -431,46 +416,42 @@
                 document.getElementById('phaseFilter').value = '';
                 document.getElementById('startDateFilter').value = '';
                 document.getElementById('sponsorFilter').value = '';
-                updateDashboard();
+                fetchDataWithCurrentFilters();
             });
             
             document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
                 const filters = document.getElementById('filters');
                 const icon = document.getElementById('toggleIcon');
                 const isHidden = filters.classList.toggle('hidden');
-                
-                if (isHidden) {
-                    icon.classList.remove('rotate-180');
-                } else {
-                    icon.classList.add('rotate-180');
-                }
+                icon.classList.toggle('rotate-180', !isHidden);
             });
         }
 
-        // --- CHART INITIALIZATION ---
         function initializeCharts() {
             const defaultOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        labels: { color: '#d1d5db' }
-                    },
+                    legend: { labels: { color: '#d1d5db' } },
                     datalabels: { display: false },
                     tooltip: { enabled: true }
                 },
                 scales: {
-                    x: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    },
-                    y: {
-                        ticks: { color: '#d1d5db' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
-                    }
+                    x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                    y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
                 }
             };
             
+            const titlePlugin = {
+                title: {
+                    display: true,
+                    text: 'Chart Title',
+                    color: '#FFFFFF',
+                    font: { size: 16, weight: '600', family: 'Inter' },
+                    padding: { bottom: 20 }
+                }
+            };
+
             const horizontalOptions = { ...defaultOptions, indexAxis: 'y' };
             const phasePalette = [newPalette.dodgerBlue, newPalette.robinsEggBlue, newPalette.sulu, newPalette.malibu, newPalette.deepSapphire];
 
@@ -478,28 +459,26 @@
                 type: 'doughnut',
                 data: {
                     labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: phasePalette,
-                        borderColor: '#1f2937',
-                        borderWidth: 3,
-                    }]
+                    datasets: [{ data: [], backgroundColor: phasePalette, borderColor: '#1f2937', borderWidth: 3 }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        ...titlePlugin,
+                        legend: { display: true, position: 'bottom', labels: { color: '#d1d5db' } },
+                        centerText: { text: '0', color: '#FFFFFF', font: 'bold 30px Inter' },
                         datalabels: {
                             display: true,
                             formatter: (value, ctx) => {
                                 const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                if (total === 0) return '';
                                 const percentage = value / total * 100;
                                 if (percentage < 3) return '';
                                 let label = ctx.chart.data.labels[ctx.dataIndex];
                                 if (label.includes('Applicable')) label = 'N/A';
                                 if (label.includes('Phase')) label = label.replace('Phase ', 'P');
-                                return `${label}\n${percentage.toFixed(0)}%`;
+                                return `${percentage.toFixed(0)}%`;
                             },
                             color: (ctx) => {
                                 const bgColor = ctx.dataset.backgroundColor[ctx.dataIndex];
@@ -507,7 +486,6 @@
                                 const r = parseInt(bgColor.slice(1, 3), 16), g = parseInt(bgColor.slice(3, 5), 16), b = parseInt(bgColor.slice(5, 7), 16);
                                 return (r * 299 + g * 587 + b * 114) / 1000 > 155 ? newPalette.deepSapphire : '#FFFFFF';
                             },
-                            textAlign: 'center',
                             font: { weight: 'bold', size: 12, family: 'Inter' }
                         }
                     }
@@ -517,91 +495,50 @@
             statusChart = new Chart(document.getElementById('statusChart'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.dodgerBlue }] },
-                options: defaultOptions
+                options: { ...defaultOptions, plugins: { ...defaultOptions.plugins, ...titlePlugin, legend: {display: false} } }
             });
             
             sponsorChart = new Chart(document.getElementById('sponsorChart'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.malibu }] },
-                options: {
-                    ...horizontalOptions,
-                     plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: true,
-                            color: newPalette.deepSapphire,
-                            anchor: 'end',
-                            align: 'end',
-                            font: { weight: 'bold' }
-                        }
-                    }
-                }
+                options: { ...horizontalOptions, plugins: { legend: { display: false }, datalabels: { display: true, color: '#FFFFFF', anchor: 'center', align: 'center', font: { weight: 'bold' } } } }
             });
             
             timeChart = new Chart(document.getElementById('timeChart'), {
                 type: 'line',
-                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: false }] },
-                options: defaultOptions
+                data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: newPalette.robinsEggBlue, backgroundColor: 'rgba(0, 218, 200, 0.5)', tension: 0.1, fill: true }] },
+                options: { ...defaultOptions, plugins: { ...defaultOptions.plugins, ...titlePlugin, legend: {display: false} } }
             });
             
             conditionsChart = new Chart(document.getElementById('conditionsChart'), {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Number of Trials', data: [], backgroundColor: newPalette.sulu }] },
-                options: {
-                    ...horizontalOptions,
-                    scales: {
-                        x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-                        y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-                    },
-                     plugins: {
-                        legend: { display: false },
-                        datalabels: {
-                            display: true,
-                            color: newPalette.deepSapphire,
-                            anchor: 'end',
-                            align: 'end',
-                            font: { weight: 'bold' }
-                        }
-                    }
-                }
+                options: { ...horizontalOptions, plugins: { legend: { display: false }, datalabels: { display: true, color: '#FFFFFF', anchor: 'center', align: 'center', font: { weight: 'bold' } } } }
             });
         }
         
-        // --- CORE LOGIC: DASHBOARD UPDATE ---
-        function updateDashboard() {
-            if (allTrials.length === 0) return;
+        function fetchDataWithCurrentFilters() {
+            setLoadingState(true, 'Applying filters...');
+            const filters = {
+                keyword: document.getElementById('keywordSearch').value,
+                status: document.getElementById('statusFilter').value,
+                phase: document.getElementById('phaseFilter').value,
+                startDate: document.getElementById('startDateFilter').value,
+                sponsor: document.getElementById('sponsorFilter').value
+            };
+            dataWorker.postMessage({ type: 'fetch', filters: filters });
+        }
 
-            const keyword = document.getElementById('keywordSearch').value.toLowerCase();
-            const status = document.getElementById('statusFilter').value;
-            const phase = document.getElementById('phaseFilter').value;
-            const startDateString = document.getElementById('startDateFilter').value;
-            const sponsorQuery = document.getElementById('sponsorFilter').value.toLowerCase();
-
-            const filteredTrials = allTrials.filter(trial => {
-                const keywordMatch = keyword === '' || 
-                    (trial.nct && trial.nct.toLowerCase().includes(keyword)) || 
-                    (trial.title && trial.title.toLowerCase().includes(keyword)) ||
-                    (trial.sponsor && trial.sponsor.toLowerCase().includes(keyword)) ||
-                    (trial.conditions && trial.conditions.some(c => c.toLowerCase().includes(keyword)));
-                
-                const statusMatch = status === '' || trial.status === status;
-                const phaseMatch = phase === '' || trial.phase === phase;
-                const startDateMatch = startDateString === '' || (trial.startDate && trial.startDate !== 'N/A' && new Date(trial.startDate) >= new Date(startDateString));
-                const sponsorMatch = sponsorQuery === '' || (trial.sponsor && trial.sponsor.toLowerCase().includes(sponsorQuery));
-
-                return keywordMatch && statusMatch && phaseMatch && startDateMatch && sponsorMatch;
-            });
-            
-            // Sort by start date (newest first) after filtering
-            filteredTrials.sort((a, b) => {
+        function updateDashboardUI(trials) {
+            trials.sort((a, b) => {
                 const dateA = a.startDate && a.startDate !== 'N/A' ? new Date(a.startDate) : new Date(0);
                 const dateB = b.startDate && b.startDate !== 'N/A' ? new Date(b.startDate) : new Date(0);
                 return dateB - dateA;
             });
 
-            updateKPIs(filteredTrials);
-            updateCharts(filteredTrials);
-            updateTable(filteredTrials);
+            updateKPIs(trials);
+            updateCharts(trials);
+            updateTable(trials);
         }
 
         function updateKPIs(trials) {
@@ -613,59 +550,48 @@
         }
         
         function updateCharts(trials) {
+            const totalCount = trials.length;
+
             // Phase Chart
             const phaseCounts = trials.reduce((acc, trial) => {
-                acc[trial.phase] = (acc[trial.phase] || 0) + 1;
-                return acc;
-            }, {});
+                acc[trial.phase] = (acc[trial.phase] || 0) + 1; return acc; }, {});
             const sortedPhases = Object.entries(phaseCounts).sort(([,a],[,b]) => b-a);
             phaseChart.data.labels = sortedPhases.map(p => p[0]);
             phaseChart.data.datasets[0].data = sortedPhases.map(p => p[1]);
+            phaseChart.options.plugins.title.text = 'Trials by Phase';
+            phaseChart.options.plugins.centerText.text = totalCount.toLocaleString();
             phaseChart.update();
             
             // Status Chart
             const statusCounts = trials.reduce((acc, trial) => {
-                acc[trial.status] = (acc[trial.status] || 0) + 1;
-                return acc;
-            }, {});
+                acc[trial.status] = (acc[trial.status] || 0) + 1; return acc; }, {});
             const sortedStatuses = Object.entries(statusCounts).sort(([,a],[,b]) => b-a);
             statusChart.data.labels = sortedStatuses.map(s => s[0].replace(/_/g, ' '));
             statusChart.data.datasets[0].data = sortedStatuses.map(s => s[1]);
+            statusChart.options.plugins.title.text = `Trials by Status (Total: ${totalCount.toLocaleString()})`;
             statusChart.update();
             
-            // Time Chart (Grouped by Year)
+            // Time Chart
             const timeCounts = trials.reduce((acc, trial) => {
                 if(trial.startDate && trial.startDate !== 'N/A') {
                     const year = new Date(trial.startDate).getFullYear();
-                    if (year) {
-                        acc[year] = (acc[year] || 0) + 1;
-                    }
+                    if (year) { acc[year] = (acc[year] || 0) + 1; }
                 }
                 return acc;
             }, {});
             const sortedYears = Object.keys(timeCounts).sort((a, b) => a - b);
-            
-            // Dynamically change chart type based on number of data points
-            if (sortedYears.length === 1) {
-                timeChart.config.type = 'bar';
-                timeChart.options.plugins.tooltip.enabled = false;
-            } else {
-                timeChart.config.type = 'line';
-                timeChart.options.plugins.tooltip.enabled = true;
-            }
-
+            timeChart.config.type = sortedYears.length > 1 ? 'line' : 'bar';
             timeChart.data.labels = sortedYears;
             timeChart.data.datasets[0].data = sortedYears.map(year => timeCounts[year]);
+            timeChart.options.plugins.title.text = `Trials Started Over Time (Total: ${totalCount.toLocaleString()})`;
             timeChart.update();
 
             // Sponsor Chart
             const sponsorCounts = trials.reduce((acc, trial) => {
-                if (trial.sponsor && trial.sponsor !== 'N/A') {
-                    acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1;
-                }
+                if (trial.sponsor && trial.sponsor !== 'N/A') { acc[trial.sponsor] = (acc[trial.sponsor] || 0) + 1; }
                 return acc;
             }, {});
-            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse(); // reverse for horizontal chart
+            const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b]) => b-a).slice(0, 10).reverse();
             sponsorChart.data.labels = topSponsors.map(s => s[0]);
             sponsorChart.data.datasets[0].data = topSponsors.map(s => s[1]);
             sponsorChart.update();
@@ -673,16 +599,14 @@
             // Conditions Chart
             const conditionCounts = trials.reduce((acc, trial) => {
                 if (Array.isArray(trial.conditions)) {
-                    trial.conditions.forEach(c => {
-                        acc[c] = (acc[c] || 0) + 1;
-                    });
+                    trial.conditions.forEach(c => { acc[c] = (acc[c] || 0) + 1; });
                 }
                 return acc;
             }, {});
             const topConditions = Object.entries(conditionCounts)
                 .filter(([condition]) => !condition.toLowerCase().includes('healthy'))
                 .sort(([,a],[,b]) => b-a)
-                .slice(0, 10).reverse(); // reverse for horizontal chart
+                .slice(0, 10).reverse();
             conditionsChart.data.labels = topConditions.map(c => c[0]);
             conditionsChart.data.datasets[0].data = topConditions.map(c => c[1]);
             conditionsChart.update();
@@ -698,9 +622,8 @@
                 return;
             }
 
-            // Performance Improvement: Display top N results to keep the DOM fast
-            const trialsToDisplay = trials.slice(0, DISPLAY_LIMIT);
-            // Performance Improvement: Build HTML string and set innerHTML once
+            const displayLimit = 500;
+            const trialsToDisplay = trials.slice(0, displayLimit);
             let tableHTML = '';
             trialsToDisplay.forEach(trial => {
                 const statusCellStyle = getStatusColor(trial.status);
@@ -739,7 +662,6 @@
                     return `background-color:#4B5563; color:#F9FAFB;`; // Gray-600, Gray-50
             }
         }
-
     </script>
 </body>
 </html>
