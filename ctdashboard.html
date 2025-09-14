@@ -82,7 +82,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
     <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Total Trials</h3><p id="totalTrials" class="text-3xl font-bold text-white">0</p></div>
     <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Recruiting</h3><p id="recruitingTrials" class="text-3xl font-bold text-green-400">0</p></div>
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Completed</h3><p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p></div>
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Comped</h3><p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p></div>
     <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="text-gray-400 text-sm font-medium">Total Participants</h3><p id="totalParticipants" class="text-3xl font-bold text-white">0</p></div>
   </div>
 
@@ -152,7 +152,7 @@ let allTrials = [];    // preprocessed
 let filtered = [];     // filtered set
 let currentPage = 1;
 let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
-
+const ensureCharts = () => (phaseChart && statusChart && sponsorChart && timeChart && conditionsChart);
 const newPalette = { dodgerBlue:'#00ACFF', robinsEggBlue:'#00DAC8', deepSapphire:'#001E63', sulu:'#CAFF5E', malibu:'#6EC3FA' };
 
 /* ===== UTIL ===== */
@@ -238,21 +238,22 @@ const dataWorkerScript = `
 document.addEventListener('DOMContentLoaded', ()=>{
   Chart.register(ChartDataLabels);
   document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  initializeCharts();
-  setupEventListeners();
 
-  const cached=readCache();
+  initializeCharts();        // 1) create all charts
+  setupEventListeners();     // 2) wire up UI
+
+  const cached = readCache();
   if (cached && cached.length){
     preprocess(cached);
     populateFilters();
-    updateAll();
-    // refresh cache in background
+    updateAll();             // 3) this calls updateCharts(...) safely
     setTimeout(startWorker,0);
   } else {
     setLoadingState(true,'Initializing data fetch…');
     startWorker();
   }
 });
+
 
 /* ===== PREPROCESS ===== */
 function preprocess(raw){
@@ -453,6 +454,8 @@ function initializeCharts(){
 }
 
 function updateCharts(trials){
+  if (!ensureCharts()) return; // charts not initialized yet
+
   // Phase
   const phaseCounts = trials.reduce((acc,t)=>{acc[t.phase]=(acc[t.phase]||0)+1;return acc;}, {});
   const phases = Object.entries(phaseCounts).sort(([,a],[,b])=>b-a);
@@ -481,26 +484,25 @@ function updateCharts(trials){
   timeChart.data.datasets[0].pointRadius = years.length>30?0:2;
   timeChart.update('none');
 
-  // Sponsors
+  // Sponsors (top 10)
   const sponsorCounts = trials.reduce((acc,t)=>{ if(t.sponsor && t.sponsor!=='N/A') acc[t.sponsor]=(acc[t.sponsor]||0)+1; return acc; },{});
   const topSponsors = Object.entries(sponsorCounts).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
   sponsorChart.data.labels = topSponsors.map(([k])=>k);
   sponsorChart.data.datasets[0].data = topSponsors.map(([,v])=>v);
   sponsorChart.update('none');
 
-  // Conditions (skip “healthy”)
-  const condCounts = trials.reduce((acc,t)=>{
-    (t.conditions||[]).forEach(c=>{
-      const lc=String(c||'').toLowerCase();
-      if(!lc.includes('healthy')) acc[c]=(acc[c]||0)+1;
-    });
-    return acc;
-  },{});
-  const topConds = Object.entries(condCounts).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
-  conditionsChart.data.labels = topConds.map(([k])=>k);
-  conditionsChart.data.datasets[0].data = topConds.map(([,v])=>v);
-  conditionsChart.update('none');
-}
+// Conditions (top 10, skip “healthy”)
+const condCounts = trials.reduce((acc,t)=>{
+  (t.conditions||[]).forEach(c=>{
+    const lc = String(c||'').toLowerCase();
+    if (!lc.includes('healthy')) acc[c]=(acc[c]||0)+1;
+  });
+  return acc;
+}, {});
+const topConds = Object.entries(condCounts).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
+conditionsChart.data.labels = topConds.map(([k])=>k);
+conditionsChart.data.datasets[0].data = topConds.map(([,v])=>v);
+conditionsChart.update('none');
 
 /* ===== KPIs ===== */
 function updateKPIs(trials){
@@ -567,22 +569,5 @@ function updateAll(){
   renderTable();
 }
 
-/* ===== ORIGINAL CHART SETUP (KEPT) ===== */
-function initializeCharts(){ /* replaced by optimized version above */ }
-</script>
-
-<script>
-/* REPLACE initializeCharts stub with the optimized one defined earlier */
-</script>
-
-<script>
-/* Actually call the optimized chart initializer */
-(function(){
-  // overwrite the earlier stub with real function
-  window.initializeCharts = window.initializeChartsOptimized || (function(){
-    // no-op placeholder; will be set in DOMContentLoaded above
-  });
-})();
-</script>
 </body>
 </html>
