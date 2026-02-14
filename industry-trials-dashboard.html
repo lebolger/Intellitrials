@@ -173,33 +173,7 @@
         </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-        <div class="p-4 flex justify-between items-center">
-            <h3 class="font-semibold text-white">Trial Details</h3>
-            <span id="tableRecordCount" class="text-sm text-gray-400"></span>
-        </div>
-        <!-- This div makes the table scrollable on small screens -->
-        <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-gray-300">
-                <thead class="text-xs text-gray-300 uppercase bg-gray-700">
-                    <tr>
-                        <!-- Using min-width instead of fixed width for better responsiveness -->
-                        <th scope="col" class="px-4 py-3" style="min-width: 120px;">NCT Number</th>
-                        <th scope="col" class="px-4 py-3" style="min-width: 300px;">Title</th>
-                        <th scope="col" class="px-4 py-3 text-center" style="min-width: 150px;">Status</th>
-                        <th scope="col" class="px-4 py-3" style="min-width: 100px;">Phase</th>
-                        <th scope="col" class="px-4 py-3" style="min-width: 200px;">Sponsor</th>
-                        <th scope="col" class="px-4 py-3" style="min-width: 100px;">Start Date</th>
-                        <th scope="col" class="px-4 py-3 text-right" style="min-width: 100px;">Enrollment</th>
-                    </tr>
-                </thead>
-                <tbody id="trialsTableBody">
-                    <!-- JS will populate this -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+
 
     <script>
         // --- GLOBAL VARIABLES ---
@@ -231,16 +205,8 @@
          * Manages the loading state of the UI.
          */
         function setLoadingState(isLoading, message = '') {
-            const tableBody = document.getElementById('trialsTableBody');
             const filters = document.getElementById('filters');
-            
             filters.disabled = isLoading;
-
-            if (isLoading) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-lg">${message}</p></div></td></tr>`;
-            } else if (tableBody.innerHTML.includes('loader')) {
-                tableBody.innerHTML = ''; 
-            }
         }
         
         // --- WEB WORKER SCRIPT ---
@@ -324,40 +290,30 @@
                     conditions: { labels: topConditions.map(c => c[0]), data: topConditions.map(c => c[1]) }
                 };
 
-                // 5. Prepare the data for the details table, applying the display limit
-                const DISPLAY_LIMIT = 200;
-                const table = {
-                    rows: filteredTrials.slice(0, DISPLAY_LIMIT),
-                    totalCount: filteredTrials.length
-                };
-
-                // 6. Return a single payload object
-                return { kpis, charts, table };
+                // 5. Return a single payload object
+                return { kpis, charts };
             }
 
             // --- Initial data fetch, runs only once when the worker starts ---
             async function fetchAndProcessInitialData() {
                 const BASE_URL = 'https://clinicaltrials.gov/api/v2/studies';
-                // FIXED: Changed OrgClass to SponsorClass which is the correct parameter
-                const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[SponsorClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+                const QUERY_PARAMS = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
                 let nextPageToken = null;
                 let allStudies = [];
                 let page = 1;
+                const maxPages = 50;
 
                 try {
                     do {
                         let url = BASE_URL + '?pageSize=1000&' + QUERY_PARAMS + (nextPageToken ? '&pageToken=' + nextPageToken : '');
-                        postMessage({ type: 'progress', page: page, total: allStudies.length });
+                        postMessage({ type: 'progress', page: page });
                         const response = await fetch(url);
                         if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
                         const data = await response.json();
                         if (data.studies) allStudies.push(...data.studies);
                         nextPageToken = data.nextPageToken;
                         page++;
-                        // FIXED: Removed arbitrary maxPages limit - now fetches ALL pages
                     } while (nextPageToken);
-
-                    postMessage({ type: 'progress', page: 'Processing', total: allStudies.length });
 
                     allTrials = allStudies.map(study => {
                         const p = study.protocolSection;
@@ -388,7 +344,7 @@
                         sponsors: [...new Set(allTrials.map(t => t.sponsor).filter(Boolean).filter(s => s !== 'N/A'))].sort()
                     };
 
-                    postMessage({ type: 'complete', payload: { initialDashboardData, filterOptions, totalFetched: allTrials.length } });
+                    postMessage({ type: 'complete', payload: { initialDashboardData, filterOptions } });
 
                 } catch (error) {
                     postMessage({ type: 'error', error: error.message });
@@ -421,27 +377,23 @@
                 
                 // --- Central message handler for all worker communication ---
                 dataWorker.onmessage = function(e) {
-                    const { type, payload, page, total, error } = e.data;
+                    const { type, payload, page, error } = e.data;
 
                     if (type === 'progress') {
-                        const totalStr = total ? ` (${total.toLocaleString()} trials so far)` : '';
-                        setLoadingState(true, `Fetching ${page === 'Processing' ? 'and processing data' : 'page ' + page} from ClinicalTrials.gov${totalStr}...`);
+                        setLoadingState(true, `Fetching page ${page} from ClinicalTrials.gov...`);
                     } else if (type === 'complete') {
-                        console.log(`Successfully fetched and processed ${payload.totalFetched.toLocaleString()} trials.`);
+                        console.log(`Successfully fetched and processed initial data.`);
                         populateFilters(payload.filterOptions);
                         const initialData = payload.initialDashboardData;
                         updateKPIs(initialData.kpis);
                         updateCharts(initialData.charts);
-                        updateTable(initialData.table);
                         setLoadingState(false);
                     } else if (type === 'update') {
                         updateKPIs(payload.kpis);
                         updateCharts(payload.charts);
-                        updateTable(payload.table);
                         setLoadingState(false);
                     } else if (type === 'error') {
                         console.error("Error from data worker:", error);
-                        document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Failed to load trial data: ${error}</td></tr>`;
                         setLoadingState(false);
                         dataWorker.terminate(); 
                     }
@@ -449,12 +401,10 @@
                 
                 dataWorker.onerror = function(err) {
                     console.error("A critical error occurred in the data worker:", err);
-                    document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">A critical error occurred. See console for details.</td></tr>`;
                     setLoadingState(false);
                 };
             } catch (e) {
                  console.error("Failed to initialize Web Worker:", e);
-                 document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Could not initialize the data fetching process. Your browser may not support Web Workers.</td></tr>`;
                  setLoadingState(false);
             }
         });
@@ -559,43 +509,9 @@
             conditionsChart.update();
         }
 
-        function updateTable({ rows, totalCount }) {
-            const tableBody = document.getElementById('trialsTableBody');
-            const recordCountEl = document.getElementById('tableRecordCount');
-            
-            if (rows.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials match the current filters.</td></tr>`;
-                recordCountEl.textContent = 'Showing 0 records';
-                return;
-            }
 
-            let tableHTML = '';
-            rows.forEach(trial => {
-                const statusCellStyle = getStatusColor(trial.status);
-                tableHTML += `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                        <td class="px-4 py-3 font-medium text-blue-400 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${trial.nct}" target="_blank" class="hover:underline">${trial.nct}</a></td>
-                        <td class="px-4 py-3 whitespace-normal break-words">${trial.title}</td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap"><span class="px-2 py-1 rounded-full text-xs font-semibold" style="${statusCellStyle}">${trial.status.replace(/_/g, ' ')}</span></td>
-                        <td class="px-4 py-3">${trial.phase}</td>
-                        <td class="px-4 py-3 whitespace-normal break-words">${trial.sponsor}</td>
-                        <td class="px-4 py-3 whitespace-nowrap">${trial.startDate}</td>
-                        <td class="px-4 py-3 text-right">${(trial.enrollment || 0).toLocaleString()}</td>
-                    </tr>`;
-            });
-            
-            tableBody.innerHTML = tableHTML;
-            recordCountEl.textContent = `Showing ${rows.length} of ${totalCount.toLocaleString()} records`;
-        }
-        
-        function getStatusColor(status) {
-            switch(status) {
-                case 'RECRUITING': return `background-color:${newPalette.sulu}; color:${newPalette.deepSapphire};`;
-                case 'COMPLETED': return `background-color:${newPalette.malibu}; color:${newPalette.deepSapphire};`;
-                case 'TERMINATED': return `background-color:#F87171; color:#7f1d1d;`;
-                case 'NOT_YET_RECRUITING': return `background-color:#FBBF24; color:#78350f;`;
-                default: return `background-color:#4B5563; color:#F9FAFB;`;
-            }
-        }
     </script>
 </body>
 </html>
+
+
