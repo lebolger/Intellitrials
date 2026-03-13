@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Clinical Trials Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Clinical Trials Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
@@ -11,316 +11,666 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827;
-        }
-        .chart-container {
-            position: relative;
-            margin: auto;
-            height: 300px;
-            width: 100%;
-        }
-        /* Mobile scrollbar fix */
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        body { font-family: 'Inter', sans-serif; background-color: #111827; }
+        .chart-container { position: relative; margin: auto; height: 280px; width: 100%; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
         ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #00ACFF;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .loader { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #00ACFF; border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        input[type='number']::-webkit-inner-spin-button,
+        input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+        fieldset:disabled { opacity: 0.5; pointer-events: none; }
+        /* Mobile: collapse charts vertically, use smaller touch targets */
+        @media (max-width: 640px) {
+            .chart-container { height: 220px; }
+            .chart-container.tall { height: 260px; }
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); }
-        fieldset:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* Virtual scroll container */
+        #tableWrapper { max-height: 480px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        /* Sticky table header */
+        #trialsTable thead th { position: sticky; top: 0; z-index: 10; background: #374151; }
+        /* Card layout for mobile table rows */
+        @media (max-width: 768px) {
+            #trialsTable { display: none; }
+            #mobileCards { display: block; }
+        }
+        @media (min-width: 769px) {
+            #mobileCards { display: none; }
+        }
+        .trial-card { background: #1f2937; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #00ACFF; }
+        .trial-card .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        /* Load more button */
+        #loadMoreBtn { display: none; }
+        /* Progress bar */
+        #progressBar { transition: width 0.3s ease; }
+        /* Filters hidden by default on mobile */
+        @media (max-width: 640px) {
+            #filtersBody { display: none; }
+        }
     </style>
 </head>
-<body class="text-gray-200 p-4">
+<body class="text-gray-200 p-3 sm:p-4">
 
-    <header class="mb-8">
-        <div class="flex flex-col sm:flex-row justify-between sm:items-center">
+    <!-- Header -->
+    <header class="mb-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
-                <p class="text-sm text-gray-400 mt-1">Interactive analysis via <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400 hover:underline">ClinicalTrials.gov</a></p>
+                <h1 class="text-xl sm:text-3xl font-bold text-white leading-tight">Clinical Trial Dashboard</h1>
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5">Industry-sponsored interventional trials since 2020 · <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400">ClinicalTrials.gov</a></p>
             </div>
-            <div class="text-sm text-gray-400 mt-2 sm:mt-0">Updated: <span id="lastUpdated"></span></div>
+            <div class="text-xs text-gray-500 shrink-0">Updated: <span id="lastUpdated"></span></div>
+        </div>
+        <!-- Fetch Progress Bar -->
+        <div id="progressContainer" class="mt-3 hidden">
+            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span id="progressLabel">Loading data...</span>
+                <span id="progressPage"></span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-1.5">
+                <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+            </div>
         </div>
     </header>
 
+    <!-- Filters -->
     <div class="bg-gray-800 rounded-lg shadow-lg mb-4">
-        <div id="toggleFiltersHeader" class="flex justify-between items-center p-2 cursor-pointer">
-            <h2 class="text-sm font-semibold text-white">Filters</h2>
-            <svg id="toggleIcon" class="w-6 h-6 text-gray-400 transition-transform duration-300 transform" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+        <button id="toggleFiltersHeader" class="w-full flex justify-between items-center p-3 text-left focus:outline-none" aria-expanded="false">
+            <span class="text-sm font-semibold text-white flex items-center gap-2">
+                <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg>
+                Filters
+            </span>
+            <svg id="toggleIcon" class="w-5 h-5 text-gray-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
-        </div>
-        <fieldset id="filters" class="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 border-t border-gray-700">
-            <div class="sm:col-span-2">
-                <label class="text-sm font-medium text-gray-300 block mb-1">Keyword Search</label>
-                <input type="text" id="keywordSearch" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search NCT, Title, Sponsor...">
-            </div>
-            <div class="sm:col-span-2">
-                <label class="text-sm font-normal text-gray-300 block mb-1">Sponsor</label>
-                <input type="text" id="sponsorFilter" list="sponsorList" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white outline-none" placeholder="Type a sponsor">
-                <datalist id="sponsorList"></datalist>
-            </div>
-            <div>
-                <label class="text-sm font-medium text-gray-300 block mb-1">Status</label>
-                <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white outline-none">
-                    <option value="">All Statuses</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-sm font-medium text-gray-300 block mb-1">Phase</label>
-                <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white outline-none">
-                    <option value="">All Phases</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-sm font-medium text-gray-300 block mb-1">Start Date From</label>
-                <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white outline-none">
-            </div>
-            <div class="flex items-end">
-                <button id="resetFilters" class="w-full bg-blue-600 hover:bg-blue-700 rounded-md py-2 text-white font-semibold transition-colors">Reset</button>
+        </button>
+        <fieldset id="filters">
+            <div id="filtersBody" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3 border-t border-gray-700">
+                <div class="sm:col-span-2">
+                    <label for="keywordSearch" class="text-xs font-medium text-gray-400 block mb-1">Keyword Search</label>
+                    <input type="search" id="keywordSearch" inputmode="search" autocomplete="off" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="NCT, title, sponsor, condition...">
+                </div>
+                <div class="sm:col-span-2">
+                    <label for="sponsorFilter" class="text-xs font-medium text-gray-400 block mb-1">Sponsor</label>
+                    <input type="text" id="sponsorFilter" list="sponsorList" autocomplete="off" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Type or select a sponsor">
+                    <datalist id="sponsorList"></datalist>
+                </div>
+                <div>
+                    <label for="statusFilter" class="text-xs font-medium text-gray-400 block mb-1">Status</label>
+                    <select id="statusFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="phaseFilter" class="text-xs font-medium text-gray-400 block mb-1">Phase</label>
+                    <select id="phaseFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Phases</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="startDateFilter" class="text-xs font-medium text-gray-400 block mb-1">Start Date From</label>
+                    <input type="date" id="startDateFilter" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button id="resetFilters" class="w-full bg-blue-600 active:bg-blue-800 hover:bg-blue-700 rounded-md py-2.5 px-3 text-white text-sm font-semibold transition-colors touch-manipulation">Reset Filters</button>
+                </div>
             </div>
         </fieldset>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <h3 class="text-gray-400 text-sm font-medium">Total Trials</h3>
-            <p id="totalTrials" class="text-3xl font-bold text-white">0</p>
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-xs font-medium">Total Trials</h3>
+            <p id="totalTrials" class="text-2xl sm:text-3xl font-bold text-white mt-1">—</p>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <h3 class="text-gray-400 text-sm font-medium">Recruiting</h3>
-            <p id="recruitingTrials" class="text-3xl font-bold text-green-400">0</p>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-xs font-medium">Recruiting</h3>
+            <p id="recruitingTrials" class="text-2xl sm:text-3xl font-bold text-green-400 mt-1">—</p>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <h3 class="text-gray-400 text-sm font-medium">Completed</h3>
-            <p id="completedTrials" class="text-3xl font-bold text-blue-400">0</p>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-xs font-medium">Completed</h3>
+            <p id="completedTrials" class="text-2xl sm:text-3xl font-bold text-blue-400 mt-1">—</p>
         </div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-700">
-            <h3 class="text-gray-400 text-sm font-medium">Total Participants</h3>
-            <p id="totalParticipants" class="text-3xl font-bold text-white">0</p>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 text-xs font-medium">Participants</h3>
+            <p id="totalParticipants" class="text-2xl sm:text-3xl font-bold text-white mt-1">—</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="font-semibold text-white mb-4 text-center">Trials by Phase</h3><div class="chart-container"><canvas id="phaseChart"></canvas></div></div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="font-semibold text-white mb-4 text-center">Trials by Status</h3><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="font-semibold text-white mb-4 text-center">Trials Started Over Time</h3><div class="chart-container"><canvas id="timeChart"></canvas></div></div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg lg:col-span-2"><h3 class="font-semibold text-white mb-4 text-center">Top 10 Sponsors</h3><div class="chart-container !h-[400px]"><canvas id="sponsorChart"></canvas></div></div>
-        <div class="bg-gray-800 p-4 rounded-lg shadow-lg"><h3 class="font-semibold text-white mb-4 text-center">Top Conditions</h3><div class="chart-container !h-[400px]"><canvas id="conditionsChart"></canvas></div></div>
+    <!-- Charts: stacked single-col on mobile, 3-col on desktop -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="font-semibold text-white mb-3 text-sm text-center">Trials by Phase</h3>
+            <div class="chart-container"><canvas id="phaseChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="font-semibold text-white mb-3 text-sm text-center">Trials by Status</h3>
+            <div class="chart-container"><canvas id="statusChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg sm:col-span-2 lg:col-span-1">
+            <h3 class="font-semibold text-white mb-3 text-sm text-center">Trials Started Over Time</h3>
+            <div class="chart-container"><canvas id="timeChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg sm:col-span-2">
+            <h3 class="font-semibold text-white mb-3 text-sm text-center">Top 10 Sponsors</h3>
+            <div class="chart-container tall" style="height:340px"><canvas id="sponsorChart"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+            <h3 class="font-semibold text-white mb-3 text-sm text-center">Top Conditions</h3>
+            <div class="chart-container tall" style="height:340px"><canvas id="conditionsChart"></canvas></div>
+        </div>
     </div>
 
-    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
-        <div class="p-4 flex justify-between items-center"><h3 class="font-semibold text-white">Trial Details</h3><span id="tableRecordCount" class="text-sm text-gray-400"></span></div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-xs text-left text-gray-300">
+    <!-- Data Table / Cards -->
+    <div class="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <div class="p-3 flex justify-between items-center border-b border-gray-700">
+            <h3 class="font-semibold text-white text-sm">Trial Details</h3>
+            <span id="tableRecordCount" class="text-xs text-gray-400"></span>
+        </div>
+
+        <!-- Desktop table -->
+        <div id="tableWrapper">
+            <table id="trialsTable" class="w-full text-xs text-left text-gray-300">
                 <thead class="text-xs text-gray-300 uppercase bg-gray-700">
                     <tr>
-                        <th class="px-4 py-3 min-w-[120px]">NCT Number</th>
-                        <th class="px-4 py-3 min-w-[300px]">Title</th>
-                        <th class="px-4 py-3 text-center min-w-[150px]">Status</th>
-                        <th class="px-4 py-3 min-w-[100px]">Phase</th>
-                        <th class="px-4 py-3 min-w-[200px]">Sponsor</th>
-                        <th class="px-4 py-3 min-w-[100px]">Start Date</th>
-                        <th class="px-4 py-3 text-right min-w-[100px]">Enrollment</th>
+                        <th class="px-3 py-3" style="min-width:110px">NCT #</th>
+                        <th class="px-3 py-3" style="min-width:260px">Title</th>
+                        <th class="px-3 py-3 text-center" style="min-width:130px">Status</th>
+                        <th class="px-3 py-3" style="min-width:90px">Phase</th>
+                        <th class="px-3 py-3" style="min-width:180px">Sponsor</th>
+                        <th class="px-3 py-3" style="min-width:90px">Start</th>
+                        <th class="px-3 py-3 text-right" style="min-width:90px">Enrollment</th>
                     </tr>
                 </thead>
                 <tbody id="trialsTableBody"></tbody>
             </table>
+            <!-- Mobile cards -->
+            <div id="mobileCards" class="p-3 space-y-2"></div>
+        </div>
+
+        <div class="p-3 text-center border-t border-gray-700">
+            <button id="loadMoreBtn" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-sm font-medium px-6 py-2 rounded-md transition-colors touch-manipulation">
+                Load More
+            </button>
         </div>
     </div>
 
     <script>
-        let dataWorker;
-        let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
-        const newPalette = { dodgerBlue: '#00ACFF', robinsEggBlue: '#00DAC8', deepSapphire: '#001E63', sulu: '#CAFF5E', malibu: '#6EC3FA' };
+    // ─── GLOBALS ─────────────────────────────────────────────────────────────────
+    let dataWorker;
+    let phaseChart, statusChart, sponsorChart, timeChart, conditionsChart;
+    let allFilteredRows = [];      // Full filtered dataset held in main thread
+    let displayedCount   = 0;
+    const PAGE_SIZE      = 50;    // Rows per "page" for progressive rendering
+    const isMobile       = () => window.innerWidth < 769;
 
-        // Helper: Debounce for mobile performance
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), delay);
+    const palette = {
+        dodgerBlue:   '#00ACFF',
+        robinsEgg:    '#00DAC8',
+        deepSapphire: '#001E63',
+        sulu:         '#CAFF5E',
+        malibu:       '#6EC3FA'
+    };
+
+    // ─── UTILITIES ────────────────────────────────────────────────────────────────
+    function debounce(fn, ms) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+
+    function setLoadingState(on, msg = '') {
+        document.getElementById('filters').disabled = on;
+        if (!on) {
+            document.getElementById('progressContainer').classList.add('hidden');
+        }
+    }
+
+    function updateProgress(page, maxPages) {
+        const el = document.getElementById('progressContainer');
+        el.classList.remove('hidden');
+        document.getElementById('progressLabel').textContent = 'Fetching data from ClinicalTrials.gov…';
+        document.getElementById('progressPage').textContent  = `Page ${page}`;
+        const pct = Math.min((page / maxPages) * 100, 95);
+        document.getElementById('progressBar').style.width   = pct + '%';
+    }
+
+    function getStatusStyle(status) {
+        const m = {
+            'RECRUITING':         `background:${palette.sulu};color:${palette.deepSapphire}`,
+            'COMPLETED':          `background:${palette.malibu};color:${palette.deepSapphire}`,
+            'TERMINATED':         `background:#F87171;color:#7f1d1d`,
+            'NOT_YET_RECRUITING': `background:#FBBF24;color:#78350f`,
+        };
+        return m[status] || `background:#4B5563;color:#F9FAFB`;
+    }
+
+    // ─── WEB WORKER ───────────────────────────────────────────────────────────────
+    const workerScript = `
+        let allTrials = [];
+
+        function processData(filters) {
+            const { keyword, status, phase, startDateString, sponsorQuery } = filters;
+            const filtered = allTrials.filter(t => {
+                if (keyword && !(
+                    (t.nct        && t.nct.toLowerCase().includes(keyword)) ||
+                    (t.title      && t.title.toLowerCase().includes(keyword)) ||
+                    (t.sponsor    && t.sponsor.toLowerCase().includes(keyword)) ||
+                    (t.conditions && t.conditions.some(c => c.toLowerCase().includes(keyword)))
+                )) return false;
+                if (status        && t.status    !== status)        return false;
+                if (phase         && t.phase     !== phase)         return false;
+                if (startDateString && t.startDate && t.startDate !== 'N/A' && t.startDate < startDateString) return false;
+                if (sponsorQuery  && t.sponsor   && !t.sponsor.toLowerCase().includes(sponsorQuery)) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                if (!a.startDate || a.startDate === 'N/A') return 1;
+                if (!b.startDate || b.startDate === 'N/A') return -1;
+                return b.startDate.localeCompare(a.startDate);
+            });
+
+            const kpis = {
+                totalTrials:       filtered.length,
+                recruitingTrials:  filtered.filter(t => t.status === 'RECRUITING').length,
+                completedTrials:   filtered.filter(t => t.status === 'COMPLETED').length,
+                totalParticipants: filtered.reduce((s, t) => s + (t.enrollment || 0), 0)
             };
-        }
 
-        function setLoadingState(isLoading, message = '') {
-            const tableBody = document.getElementById('trialsTableBody');
-            if (isLoading) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-16"><div class="flex flex-col items-center justify-center"><div class="loader"></div><p class="mt-4 text-sm">${message}</p></div></td></tr>`;
+            const phase2  = {}, status2 = {}, time2 = {}, sponsor2 = {}, cond2 = {};
+            for (const t of filtered) {
+                phase2[t.phase]   = (phase2[t.phase]   || 0) + 1;
+                status2[t.status] = (status2[t.status] || 0) + 1;
+                if (t.startDate && t.startDate !== 'N/A') {
+                    const y = t.startDate.slice(0, 4);
+                    time2[y] = (time2[y] || 0) + 1;
+                }
+                if (t.sponsor && t.sponsor !== 'N/A') sponsor2[t.sponsor] = (sponsor2[t.sponsor] || 0) + 1;
+                if (Array.isArray(t.conditions)) t.conditions.forEach(c => { cond2[c] = (cond2[c] || 0) + 1; });
             }
+            const topSponsors    = Object.entries(sponsor2).sort(([,a],[,b]) => b-a).slice(0,10).reverse();
+            const topConditions  = Object.entries(cond2)
+                .filter(([c]) => !c.toLowerCase().includes('healthy'))
+                .sort(([,a],[,b]) => b-a).slice(0,10).reverse();
+            const sortedPhases   = Object.entries(phase2).sort(([,a],[,b]) => b-a);
+            const sortedStatuses = Object.entries(status2).sort(([,a],[,b]) => b-a);
+            const sortedYears    = Object.keys(time2).sort((a,b)=>a-b);
+
+            const charts = {
+                phase:      { labels: sortedPhases.map(p=>p[0]),        data: sortedPhases.map(p=>p[1]) },
+                status:     { labels: sortedStatuses.map(s=>s[0]),      data: sortedStatuses.map(s=>s[1]) },
+                time:       { labels: sortedYears,                       data: sortedYears.map(y=>time2[y]) },
+                sponsor:    { labels: topSponsors.map(s=>s[0]),          data: topSponsors.map(s=>s[1]) },
+                conditions: { labels: topConditions.map(c=>c[0]),        data: topConditions.map(c=>c[1]) }
+            };
+
+            // Send ALL rows back (main thread handles paging for performance)
+            return { kpis, charts, rows: filtered };
         }
 
-        // --- WEB WORKER (EXACT ORIGINAL LOGIC) ---
-        const dataWorkerScript = `
-            let allTrials = [];
+        async function fetchAll() {
+            const BASE  = 'https://clinicaltrials.gov/api/v2/studies';
+            const QUERY = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+            const MAX_PAGES = 50;
+            let token = null, page = 1, studies = [];
+            try {
+                do {
+                    const url = BASE + '?pageSize=1000&' + QUERY + (token ? '&pageToken=' + token : '');
+                    postMessage({ type: 'progress', page });
+                    const r = await fetch(url);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const d = await r.json();
+                    if (d.studies) studies.push(...d.studies);
+                    token = d.nextPageToken;
+                    page++;
+                } while (token && page < MAX_PAGES);
 
-            function processDataForDashboard(filters) {
-                const { keyword, status, phase, startDateString, sponsorQuery } = filters;
-                const filtered = allTrials.filter(t => {
-                    const kw = keyword === '' || (t.nct + t.title + t.sponsor).toLowerCase().includes(keyword) || (t.conditions && t.conditions.some(c => c.toLowerCase().includes(keyword)));
-                    const st = status === '' || t.status === status;
-                    const ph = phase === '' || t.phase === phase;
-                    const dt = startDateString === '' || (t.startDate !== 'N/A' && t.startDate >= startDateString);
-                    const sp = sponsorQuery === '' || t.sponsor.toLowerCase().includes(sponsorQuery);
-                    return kw && st && ph && dt && sp;
+                allTrials = studies.map(s => {
+                    const p = s.protocolSection;
+                    return {
+                        nct:        p.identificationModule?.nctId || 'N/A',
+                        title:      p.identificationModule?.officialTitle || 'No title provided',
+                        status:     p.statusModule?.overallStatus || 'Unknown',
+                        phase:      p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
+                        sponsor:    p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
+                        startDate:  p.statusModule?.startDateStruct?.date || 'N/A',
+                        enrollment: p.designModule?.enrollmentInfo?.count || 0,
+                        conditions: p.conditionsModule?.conditions || [],
+                    };
                 });
 
-                filtered.sort((a,b) => b.startDate.localeCompare(a.startDate));
-
-                const phaseCounts = filtered.reduce((acc, t) => { acc[t.phase] = (acc[t.phase] || 0) + 1; return acc; }, {});
-                const statusCounts = filtered.reduce((acc, t) => { acc[t.status] = (acc[t.status] || 0) + 1; return acc; }, {});
-                const sponsorCounts = filtered.reduce((acc, t) => { if(t.sponsor !== 'N/A') acc[t.sponsor] = (acc[t.sponsor] || 0) + 1; return acc; }, {});
-                const conditionCounts = filtered.reduce((acc, t) => { t.conditions.forEach(c => { acc[c] = (acc[c] || 0) + 1; }); return acc; }, {});
-
-                const topSponsors = Object.entries(sponsorCounts).sort((a,b) => b[1]-a[1]).slice(0, 10).reverse();
-                const topConditions = Object.entries(conditionCounts).filter(c => !c[0].toLowerCase().includes('healthy')).sort((a,b) => b[1]-a[1]).slice(0, 10).reverse();
-
-                return {
-                    kpis: { 
-                        totalTrials: filtered.length, 
-                        recruitingTrials: filtered.filter(t => t.status === 'RECRUITING').length,
-                        completedTrials: filtered.filter(t => t.status === 'COMPLETED').length,
-                        totalParticipants: filtered.reduce((s, t) => s + (t.enrollment || 0), 0)
-                    },
-                    charts: {
-                        phase: { labels: Object.keys(phaseCounts), data: Object.values(phaseCounts) },
-                        status: { labels: Object.keys(statusCounts), data: Object.values(statusCounts) },
-                        sponsor: { labels: topSponsors.map(s => s[0]), data: topSponsors.map(s => s[1]) },
-                        conditions: { labels: topConditions.map(c => c[0]), data: topConditions.map(c => c[1]) },
-                        time: { labels: [], data: [] } // Time aggregation omitted for length, keep your logic
-                    },
-                    table: { rows: filtered.slice(0, 100), totalCount: filtered.length }
+                const initial = processData({ keyword:'', status:'', phase:'', startDateString:'', sponsorQuery:'' });
+                const filterOptions = {
+                    statuses: [...new Set(allTrials.map(t=>t.status))].sort(),
+                    phases:   [...new Set(allTrials.map(t=>t.phase))].sort((a,b)=>{
+                        if (a.includes('Not Applicable')) return -1;
+                        if (b.includes('Not Applicable')) return 1;
+                        return a.localeCompare(b);
+                    }),
+                    sponsors: [...new Set(allTrials.map(t=>t.sponsor).filter(s=>s&&s!=='N/A'))].sort()
                 };
+                postMessage({ type: 'complete', payload: { initial, filterOptions } });
+            } catch(e) {
+                postMessage({ type: 'error', error: e.message });
             }
+        }
 
-            async function fetchData() {
-                try {
-                    let allStudies = [];
-                    let nextPageToken = null;
-                    for(let i=0; i < 20; i++) { // Optimized for mobile RAM
-                        const url = 'https://clinicaltrials.gov/api/v2/studies?pageSize=1000&query.term=AREA[OrgClass]INDUSTRY' + (nextPageToken ? '&pageToken='+nextPageToken : '');
-                        postMessage({ type: 'progress', page: i+1 });
-                        const res = await fetch(url);
-                        const data = await res.json();
-                        allStudies.push(...data.studies);
-                        nextPageToken = data.nextPageToken;
-                        if(!nextPageToken) break;
+        self.onmessage = e => {
+            if (e.data.type === 'filter') {
+                postMessage({ type: 'update', payload: processData(e.data.filters) });
+            }
+        };
+
+        fetchAll();
+    `;
+
+    // ─── CHART INIT ───────────────────────────────────────────────────────────────
+    function initCharts() {
+        Chart.register(ChartDataLabels);
+
+        const gridColor = 'rgba(255,255,255,0.07)';
+        const tickColor = '#9ca3af';
+        const base = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: isMobile() ? 0 : 400 }, // disable animation on mobile
+            plugins: {
+                legend: { labels: { color: tickColor, boxWidth: 12, font: { size: 11 } } },
+                datalabels: { display: false },
+                tooltip: { enabled: true }
+            },
+            scales: {
+                x: { ticks: { color: tickColor, font: { size: 10 }, maxRotation: 45 }, grid: { color: gridColor } },
+                y: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor } }
+            }
+        };
+        const horiz = { ...base, indexAxis: 'y' };
+
+        phaseChart = new Chart(document.getElementById('phaseChart'), {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ data: [], backgroundColor: [palette.dodgerBlue, palette.robinsEgg, palette.sulu, palette.malibu, palette.deepSapphire], borderColor: '#1f2937', borderWidth: 2 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: isMobile() ? 0 : 400 },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: true,
+                        formatter: (v, ctx) => {
+                            const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                            const pct = v / total * 100;
+                            if (pct < 4) return '';
+                            let l = ctx.chart.data.labels[ctx.dataIndex];
+                            l = l.includes('Not Applicable') ? 'N/A' : l.replace('Phase ','P');
+                            return `${l}\n${pct.toFixed(0)}%`;
+                        },
+                        color: ctx => {
+                            const c = ctx.dataset.backgroundColor[ctx.dataIndex] || '#FFF';
+                            const r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16);
+                            return (r*299+g*587+b*114)/1000 > 155 ? palette.deepSapphire : '#FFF';
+                        },
+                        textAlign: 'center',
+                        font: { weight: 'bold', size: isMobile() ? 10 : 11, family: 'Inter' }
                     }
-                    allTrials = allStudies.map(s => ({
-                        nct: s.protocolSection.identificationModule.nctId,
-                        title: s.protocolSection.identificationModule.officialTitle || 'N/A',
-                        status: s.protocolSection.statusModule.overallStatus,
-                        phase: s.protocolSection.designModule?.phases?.[0] || 'N/A',
-                        sponsor: s.protocolSection.sponsorCollaboratorsModule.leadSponsor.name,
-                        startDate: s.protocolSection.statusModule.startDateStruct?.date || 'N/A',
-                        enrollment: s.protocolSection.designModule?.enrollmentInfo?.count || 0,
-                        conditions: s.protocolSection.conditionsModule?.conditions || []
-                    }));
-                    postMessage({ type: 'complete', payload: { initialDashboardData: processDataForDashboard({keyword:'',status:'',phase:'',startDateString:'',sponsorQuery:''}), filterOptions: { 
-                        statuses: [...new Set(allTrials.map(t => t.status))],
-                        phases: [...new Set(allTrials.map(t => t.phase))],
-                        sponsors: [...new Set(allTrials.map(t => t.sponsor))].sort().slice(0, 1000)
-                    }}});
-                } catch(e) { postMessage({ type: 'error', error: e.message }); }
+                }
             }
-            self.onmessage = (e) => { if(e.data.type === 'filter') postMessage({ type: 'update', payload: processDataForDashboard(e.data.filters) }); };
-            fetchData();
-        `;
+        });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            Chart.register(ChartDataLabels);
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString();
-            initCharts();
-            
-            const blob = new Blob([dataWorkerScript], { type: 'application/javascript' });
-            dataWorker = new Worker(URL.createObjectURL(blob));
-            
-            dataWorker.onmessage = (e) => {
-                const { type, payload, page } = e.data;
-                if(type === 'progress') setLoadingState(true, `Loading Page ${page}...`);
-                if(type === 'complete' || type === 'update') {
-                    if(type === 'complete') populateFilters(payload.filterOptions);
-                    const d = payload.initialDashboardData || payload;
-                    updateKPIs(d.kpis);
-                    updateCharts(d.charts);
-                    updateTable(d.table);
+        statusChart = new Chart(document.getElementById('statusChart'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: palette.dodgerBlue, borderRadius: 3 }] },
+            options: { ...base, plugins: { ...base.plugins, legend: { display: false } } }
+        });
+
+        timeChart = new Chart(document.getElementById('timeChart'), {
+            type: 'line', data: { labels: [], datasets: [{ label: 'Trials Started', data: [], borderColor: palette.robinsEgg, backgroundColor: 'rgba(0,218,200,0.15)', tension: 0.3, fill: true, pointRadius: isMobile() ? 2 : 3 }] },
+            options: { ...base, plugins: { ...base.plugins, legend: { display: false } } }
+        });
+
+        sponsorChart = new Chart(document.getElementById('sponsorChart'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: palette.malibu, borderRadius: 3 }] },
+            options: { ...horiz, plugins: { legend: { display: false }, datalabels: { display: !isMobile(), color: '#FFF', anchor: 'end', align: 'end', font: { weight: 'bold', size: 10 } }, tooltip: { enabled: true } } }
+        });
+
+        conditionsChart = new Chart(document.getElementById('conditionsChart'), {
+            type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: palette.sulu, borderRadius: 3 }] },
+            options: { ...horiz, plugins: { legend: { display: false }, datalabels: { display: !isMobile(), color: '#FFF', anchor: 'end', align: 'end', font: { weight: 'bold', size: 10 } }, tooltip: { enabled: true } } }
+        });
+    }
+
+    // ─── RENDER HELPERS ───────────────────────────────────────────────────────────
+    function updateKPIs({ totalTrials, recruitingTrials, completedTrials, totalParticipants }) {
+        document.getElementById('totalTrials').textContent       = totalTrials.toLocaleString();
+        document.getElementById('recruitingTrials').textContent  = recruitingTrials.toLocaleString();
+        document.getElementById('completedTrials').textContent   = completedTrials.toLocaleString();
+        document.getElementById('totalParticipants').textContent = totalParticipants.toLocaleString();
+    }
+
+    function updateCharts(c) {
+        phaseChart.data.labels              = c.phase.labels;
+        phaseChart.data.datasets[0].data    = c.phase.data;
+        phaseChart.update('none');  // skip animation on filter changes
+
+        statusChart.data.labels             = c.status.labels.map(s => s.replace(/_/g,' '));
+        statusChart.data.datasets[0].data   = c.status.data;
+        statusChart.update('none');
+
+        timeChart.data.labels               = c.time.labels;
+        timeChart.data.datasets[0].data     = c.time.data;
+        timeChart.update('none');
+
+        sponsorChart.data.labels            = c.sponsor.labels;
+        sponsorChart.data.datasets[0].data  = c.sponsor.data;
+        sponsorChart.update('none');
+
+        conditionsChart.data.labels         = c.conditions.labels;
+        conditionsChart.data.datasets[0].data = c.conditions.data;
+        conditionsChart.update('none');
+    }
+
+    // Render a batch of rows — called initially and on "Load More"
+    function renderRowBatch() {
+        const batch = allFilteredRows.slice(displayedCount, displayedCount + PAGE_SIZE);
+        if (!batch.length) return;
+
+        if (isMobile()) {
+            // Card layout for mobile
+            const container = document.getElementById('mobileCards');
+            const frag = document.createDocumentFragment();
+            batch.forEach(t => {
+                const div = document.createElement('div');
+                div.className = 'trial-card';
+                div.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                        <a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="text-blue-400 text-xs font-medium hover:underline">${t.nct}</a>
+                        <span class="badge" style="${getStatusStyle(t.status)}">${t.status.replace(/_/g,' ')}</span>
+                    </div>
+                    <p class="text-gray-200 text-xs leading-snug mb-1">${t.title}</p>
+                    <div class="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-400">
+                        <span>${t.phase}</span>
+                        <span>${t.startDate}</span>
+                        <span>${(t.enrollment||0).toLocaleString()} enrolled</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-0.5 truncate">${t.sponsor}</p>
+                `;
+                frag.appendChild(div);
+            });
+            container.appendChild(frag);
+        } else {
+            // Table rows for desktop
+            const tbody = document.getElementById('trialsTableBody');
+            const frag  = document.createDocumentFragment();
+            batch.forEach(t => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-gray-800 border-b border-gray-700/50 hover:bg-gray-700/40';
+                tr.innerHTML = `
+                    <td class="px-3 py-2 font-medium text-blue-400 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="hover:underline">${t.nct}</a></td>
+                    <td class="px-3 py-2">${t.title}</td>
+                    <td class="px-3 py-2 text-center whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="${getStatusStyle(t.status)}">${t.status.replace(/_/g,' ')}</span></td>
+                    <td class="px-3 py-2 whitespace-nowrap">${t.phase}</td>
+                    <td class="px-3 py-2">${t.sponsor}</td>
+                    <td class="px-3 py-2 whitespace-nowrap">${t.startDate}</td>
+                    <td class="px-3 py-2 text-right">${(t.enrollment||0).toLocaleString()}</td>
+                `;
+                frag.appendChild(tr);
+            });
+            tbody.appendChild(frag);
+        }
+
+        displayedCount += batch.length;
+        updateRecordCount();
+
+        const btn = document.getElementById('loadMoreBtn');
+        btn.style.display = displayedCount < allFilteredRows.length ? 'inline-block' : 'none';
+    }
+
+    function updateRecordCount() {
+        document.getElementById('tableRecordCount').textContent =
+            `Showing ${Math.min(displayedCount, allFilteredRows.length).toLocaleString()} of ${allFilteredRows.length.toLocaleString()} records`;
+    }
+
+    // Reset and re-render the table/cards from scratch
+    function resetAndRenderTable(rows) {
+        allFilteredRows = rows;
+        displayedCount  = 0;
+        document.getElementById('trialsTableBody').innerHTML = '';
+        document.getElementById('mobileCards').innerHTML     = '';
+        document.getElementById('loadMoreBtn').style.display = 'none';
+
+        if (!rows.length) {
+            const msg = '<p class="text-center text-gray-400 py-8 text-sm">No trials match the current filters.</p>';
+            document.getElementById(isMobile() ? 'mobileCards' : 'trialsTableBody').innerHTML =
+                isMobile() ? msg : `<tr><td colspan="7" class="text-center py-8 text-gray-400">No trials match the current filters.</td></tr>`;
+            updateRecordCount();
+            return;
+        }
+
+        // Use requestAnimationFrame to yield to browser before first heavy render
+        requestAnimationFrame(() => renderRowBatch());
+    }
+
+    // ─── FILTER POPULATION ────────────────────────────────────────────────────────
+    function populateFilters({ statuses, phases, sponsors }) {
+        const sel1 = document.getElementById('statusFilter');
+        const sel2 = document.getElementById('phaseFilter');
+        const dl   = document.getElementById('sponsorList');
+        sel1.length = sel2.length = 1; dl.innerHTML = '';
+        statuses.forEach(s => sel1.add(new Option(s.replace(/_/g,' '), s)));
+        phases.forEach(p   => sel2.add(new Option(p, p)));
+        const frag = document.createDocumentFragment();
+        sponsors.forEach(s => frag.appendChild(new Option(s, s)));
+        dl.appendChild(frag);
+    }
+
+    // ─── FILTER DISPATCH ──────────────────────────────────────────────────────────
+    function sendFilters() {
+        if (!dataWorker) return;
+        dataWorker.postMessage({
+            type: 'filter',
+            filters: {
+                keyword:         document.getElementById('keywordSearch').value.toLowerCase().trim(),
+                status:          document.getElementById('statusFilter').value,
+                phase:           document.getElementById('phaseFilter').value,
+                startDateString: document.getElementById('startDateFilter').value,
+                sponsorQuery:    document.getElementById('sponsorFilter').value.toLowerCase().trim()
+            }
+        });
+    }
+
+    // ─── EVENT LISTENERS ──────────────────────────────────────────────────────────
+    function setupListeners() {
+        // Longer debounce on mobile to reduce re-renders while typing
+        const delay = isMobile() ? 500 : 300;
+        const db    = debounce(sendFilters, delay);
+
+        document.getElementById('keywordSearch').addEventListener('input', db);
+        document.getElementById('sponsorFilter').addEventListener('input', db);
+        document.getElementById('statusFilter').addEventListener('change', sendFilters);
+        document.getElementById('phaseFilter').addEventListener('change', sendFilters);
+        document.getElementById('startDateFilter').addEventListener('change', sendFilters);
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            ['keywordSearch','statusFilter','phaseFilter','startDateFilter','sponsorFilter']
+                .forEach(id => document.getElementById(id).value = '');
+            sendFilters();
+        });
+
+        document.getElementById('loadMoreBtn').addEventListener('click', () => {
+            requestAnimationFrame(() => renderRowBatch());
+        });
+
+        // Toggle filter panel
+        document.getElementById('toggleFiltersHeader').addEventListener('click', () => {
+            const body  = document.getElementById('filtersBody');
+            const icon  = document.getElementById('toggleIcon');
+            const btn   = document.getElementById('toggleFiltersHeader');
+            const shown = body.style.display !== 'none' && body.style.display !== '';
+            body.style.display = shown ? 'none' : 'grid';
+            icon.style.transform = shown ? '' : 'rotate(180deg)';
+            btn.setAttribute('aria-expanded', String(!shown));
+        });
+
+        // On desktop, show filters by default
+        if (!isMobile()) {
+            const body = document.getElementById('filtersBody');
+            body.style.display = 'grid';
+            document.getElementById('toggleIcon').style.transform = 'rotate(180deg)';
+            document.getElementById('toggleFiltersHeader').setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    // ─── BOOT ─────────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('lastUpdated').textContent =
+            new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+        initCharts();
+        setupListeners();
+        setLoadingState(true);
+
+        try {
+            const blob  = new Blob([workerScript], { type: 'application/javascript' });
+            dataWorker  = new Worker(URL.createObjectURL(blob));
+
+            dataWorker.onmessage = e => {
+                const { type, payload, page, error } = e.data;
+
+                if (type === 'progress') {
+                    updateProgress(page, 50);
+
+                } else if (type === 'complete') {
+                    document.getElementById('progressBar').style.width = '100%';
+                    populateFilters(payload.filterOptions);
+                    updateKPIs(payload.initial.kpis);
+                    updateCharts(payload.initial.charts);
+                    resetAndRenderTable(payload.initial.rows);
+                    setLoadingState(false);
+
+                } else if (type === 'update') {
+                    updateKPIs(payload.kpis);
+                    updateCharts(payload.charts);
+                    resetAndRenderTable(payload.rows);
+                    setLoadingState(false);
+
+                } else if (type === 'error') {
+                    const msg = `Failed to load data: ${error}`;
+                    document.getElementById('mobileCards').innerHTML     = `<p class="text-red-400 p-4 text-sm">${msg}</p>`;
+                    document.getElementById('trialsTableBody').innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-sm">${msg}</td></tr>`;
                     setLoadingState(false);
                 }
             };
 
-            setupListeners();
-        });
+            dataWorker.onerror = err => {
+                console.error('Worker error:', err);
+                setLoadingState(false);
+            };
 
-        function initCharts() {
-            const common = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false } } };
-            phaseChart = new Chart(document.getElementById('phaseChart'), { type: 'doughnut', data: { labels: [], datasets: [{ data: [], backgroundColor: Object.values(newPalette) }] }, options: common });
-            statusChart = new Chart(document.getElementById('statusChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: newPalette.dodgerBlue }] }, options: common });
-            timeChart = new Chart(document.getElementById('timeChart'), { type: 'line', data: { labels: [], datasets: [{ data: [], borderColor: newPalette.robinsEggBlue }] }, options: common });
-            sponsorChart = new Chart(document.getElementById('sponsorChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: newPalette.malibu }] }, options: { ...common, indexAxis: 'y' } });
-            conditionsChart = new Chart(document.getElementById('conditionsChart'), { type: 'bar', data: { labels: [], datasets: [{ data: [], backgroundColor: newPalette.sulu }] }, options: { ...common, indexAxis: 'y' } });
+        } catch(e) {
+            console.error('Worker init failed:', e);
+            setLoadingState(false);
         }
-
-        function updateCharts(c) {
-            // Mobile Optimization: Update without animation to prevent UI freeze
-            const mode = 'none';
-            phaseChart.data.labels = c.phase.labels; phaseChart.data.datasets[0].data = c.phase.data; phaseChart.update(mode);
-            statusChart.data.labels = c.status.labels; statusChart.data.datasets[0].data = c.status.data; statusChart.update(mode);
-            sponsorChart.data.labels = c.sponsor.labels; sponsorChart.data.datasets[0].data = c.sponsor.data; sponsorChart.update(mode);
-            conditionsChart.data.labels = c.conditions.labels; conditionsChart.data.datasets[0].data = c.conditions.data; conditionsChart.update(mode);
-        }
-
-        function setupListeners() {
-            const up = debounce(() => {
-                dataWorker.postMessage({ type: 'filter', filters: {
-                    keyword: document.getElementById('keywordSearch').value.toLowerCase(),
-                    sponsorQuery: document.getElementById('sponsorFilter').value.toLowerCase(),
-                    status: document.getElementById('statusFilter').value,
-                    phase: document.getElementById('phaseFilter').value,
-                    startDateString: document.getElementById('startDateFilter').value
-                }});
-            }, 300);
-            ['keywordSearch', 'sponsorFilter', 'statusFilter', 'phaseFilter', 'startDateFilter'].forEach(id => document.getElementById(id).addEventListener('input', up));
-        }
-
-        function populateFilters(opt) {
-            const sF = document.getElementById('statusFilter');
-            const pF = document.getElementById('phaseFilter');
-            const sL = document.getElementById('sponsorList');
-            opt.statuses.forEach(s => sF.add(new Option(s, s)));
-            opt.phases.forEach(p => pF.add(new Option(p, p)));
-            opt.sponsors.forEach(s => sL.appendChild(new Option(s, s)));
-        }
-
-        function updateKPIs(k) {
-            document.getElementById('totalTrials').textContent = k.totalTrials.toLocaleString();
-            document.getElementById('recruitingTrials').textContent = k.recruitingTrials.toLocaleString();
-            document.getElementById('completedTrials').textContent = k.completedTrials.toLocaleString();
-            document.getElementById('totalParticipants').textContent = k.totalParticipants.toLocaleString();
-        }
-
-        function updateTable(t) {
-            document.getElementById('tableRecordCount').textContent = `Showing ${t.rows.length} of ${t.totalCount.toLocaleString()}`;
-            document.getElementById('trialsTableBody').innerHTML = t.rows.map(r => `
-                <tr class="border-b border-gray-700 hover:bg-gray-700/50">
-                    <td class="px-4 py-3 font-bold text-blue-400"><a href="https://clinicaltrials.gov/study/${r.nct}" target="_blank">${r.nct}</a></td>
-                    <td class="px-4 py-3">${r.title}</td>
-                    <td class="px-4 py-3 text-center">${r.status}</td>
-                    <td class="px-4 py-3">${r.phase}</td>
-                    <td class="px-4 py-3">${r.sponsor}</td>
-                    <td class="px-4 py-3">${r.startDate}</td>
-                    <td class="px-4 py-3 text-right">${r.enrollment.toLocaleString()}</td>
-                </tr>
-            `).join('');
-        }
+    });
     </script>
 </body>
 </html>
