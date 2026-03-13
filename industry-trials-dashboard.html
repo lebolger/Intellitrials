@@ -10,35 +10,29 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family:'Inter',sans-serif; background:#111827; -webkit-text-size-adjust:100%; }
-        .chart-box { position:relative; height:220px; }
-        @media(max-width:640px){ .chart-box{ height:190px; } }
-        input[type="date"]::-webkit-calendar-picker-indicator{ filter:invert(0.8); }
-        fieldset:disabled{ opacity:0.5; pointer-events:none; }
-        #progressBar{ transition:width 0.3s ease; }
-        .badge{ display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; }
-        .card{ background:#1f2937; border-radius:8px; padding:10px 12px; border-left:3px solid #00ACFF; }
-        #loadMoreBtn{ display:none; }
-        /* Desktop shows table, mobile shows cards */
-        @media(max-width:768px){ #deskTable{ display:none; } }
-        @media(min-width:769px){ #cardList{ display:none; } #filterBody{ display:grid !important; } }
+        body{font-family:'Inter',sans-serif;background:#111827;-webkit-text-size-adjust:100%}
+        .chart-box{position:relative;height:210px}
+        @media(max-width:640px){.chart-box{height:180px}}
+        input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(0.8)}
+        fieldset:disabled{opacity:.5;pointer-events:none}
+        #progressBar{transition:width .3s ease}
+        .badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap}
+        .card{background:#1f2937;border-radius:8px;padding:10px 12px;border-left:3px solid #00ACFF}
+        #loadMoreBtn{display:none}
+        @media(max-width:768px){#deskWrap{display:none}}
+        @media(min-width:769px){#cardList{display:none};#filterBody{display:grid!important}}
     </style>
 </head>
 <body class="text-gray-200 p-3 sm:p-4">
 
-<!-- Header -->
 <header class="mb-4">
     <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
         <div>
             <h1 class="text-xl sm:text-3xl font-bold text-white">Clinical Trials Dashboard</h1>
-            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">
-                Industry-sponsored interventional trials &middot;
-                <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400">ClinicalTrials.gov</a>
-            </p>
+            <p class="text-xs sm:text-sm text-gray-400 mt-0.5">Industry-sponsored interventional trials &middot; <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400">ClinicalTrials.gov</a></p>
         </div>
-        <p class="text-xs text-gray-500">Updated: <span id="dateLbl"></span></p>
+        <p class="text-xs text-gray-500 shrink-0">Updated: <span id="dateLbl"></span></p>
     </div>
-    <!-- Progress -->
     <div id="progressWrap" class="mt-3 hidden">
         <div class="flex justify-between text-xs text-gray-400 mb-1">
             <span id="progressLbl">Loading&hellip;</span>
@@ -48,8 +42,7 @@
             <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full" style="width:2%"></div>
         </div>
     </div>
-    <!-- Mobile data-cap notice (shown after load) -->
-    <div id="capNotice" class="hidden mt-2 text-xs text-yellow-400 bg-yellow-400/10 rounded px-3 py-1.5"></div>
+    <div id="capNotice" class="hidden mt-2 text-xs text-yellow-400 bg-yellow-400/10 rounded px-3 py-2"></div>
 </header>
 
 <!-- Filters -->
@@ -61,10 +54,9 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 8h12M9 12h6"/>
             </svg>
             Filters
-            <span id="activeFilterBadge" class="hidden bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5 leading-none"></span>
+            <span id="fBadge" class="hidden bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5 leading-none"></span>
         </span>
-        <svg id="filterChevron" class="w-5 h-5 text-gray-400 transition-transform"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg id="fChevron" class="w-5 h-5 text-gray-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
         </svg>
     </button>
@@ -97,13 +89,10 @@
             </div>
             <div>
                 <label class="text-xs text-gray-400 block mb-1">Start Date From</label>
-                <input type="date" id="fDt"
-                    class="w-full bg-gray-700 border border-gray-600 rounded py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" id="fDt" class="w-full bg-gray-700 border border-gray-600 rounded py-2.5 px-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <div class="flex items-end">
-                <button id="resetBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded py-2.5 px-3 text-white text-sm font-semibold touch-manipulation">
-                    Reset
-                </button>
+                <button id="resetBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded py-2.5 px-3 text-white text-sm font-semibold touch-manipulation">Reset</button>
             </div>
         </div>
     </fieldset>
@@ -119,399 +108,384 @@
 
 <!-- Charts -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-    <div class="bg-gray-800 p-4 rounded-lg">
-        <h3 class="text-sm font-semibold text-white mb-2 text-center">By Phase</h3>
-        <div class="chart-box"><canvas id="cPh"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg">
-        <h3 class="text-sm font-semibold text-white mb-2 text-center">By Status</h3>
-        <div class="chart-box"><canvas id="cSt"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2 lg:col-span-1">
-        <h3 class="text-sm font-semibold text-white mb-2 text-center">Started Over Time</h3>
-        <div class="chart-box"><canvas id="cTm"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2">
-        <h3 class="text-sm font-semibold text-white mb-2 text-center">Top 10 Sponsors</h3>
-        <div class="chart-box" style="height:300px"><canvas id="cSp"></canvas></div>
-    </div>
-    <div class="bg-gray-800 p-4 rounded-lg">
-        <h3 class="text-sm font-semibold text-white mb-2 text-center">Top Conditions</h3>
-        <div class="chart-box" style="height:300px"><canvas id="cCo"></canvas></div>
-    </div>
+    <div class="bg-gray-800 p-4 rounded-lg"><h3 class="text-sm font-semibold text-white mb-2 text-center">By Phase</h3><div class="chart-box"><canvas id="cPh"></canvas></div></div>
+    <div class="bg-gray-800 p-4 rounded-lg"><h3 class="text-sm font-semibold text-white mb-2 text-center">By Status</h3><div class="chart-box"><canvas id="cSt"></canvas></div></div>
+    <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2 lg:col-span-1"><h3 class="text-sm font-semibold text-white mb-2 text-center">Started Over Time</h3><div class="chart-box"><canvas id="cTm"></canvas></div></div>
+    <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2"><h3 class="text-sm font-semibold text-white mb-2 text-center">Top 10 Sponsors</h3><div class="chart-box" style="height:290px"><canvas id="cSp"></canvas></div></div>
+    <div class="bg-gray-800 p-4 rounded-lg"><h3 class="text-sm font-semibold text-white mb-2 text-center">Top Conditions</h3><div class="chart-box" style="height:290px"><canvas id="cCo"></canvas></div></div>
 </div>
 
-<!-- Trials list -->
+<!-- Trial list -->
 <div class="bg-gray-800 rounded-lg overflow-hidden">
     <div class="p-3 flex justify-between items-center border-b border-gray-700">
         <h3 class="font-semibold text-white text-sm">Trial Details</h3>
         <span id="recCount" class="text-xs text-gray-400"></span>
     </div>
-    <!-- Desktop table -->
-    <div id="deskTable" class="overflow-x-auto" style="max-height:480px;overflow-y:auto;">
+    <div id="deskWrap" class="overflow-x-auto" style="max-height:460px;overflow-y:auto">
         <table class="w-full text-xs text-left text-gray-300">
             <thead class="uppercase bg-gray-700 sticky top-0 z-10 text-gray-300">
                 <tr>
                     <th class="px-3 py-3" style="min-width:110px">NCT #</th>
-                    <th class="px-3 py-3" style="min-width:240px">Title</th>
+                    <th class="px-3 py-3" style="min-width:230px">Title</th>
                     <th class="px-3 py-3 text-center" style="min-width:120px">Status</th>
                     <th class="px-3 py-3" style="min-width:80px">Phase</th>
-                    <th class="px-3 py-3" style="min-width:170px">Sponsor</th>
-                    <th class="px-3 py-3" style="min-width:85px">Start</th>
+                    <th class="px-3 py-3" style="min-width:160px">Sponsor</th>
+                    <th class="px-3 py-3" style="min-width:80px">Start</th>
                     <th class="px-3 py-3 text-right" style="min-width:80px">Enrolled</th>
                 </tr>
             </thead>
             <tbody id="tBody"></tbody>
         </table>
     </div>
-    <!-- Mobile cards -->
-    <div id="cardList" class="p-3 space-y-2" style="max-height:500px;overflow-y:auto;-webkit-overflow-scrolling:touch;"></div>
+    <div id="cardList" class="p-3 space-y-2" style="max-height:480px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
     <div class="p-3 text-center border-t border-gray-700">
-        <button id="loadMoreBtn" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-sm font-medium px-6 py-2 rounded touch-manipulation">
-            Load More
-        </button>
+        <button id="loadMoreBtn" class="bg-gray-700 hover:bg-gray-600 active:bg-gray-500 text-white text-sm font-medium px-6 py-2 rounded touch-manipulation">Load More</button>
     </div>
 </div>
 
 <script>
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-// MOBILE: fetch max 5 pages (5,000 records) — prevents OOM crash on Safari/low-RAM Android
-// DESKTOP: fetch up to 50 pages (50,000 records)
-const isMobile   = () => window.innerWidth < 769;
-const MAX_PAGES  = isMobile() ? 5 : 50;
-const PAGE_SIZE  = 25;           // rows rendered per batch
-const API_BASE   = 'https://clinicaltrials.gov/api/v2/studies';
-const API_QUERY  = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
+// ─── DEVICE DETECTION ────────────────────────────────────────────────────────
+const IS_MOBILE  = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 769;
+const IS_SAFARI  = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const IS_IOS     = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-const PAL = { blue:'#00ACFF', teal:'#00DAC8', navy:'#001E63', lime:'#CAFF5E', sky:'#6EC3FA' };
+// Safari on iOS is the most memory-constrained — fetch only 2 pages (2,000 records).
+// Other mobile gets 5 pages. Desktop gets 50.
+const MAX_PAGES  = IS_IOS ? 2 : (IS_MOBILE ? 5 : 50);
+const PAGE_SIZE  = 25;
 
-// ─── STATE ────────────────────────────────────────────────────────────────────
-let allTrials     = [];   // full fetched dataset (capped by MAX_PAGES)
-let filtered      = [];   // indices into allTrials after filtering
-let displayed     = 0;
-let totalFetched  = 0;    // actual records from API (may be > allTrials.length if capped)
+const API_BASE  = 'https://clinicaltrials.gov/api/v2/studies';
+const API_QUERY = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
 
-// ─── CHARTS ───────────────────────────────────────────────────────────────────
-let CH = {};
-function initCharts() {
-    Chart.register(ChartDataLabels);
-    const noAnim = {duration:0};
-    const grid   = 'rgba(255,255,255,0.06)';
-    const tick   = {color:'#9ca3af', font:{size:10}};
-    const base   = {
-        responsive:true, maintainAspectRatio:false, animation:noAnim,
-        plugins:{legend:{display:false}, datalabels:{display:false}, tooltip:{enabled:true}},
-        scales:{x:{ticks:tick,grid:{color:grid}}, y:{ticks:tick,grid:{color:grid}}}
-    };
-    const horiz = {...base, indexAxis:'y'};
-    const dl = {display:!isMobile(), color:'#FFF', anchor:'end', align:'end', font:{weight:'bold',size:10}};
+const PAL = {blue:'#00ACFF',teal:'#00DAC8',navy:'#001E63',lime:'#CAFF5E',sky:'#6EC3FA'};
 
-    CH.ph = new Chart(document.getElementById('cPh'),{
-        type:'doughnut',
-        data:{labels:[],datasets:[{data:[],backgroundColor:[PAL.blue,PAL.teal,PAL.lime,PAL.sky,PAL.navy],borderColor:'#1f2937',borderWidth:2}]},
-        options:{responsive:true,maintainAspectRatio:false,animation:noAnim,
-            plugins:{legend:{display:false},datalabels:{
-                display:true,
-                formatter:(v,ctx)=>{
-                    const tot=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-                    const p=v/tot*100; if(p<5)return'';
-                    let l=ctx.chart.data.labels[ctx.dataIndex];
-                    return (l.includes('Not Applicable')?'N/A':l.replace('Phase ','P'))+'\n'+p.toFixed(0)+'%';
-                },
-                color:ctx=>{const c=ctx.dataset.backgroundColor[ctx.dataIndex]||'#FFF';const r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16);return(r*299+g*587+b*114)/1000>155?PAL.navy:'#FFF';},
-                textAlign:'center',font:{weight:'bold',size:10,family:'Inter'}
-            }}}
-    });
-    CH.st = new Chart(document.getElementById('cSt'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.blue,borderRadius:3}]},options:{...base,plugins:{...base.plugins}}});
-    CH.tm = new Chart(document.getElementById('cTm'),{type:'line',data:{labels:[],datasets:[{data:[],borderColor:PAL.teal,backgroundColor:'rgba(0,218,200,0.1)',tension:0.3,fill:true,pointRadius:2}]},options:{...base,plugins:{...base.plugins}}});
-    CH.sp = new Chart(document.getElementById('cSp'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.sky,borderRadius:3}]},options:{...horiz,plugins:{legend:{display:false},datalabels:dl,tooltip:{enabled:true}}}});
-    CH.co = new Chart(document.getElementById('cCo'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.lime,borderRadius:3}]},options:{...horiz,plugins:{legend:{display:false},datalabels:dl,tooltip:{enabled:true}}}});
-}
+// ─── STATE — intentionally minimal ───────────────────────────────────────────
+// Each trial stored as a plain flat object with only the 7 fields we need.
+// No nested arrays, no raw API objects kept anywhere.
+let trials  = [];   // ALL fetched & parsed trials
+let view    = [];   // indices into trials[] after current filter
+let shown   = 0;
+let CH      = {};
 
-// ─── FETCH (main thread, no worker — avoids worker memory overhead on mobile) ──
+// ─── FETCH ────────────────────────────────────────────────────────────────────
 async function fetchData() {
-    showProgress(true);
-    let token = null, page = 1, studies = [];
+    showProgress(true, 0);
+    let token = null, page = 0;
+
     try {
         do {
-            const url = API_BASE + '?pageSize=1000&' + API_QUERY + (token ? '&pageToken=' + token : '');
-            setProgressUI(page);
-            const r = await fetch(url);
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            const d = await r.json();
-            if (d.studies) {
-                // Parse each study immediately, discard raw object to free memory
-                for (const s of d.studies) {
-                    const p = s.protocolSection;
-                    const conds = p.conditionsModule?.conditions || [];
-                    allTrials.push({
-                        nct:        p.identificationModule?.nctId || 'N/A',
-                        title:      p.identificationModule?.officialTitle || 'No title',
-                        status:     p.statusModule?.overallStatus || 'Unknown',
-                        phase:      p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
-                        sponsor:    p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
-                        startDate:  p.statusModule?.startDateStruct?.date || 'N/A',
-                        enrollment: p.designModule?.enrollmentInfo?.count || 0,
-                        condStr:    conds.join('\x1f').toLowerCase(), // compact, no array overhead
-                    });
-                }
-                // Explicitly null out the raw data so GC can reclaim it before next fetch
-                d.studies = null;
-            }
-            totalFetched += 1000; // approximate
-            token = d.nextPageToken;
             page++;
-            // Yield to browser every page so it can breathe / GC
-            await new Promise(r => setTimeout(r, 0));
-        } while (token && page <= MAX_PAGES);
+            const url = API_BASE + '?pageSize=1000&' + API_QUERY + (token ? '&pageToken=' + token : '');
+            showProgress(true, page);
 
-        showProgress(false);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-        // Show cap notice on mobile if we hit the limit
-        if (isMobile() && token) {
+            // ── CRITICAL: parse → extract → discard immediately ──────────────
+            // We never hold both the raw JSON and the parsed array at the same time.
+            // The raw `data` reference is dropped at the end of this block.
+            const data = await resp.json();
+            const raw  = data.studies || [];
+            token      = data.nextPageToken;   // save token before nulling
+            // data is now unreachable after this block → GC can collect it
+
+            for (let i = 0; i < raw.length; i++) {
+                const s  = raw[i];
+                const p  = s.protocolSection;
+                const id = p.identificationModule;
+                const st = p.statusModule;
+                const ds = p.designModule;
+                const sc = p.sponsorCollaboratorsModule;
+                const cc = p.conditionsModule;
+
+                // Build compact string for search instead of keeping conditions array
+                const condStr = cc?.conditions ? cc.conditions.join('\x1f').toLowerCase() : '';
+
+                trials.push({
+                    nct:   id?.nctId        || 'N/A',
+                    title: id?.officialTitle || 'No title',
+                    sta:   st?.overallStatus || 'Unknown',       // 'sta' = short key = less heap
+                    pha:   ds?.phases?.at(-1)|| 'Not Applicable',
+                    spon:  sc?.leadSponsor?.name || 'N/A',
+                    date:  st?.startDateStruct?.date || 'N/A',
+                    enr:   ds?.enrollmentInfo?.count || 0,
+                    cs:    condStr,
+                });
+
+                // Null out reference to help GC during long loops
+                raw[i] = null;
+            }
+            // raw array is now all-nulls — explicitly drop it
+            raw.length = 0;
+
+            // Yield to browser: lets Safari run GC + keeps UI alive
+            // Two rAF cycles is more reliable than setTimeout(0) on iOS
+            await raf(); await raf();
+
+        } while (token && page < MAX_PAGES);
+
+        showProgress(false, 0);
+
+        if (token) {  // we hit the cap
             const notice = document.getElementById('capNotice');
-            notice.textContent = `Showing ${allTrials.length.toLocaleString()} of ~${Math.round(page * 1000).toLocaleString()}+ trials. Use filters to narrow results.`;
+            notice.textContent = `Showing ${trials.length.toLocaleString()} most-recent trials on mobile. Use filters to narrow results, or open on desktop for full data.`;
             notice.classList.remove('hidden');
         }
 
         buildFilterOptions();
         applyFilters();
 
-    } catch(e) {
-        showProgress(false);
-        showError('Failed to load: ' + e.message);
+    } catch (e) {
+        showProgress(false, 0);
+        showError('Failed to load data: ' + e.message);
     }
 }
 
-// ─── FILTER & AGGREGATE ───────────────────────────────────────────────────────
+// Two-frame yield — more reliable than setTimeout on iOS Safari
+function raf() { return new Promise(r => requestAnimationFrame(r)); }
+
+// ─── FILTERING & AGGREGATION ─────────────────────────────────────────────────
 function applyFilters() {
-    const kw = document.getElementById('fKw').value.toLowerCase().trim();
-    const st = document.getElementById('fSt').value;
-    const ph = document.getElementById('fPh').value;
-    const dt = document.getElementById('fDt').value;
-    const sp = document.getElementById('fSp').value.toLowerCase().trim();
+    const kw = g('fKw').value.toLowerCase().trim();
+    const st = g('fSt').value;
+    const ph = g('fPh').value;
+    const dt = g('fDt').value;
+    const sp = g('fSp').value.toLowerCase().trim();
 
-    // Count active filters for badge
     const active = [kw,st,ph,dt,sp].filter(Boolean).length;
-    const badge = document.getElementById('activeFilterBadge');
+    const badge  = g('fBadge');
     badge.textContent = active;
-    active > 0 ? badge.classList.remove('hidden') : badge.classList.add('hidden');
+    active ? badge.classList.remove('hidden') : badge.classList.add('hidden');
 
-    filtered = [];
-    for (let i = 0; i < allTrials.length; i++) {
-        const t = allTrials[i];
-        if (kw && !(t.nct.includes(kw) || t.title.toLowerCase().includes(kw) ||
-                    t.sponsor.toLowerCase().includes(kw) || t.condStr.includes(kw))) continue;
-        if (st && t.status   !== st) continue;
-        if (ph && t.phase    !== ph) continue;
-        if (dt && t.startDate !== 'N/A' && t.startDate < dt) continue;
-        if (sp && !t.sponsor.toLowerCase().includes(sp)) continue;
-        filtered.push(i);
+    view = [];
+    for (let i = 0; i < trials.length; i++) {
+        const t = trials[i];
+        if (kw && !(t.nct.toLowerCase().includes(kw) || t.title.toLowerCase().includes(kw) ||
+                    t.spon.toLowerCase().includes(kw) || t.cs.includes(kw))) continue;
+        if (st && t.sta  !== st) continue;
+        if (ph && t.pha  !== ph) continue;
+        if (dt && t.date !== 'N/A' && t.date < dt) continue;
+        if (sp && !t.spon.toLowerCase().includes(sp)) continue;
+        view.push(i);
     }
 
-    // Sort descending by date
-    filtered.sort((a,b)=>{
-        const da=allTrials[a].startDate, db=allTrials[b].startDate;
-        if(!da||da==='N/A') return 1; if(!db||db==='N/A') return -1;
+    view.sort((a,b) => {
+        const da = trials[a].date, db = trials[b].date;
+        if (!da||da==='N/A') return  1;
+        if (!db||db==='N/A') return -1;
         return db.localeCompare(da);
     });
 
-    updateKPIs();
-    updateCharts();
-    displayed = 0;
+    calcKPIs();
+    calcCharts();
+    shown = 0;
     clearList();
     renderBatch();
 }
 
-function updateKPIs() {
-    let rec=0, comp=0, enroll=0;
-    for (const i of filtered) {
-        const t = allTrials[i];
-        if (t.status==='RECRUITING') rec++;
-        if (t.status==='COMPLETED')  comp++;
-        enroll += t.enrollment||0;
+function calcKPIs() {
+    let rec=0,comp=0,enr=0;
+    for (const i of view) {
+        const t=trials[i];
+        if(t.sta==='RECRUITING') rec++;
+        if(t.sta==='COMPLETED')  comp++;
+        enr += t.enr;
     }
-    document.getElementById('kTotal').textContent = filtered.length.toLocaleString();
-    document.getElementById('kRec').textContent   = rec.toLocaleString();
-    document.getElementById('kComp').textContent  = comp.toLocaleString();
-    document.getElementById('kPart').textContent  = enroll.toLocaleString();
+    g('kTotal').textContent = view.length.toLocaleString();
+    g('kRec').textContent   = rec.toLocaleString();
+    g('kComp').textContent  = comp.toLocaleString();
+    g('kPart').textContent  = enr.toLocaleString();
 }
 
-function updateCharts() {
+function calcCharts() {
     const ph={},st={},ti={},sp={},co={};
-    for (const i of filtered) {
-        const t = allTrials[i];
-        ph[t.phase]  = (ph[t.phase] ||0)+1;
-        st[t.status] = (st[t.status]||0)+1;
-        if (t.startDate&&t.startDate!=='N/A'){const y=t.startDate.slice(0,4);ti[y]=(ti[y]||0)+1;}
-        if (t.sponsor&&t.sponsor!=='N/A') sp[t.sponsor]=(sp[t.sponsor]||0)+1;
-        if (t.condStr) t.condStr.split('\x1f').forEach(c=>{if(c)co[c]=(co[c]||0)+1;});
+    for (const i of view) {
+        const t = trials[i];
+        ph[t.pha] = (ph[t.pha]||0)+1;
+        st[t.sta] = (st[t.sta]||0)+1;
+        if (t.date&&t.date!=='N/A'){const y=t.date.slice(0,4);ti[y]=(ti[y]||0)+1;}
+        if (t.spon&&t.spon!=='N/A') sp[t.spon]=(sp[t.spon]||0)+1;
+        if (t.cs) t.cs.split('\x1f').forEach(c=>{if(c&&!c.includes('healthy'))co[c]=(co[c]||0)+1;});
     }
     const topSp = Object.entries(sp).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
-    const topCo = Object.entries(co).filter(([c])=>!c.includes('healthy')).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
+    const topCo = Object.entries(co).sort(([,a],[,b])=>b-a).slice(0,10).reverse();
     const sPh   = Object.entries(ph).sort(([,a],[,b])=>b-a);
     const sSt   = Object.entries(st).sort(([,a],[,b])=>b-a);
-    const sYr   = Object.keys(ti).sort((a,b)=>a-b);
+    const sYr   = Object.keys(ti).sort();
 
-    set(CH.ph, sPh.map(p=>p[0]),        sPh.map(p=>p[1]));
-    set(CH.st, sSt.map(s=>s[0].replace(/_/g,' ')), sSt.map(s=>s[1]));
-    set(CH.tm, sYr,                      sYr.map(y=>ti[y]));
-    set(CH.sp, topSp.map(s=>s[0]),       topSp.map(s=>s[1]));
-    set(CH.co, topCo.map(c=>c[0]),       topCo.map(c=>c[1]));
+    upd(CH.ph, sPh.map(p=>p[0]),  sPh.map(p=>p[1]));
+    upd(CH.st, sSt.map(s=>s[0].replace(/_/g,' ')), sSt.map(s=>s[1]));
+    upd(CH.tm, sYr, sYr.map(y=>ti[y]));
+    upd(CH.sp, topSp.map(s=>s[0]), topSp.map(s=>s[1]));
+    upd(CH.co, topCo.map(c=>c[0]), topCo.map(c=>c[1]));
 }
 
-function set(ch, labels, data) {
-    ch.data.labels = labels;
-    ch.data.datasets[0].data = data;
-    ch.update('none');
-}
+function upd(ch, labels, data){ch.data.labels=labels;ch.data.datasets[0].data=data;ch.update('none');}
 
-// ─── RENDER LIST ──────────────────────────────────────────────────────────────
-const STATUS_STYLE = {
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+const BADGE_STYLE = {
     RECRUITING:         `background:${PAL.lime};color:${PAL.navy}`,
     COMPLETED:          `background:${PAL.sky};color:${PAL.navy}`,
     TERMINATED:         'background:#F87171;color:#7f1d1d',
     NOT_YET_RECRUITING: 'background:#FBBF24;color:#78350f',
 };
-const badgeStyle = s => STATUS_STYLE[s] || 'background:#4B5563;color:#F9FAFB';
+const bs = s => BADGE_STYLE[s]||'background:#4B5563;color:#F9FAFB';
 
-function clearList() {
-    document.getElementById('tBody').innerHTML    = '';
-    document.getElementById('cardList').innerHTML = '';
-}
+function clearList(){g('tBody').innerHTML='';g('cardList').innerHTML='';}
 
 function renderBatch() {
-    const batch = filtered.slice(displayed, displayed + PAGE_SIZE);
-    if (!batch.length) { setCount(); return; }
+    const batch = view.slice(shown, shown + PAGE_SIZE);
+    if (!batch.length){ setCount(); return; }
 
-    if (isMobile()) {
-        const c = document.getElementById('cardList');
+    if (IS_MOBILE) {
+        const c = g('cardList');
         const f = document.createDocumentFragment();
         for (const i of batch) {
-            const t = allTrials[i];
+            const t = trials[i];
             const d = document.createElement('div');
             d.className = 'card';
-            d.innerHTML = `<div class="flex items-start justify-between gap-2 mb-1">
-                <a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="text-blue-400 text-xs font-medium">${t.nct}</a>
-                <span class="badge" style="${badgeStyle(t.status)}">${t.status.replace(/_/g,' ')}</span>
-            </div>
-            <p class="text-gray-200 text-xs leading-snug mb-1">${t.title}</p>
-            <div class="flex flex-wrap gap-x-3 text-xs text-gray-400">
-                <span>${t.phase}</span><span>${t.startDate}</span>
-                <span>${(t.enrollment||0).toLocaleString()} enrolled</span>
-            </div>
-            <p class="text-xs text-gray-500 mt-0.5 truncate">${t.sponsor}</p>`;
+            d.innerHTML =
+                `<div class="flex items-start justify-between gap-2 mb-1">
+                    <a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="text-blue-400 text-xs font-medium">${t.nct}</a>
+                    <span class="badge" style="${bs(t.sta)}">${t.sta.replace(/_/g,' ')}</span>
+                 </div>
+                 <p class="text-gray-200 text-xs leading-snug mb-1">${t.title}</p>
+                 <div class="flex flex-wrap gap-x-3 text-xs text-gray-400">
+                    <span>${t.pha}</span><span>${t.date}</span><span>${t.enr.toLocaleString()} enrolled</span>
+                 </div>
+                 <p class="text-xs text-gray-500 mt-0.5 truncate">${t.spon}</p>`;
             f.appendChild(d);
         }
         c.appendChild(f);
     } else {
-        const b = document.getElementById('tBody');
+        const b = g('tBody');
         const f = document.createDocumentFragment();
         for (const i of batch) {
-            const t = allTrials[i];
+            const t = trials[i];
             const r = document.createElement('tr');
             r.className = 'border-b border-gray-700/40 hover:bg-gray-700/30';
-            r.innerHTML = `<td class="px-3 py-2 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="text-blue-400 hover:underline">${t.nct}</a></td>
-                <td class="px-3 py-2">${t.title}</td>
-                <td class="px-3 py-2 text-center"><span class="badge" style="${badgeStyle(t.status)}">${t.status.replace(/_/g,' ')}</span></td>
-                <td class="px-3 py-2 whitespace-nowrap">${t.phase}</td>
-                <td class="px-3 py-2">${t.sponsor}</td>
-                <td class="px-3 py-2 whitespace-nowrap">${t.startDate}</td>
-                <td class="px-3 py-2 text-right">${(t.enrollment||0).toLocaleString()}</td>`;
+            r.innerHTML =
+                `<td class="px-3 py-2 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${t.nct}" target="_blank" class="text-blue-400 hover:underline">${t.nct}</a></td>
+                 <td class="px-3 py-2">${t.title}</td>
+                 <td class="px-3 py-2 text-center"><span class="badge" style="${bs(t.sta)}">${t.sta.replace(/_/g,' ')}</span></td>
+                 <td class="px-3 py-2 whitespace-nowrap">${t.pha}</td>
+                 <td class="px-3 py-2">${t.spon}</td>
+                 <td class="px-3 py-2 whitespace-nowrap">${t.date}</td>
+                 <td class="px-3 py-2 text-right">${t.enr.toLocaleString()}</td>`;
             f.appendChild(r);
         }
         b.appendChild(f);
     }
 
-    displayed += batch.length;
+    shown += batch.length;
     setCount();
 }
 
-function setCount() {
-    document.getElementById('recCount').textContent =
-        `Showing ${displayed.toLocaleString()} of ${filtered.length.toLocaleString()}`;
-    document.getElementById('loadMoreBtn').style.display = displayed < filtered.length ? 'inline-block' : 'none';
+function setCount(){
+    g('recCount').textContent = `Showing ${shown.toLocaleString()} of ${view.length.toLocaleString()}`;
+    g('loadMoreBtn').style.display = shown < view.length ? 'inline-block' : 'none';
 }
 
 // ─── FILTER OPTIONS ───────────────────────────────────────────────────────────
 function buildFilterOptions() {
-    const statuses  = [...new Set(allTrials.map(t=>t.status))].sort();
-    const phases    = [...new Set(allTrials.map(t=>t.phase))].sort((a,b)=>{
+    const statuses = [...new Set(trials.map(t=>t.sta))].sort();
+    const phases   = [...new Set(trials.map(t=>t.pha))].sort((a,b)=>{
         if(a.includes('Not Applicable'))return -1; if(b.includes('Not Applicable'))return 1; return a.localeCompare(b);
     });
-    const sponsors  = [...new Set(allTrials.map(t=>t.sponsor).filter(s=>s&&s!=='N/A'))].sort();
+    const sponsors = [...new Set(trials.map(t=>t.spon).filter(s=>s&&s!=='N/A'))].sort();
 
-    const s1 = document.getElementById('fSt'), s2 = document.getElementById('fPh');
-    const dl = document.getElementById('spList');
-    s1.length = s2.length = 1; dl.innerHTML = '';
-    statuses.forEach(s => s1.add(new Option(s.replace(/_/g,' '),s)));
-    phases.forEach(p   => s2.add(new Option(p,p)));
-    const frag = document.createDocumentFragment();
-    sponsors.forEach(s => frag.appendChild(new Option(s,s)));
+    const s1=g('fSt'),s2=g('fPh'),dl=g('spList');
+    s1.length=s2.length=1; dl.innerHTML='';
+    statuses.forEach(s=>s1.add(new Option(s.replace(/_/g,' '),s)));
+    phases.forEach(p=>s2.add(new Option(p,p)));
+    const frag=document.createDocumentFragment();
+    sponsors.forEach(s=>frag.appendChild(new Option(s,s)));
     dl.appendChild(frag);
-    document.getElementById('filterSet').disabled = false;
+    g('filterSet').disabled = false;
 }
 
-// ─── UTILITIES ────────────────────────────────────────────────────────────────
-function debounce(fn, ms){ let t; return (...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}; }
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+function initCharts() {
+    Chart.register(ChartDataLabels);
+    const na={duration:0}, grid='rgba(255,255,255,0.06)', tick={color:'#9ca3af',font:{size:10}};
+    const base={responsive:true,maintainAspectRatio:false,animation:na,
+        plugins:{legend:{display:false},datalabels:{display:false},tooltip:{enabled:true}},
+        scales:{x:{ticks:tick,grid:{color:grid}},y:{ticks:tick,grid:{color:grid}}}};
+    const hz={...base,indexAxis:'y'};
+    const dl={display:!IS_MOBILE,color:'#FFF',anchor:'end',align:'end',font:{weight:'bold',size:10}};
 
-function showProgress(on) {
-    document.getElementById('progressWrap').classList.toggle('hidden', !on);
-    document.getElementById('filterSet').disabled = on;
+    CH.ph = new Chart(g('cPh'),{type:'doughnut',
+        data:{labels:[],datasets:[{data:[],backgroundColor:[PAL.blue,PAL.teal,PAL.lime,PAL.sky,PAL.navy],borderColor:'#1f2937',borderWidth:2}]},
+        options:{responsive:true,maintainAspectRatio:false,animation:na,
+            plugins:{legend:{display:false},datalabels:{display:true,
+                formatter:(v,ctx)=>{
+                    const tot=ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                    const p=v/tot*100; if(p<5)return'';
+                    let l=ctx.chart.data.labels[ctx.dataIndex];
+                    return(l.includes('Not Applicable')?'N/A':l.replace('Phase ','P'))+'\n'+p.toFixed(0)+'%';
+                },
+                color:ctx=>{const c=ctx.dataset.backgroundColor[ctx.dataIndex]||'#FFF';const r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16);return(r*299+g*587+b*114)/1000>155?PAL.navy:'#FFF';},
+                textAlign:'center',font:{weight:'bold',size:10,family:'Inter'}}}}});
+
+    CH.st = new Chart(g('cSt'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.blue,borderRadius:3}]},options:{...base}});
+    CH.tm = new Chart(g('cTm'),{type:'line',data:{labels:[],datasets:[{data:[],borderColor:PAL.teal,backgroundColor:'rgba(0,218,200,0.1)',tension:0.3,fill:true,pointRadius:2}]},options:{...base}});
+    CH.sp = new Chart(g('cSp'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.sky,borderRadius:3}]},options:{...hz,plugins:{legend:{display:false},datalabels:dl,tooltip:{enabled:true}}}});
+    CH.co = new Chart(g('cCo'),{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:PAL.lime,borderRadius:3}]},options:{...hz,plugins:{legend:{display:false},datalabels:dl,tooltip:{enabled:true}}}});
 }
-function setProgressUI(page) {
-    const pct = Math.min((page / MAX_PAGES) * 90, 90);
-    document.getElementById('progressBar').style.width = pct + '%';
-    document.getElementById('progressLbl').textContent = 'Fetching data\u2026';
-    document.getElementById('progressDetail').textContent = `Page ${page} of ~${MAX_PAGES}`;
+
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+const g = id => document.getElementById(id);
+
+function showProgress(on, page) {
+    g('progressWrap').classList.toggle('hidden', !on);
+    g('filterSet').disabled = on;
+    if (on && page > 0) {
+        const pct = Math.min((page / MAX_PAGES) * 90, 90);
+        g('progressBar').style.width = pct + '%';
+        g('progressLbl').textContent  = 'Fetching data\u2026';
+        g('progressDetail').textContent = `Page ${page} of ${MAX_PAGES}`;
+    }
 }
-function showError(msg) {
-    document.getElementById('cardList').innerHTML = `<p class="text-red-400 p-4 text-sm">${msg}</p>`;
-    document.getElementById('tBody').innerHTML    = `<tr><td colspan="7" class="p-4 text-red-400 text-sm">${msg}</td></tr>`;
+
+function showError(msg){
+    g('cardList').innerHTML=`<p class="text-red-400 p-4 text-sm">${msg}</p>`;
+    g('tBody').innerHTML=`<tr><td colspan="7" class="p-4 text-red-400 text-sm">${msg}</td></tr>`;
 }
+
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
 
 // ─── BOOT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('dateLbl').textContent =
-        new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-    document.getElementById('filterSet').disabled = true;
-
+    g('dateLbl').textContent = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    g('filterSet').disabled  = true;
     initCharts();
 
     // Filter panel toggle
-    document.getElementById('filterToggle').addEventListener('click', () => {
-        const body    = document.getElementById('filterBody');
-        const chevron = document.getElementById('filterChevron');
-        const btn     = document.getElementById('filterToggle');
-        const open    = body.classList.contains('grid');
-        body.classList.toggle('grid', !open);
-        body.classList.toggle('hidden', open);
-        chevron.style.transform = open ? '' : 'rotate(180deg)';
-        btn.setAttribute('aria-expanded', String(!open));
+    g('filterToggle').addEventListener('click', () => {
+        const body = g('filterBody');
+        const open = body.classList.contains('grid');
+        body.classList.toggle('grid',!open); body.classList.toggle('hidden',open);
+        g('fChevron').style.transform = open ? '' : 'rotate(180deg)';
+        g('filterToggle').setAttribute('aria-expanded', String(!open));
     });
-
-    // On desktop, show filters open by default
-    if (!isMobile()) {
-        const body = document.getElementById('filterBody');
-        body.classList.add('grid'); body.classList.remove('hidden');
-        document.getElementById('filterChevron').style.transform = 'rotate(180deg)';
-        document.getElementById('filterToggle').setAttribute('aria-expanded','true');
+    if (!IS_MOBILE){
+        const body=g('filterBody'); body.classList.add('grid'); body.classList.remove('hidden');
+        g('fChevron').style.transform='rotate(180deg)';
+        g('filterToggle').setAttribute('aria-expanded','true');
     }
 
-    const delay = isMobile() ? 700 : 300;
+    const delay = IS_IOS ? 800 : IS_MOBILE ? 600 : 300;
     const db = debounce(applyFilters, delay);
-    document.getElementById('fKw').addEventListener('input', db);
-    document.getElementById('fSp').addEventListener('input', db);
-    document.getElementById('fSt').addEventListener('change', applyFilters);
-    document.getElementById('fPh').addEventListener('change', applyFilters);
-    document.getElementById('fDt').addEventListener('change', applyFilters);
-    document.getElementById('resetBtn').addEventListener('click', () => {
-        ['fKw','fSt','fPh','fDt','fSp'].forEach(id => document.getElementById(id).value = '');
+    g('fKw').addEventListener('input', db);
+    g('fSp').addEventListener('input', db);
+    g('fSt').addEventListener('change', applyFilters);
+    g('fPh').addEventListener('change', applyFilters);
+    g('fDt').addEventListener('change', applyFilters);
+    g('resetBtn').addEventListener('click', () => {
+        ['fKw','fSt','fPh','fDt','fSp'].forEach(id=>g(id).value='');
         applyFilters();
     });
-    document.getElementById('loadMoreBtn').addEventListener('click', () => {
-        requestAnimationFrame(renderBatch);
-    });
+    g('loadMoreBtn').addEventListener('click', () => requestAnimationFrame(renderBatch));
 
     fetchData();
 });
