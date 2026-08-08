@@ -199,66 +199,80 @@ let allTrials = [];
 let filtered  = [];
 
 function applyFilters(f) {
-    const kw = f.keyword;
-    const sp = f.sponsorQuery;
+    const kw = (f.keyword || '').toLowerCase();
+    const sp = (f.sponsorQuery || '').toLowerCase();
+    const startCutoff = f.startDateString || '';
     filtered = [];
+
     for (let i = 0; i < allTrials.length; i++) {
         const t = allTrials[i];
         if (kw && !(
-            (t.nct     && t.nct.includes(kw))    ||
-            (t.title   && t.title.includes(kw))   ||
-            (t.sponsor && t.sponsor.includes(kw)) ||
-            (t.condStr && t.condStr.includes(kw))
+            (t.nct && t.nct.toLowerCase().includes(kw)) ||
+            (t.title && t.title.toLowerCase().includes(kw)) ||
+            (t.sponsorLower && t.sponsorLower.includes(kw)) ||
+            (t.searchText && t.searchText.includes(kw))
         )) continue;
+
         if (f.status && t.status !== f.status) continue;
-        if (f.phase  && t.phase  !== f.phase)  continue;
-        if (f.startDateString && t.startDate && t.startDate !== 'N/A' && t.startDate < f.startDateString) continue;
-        if (sp && t.sponsor && !t.sponsor.includes(sp)) continue;
+        if (f.phase && t.phase !== f.phase) continue;
+        if (startCutoff && t.startDate && t.startDate !== 'N/A' && t.startDate < startCutoff) continue;
+        if (sp && t.sponsorLower && !t.sponsorLower.includes(sp)) continue;
+
         filtered.push(i);
     }
+
     filtered.sort((a, b) => {
         const da = allTrials[a].startDate, db = allTrials[b].startDate;
-        if (!da || da === 'N/A') return  1;
+        if (!da || da === 'N/A') return 1;
         if (!db || db === 'N/A') return -1;
         return db.localeCompare(da);
     });
 }
 
 function buildCharts() {
-    const ph={}, st={}, ti={}, sp={}, co={};
+    const ph = {}, st = {}, ti = {}, sp = {}, co = {};
     for (const i of filtered) {
         const t = allTrials[i];
-        ph[t.phase]   = (ph[t.phase]  || 0) + 1;
-        st[t.status]  = (st[t.status] || 0) + 1;
+        ph[t.phase] = (ph[t.phase] || 0) + 1;
+        st[t.status] = (st[t.status] || 0) + 1;
+
         if (t.startDate && t.startDate !== 'N/A') {
             const y = t.startDate.slice(0, 4);
             ti[y] = (ti[y] || 0) + 1;
         }
+
         if (t.sponsor && t.sponsor !== 'N/A') sp[t.sponsor] = (sp[t.sponsor] || 0) + 1;
-        if (t.conditions) t.conditions.forEach(c => { co[c] = (co[c] || 0) + 1; });
+        if (t.conditions) {
+            for (let j = 0; j < t.conditions.length; j++) {
+                const c = t.conditions[j];
+                if (c && !c.toLowerCase().includes('healthy')) {
+                    co[c] = (co[c] || 0) + 1;
+                }
+            }
+        }
     }
-    const topSp   = Object.entries(sp).sort(([,a],[,b]) => b-a).slice(0,10).reverse();
-    const topCo   = Object.entries(co)
-        .filter(([c]) => !c.toLowerCase().includes('healthy'))
-        .sort(([,a],[,b]) => b-a).slice(0,10).reverse();
-    const sortedPh = Object.entries(ph).sort(([,a],[,b]) => b-a);
-    const sortedSt = Object.entries(st).sort(([,a],[,b]) => b-a);
-    const sortedYr = Object.keys(ti).sort((a,b) => a-b);
+
+    const topSp = Object.entries(sp).sort(([, a], [, b]) => b - a).slice(0, 10).reverse();
+    const topCo = Object.entries(co).sort(([, a], [, b]) => b - a).slice(0, 10).reverse();
+    const sortedPh = Object.entries(ph).sort(([, a], [, b]) => b - a);
+    const sortedSt = Object.entries(st).sort(([, a], [, b]) => b - a);
+    const sortedYr = Object.keys(ti).sort((a, b) => a - b);
+
     return {
-        phase:      { labels: sortedPh.map(p=>p[0]), data: sortedPh.map(p=>p[1]) },
-        status:     { labels: sortedSt.map(s=>s[0]), data: sortedSt.map(s=>s[1]) },
-        time:       { labels: sortedYr,               data: sortedYr.map(y=>ti[y]) },
-        sponsor:    { labels: topSp.map(s=>s[0]),     data: topSp.map(s=>s[1]) },
-        conditions: { labels: topCo.map(c=>c[0]),     data: topCo.map(c=>c[1]) }
+        phase: { labels: sortedPh.map(p => p[0]), data: sortedPh.map(p => p[1]) },
+        status: { labels: sortedSt.map(s => s[0]), data: sortedSt.map(s => s[1]) },
+        time: { labels: sortedYr, data: sortedYr.map(y => ti[y]) },
+        sponsor: { labels: topSp.map(s => s[0]), data: topSp.map(s => s[1]) },
+        conditions: { labels: topCo.map(c => c[0]), data: topCo.map(c => c[1]) }
     };
 }
 
 function buildKPIs() {
-    let rec=0, comp=0, enroll=0;
+    let rec = 0, comp = 0, enroll = 0;
     for (const i of filtered) {
         const t = allTrials[i];
         if (t.status === 'RECRUITING') rec++;
-        if (t.status === 'COMPLETED')  comp++;
+        if (t.status === 'COMPLETED') comp++;
         enroll += t.enrollment || 0;
     }
     return { totalTrials: filtered.length, recruitingTrials: rec, completedTrials: comp, totalParticipants: enroll };
