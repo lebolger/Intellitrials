@@ -416,9 +416,15 @@ function applyLocalFilter(rows) {
 }
 
 async function fetchRows() {
+    if (location.protocol === 'file:') {
+        throw new Error('This dashboard must be opened through the local web server. Run: python trial_db_server.py, then open http://127.0.0.1:8000/ctdb_sqlite.html');
+    }
+
     const params = new URLSearchParams({ limit: '50000' });
     const response = await fetch(`/api/trials?${params.toString()}`);
-    if (!response.ok) throw new Error('Failed to load data');
+    if (!response.ok) {
+        throw new Error('Failed to load data from /api/trials. Check that the local server is running.');
+    }
     const payload = await response.json();
     return payload.data || [];
 }
@@ -461,8 +467,9 @@ async function initPage() {
         populateFilters(state.rows);
         refreshView();
     } catch (err) {
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-sm">${err.message}</td></tr>`;
-        document.getElementById('mobileCards').innerHTML = `<p class="text-red-400 p-4 text-sm">${err.message}</p>`;
+        const summary = err && err.message ? err.message : 'Unknown data load error';
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-sm">${summary}</td></tr>`;
+        document.getElementById('mobileCards').innerHTML = `<p class="text-red-400 p-4 text-sm">${summary}</p>`;
     }
 }
 
