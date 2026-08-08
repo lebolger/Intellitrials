@@ -402,16 +402,38 @@ function applyLocalFilter(rows) {
 
 async function fetchRows() {
     if (location.protocol === 'file:') {
-        throw new Error('This dashboard must be opened through the local web server. Run: python trial_db_server.py, then open http://127.0.0.1:8000/ctdb_sqlite.html');
+        throw new Error('This dashboard must be opened through a web server. Use python trial_db_server.py for local testing, or load it from GitHub Pages.');
     }
 
-    const params = new URLSearchParams({ limit: '50000' });
-    const response = await fetch(`/api/trials?${params.toString()}`);
-    if (!response.ok) {
-        throw new Error('Failed to load data from /api/trials. Check that the local server is running.');
+    const staticUrl = new URL('./data/clinical_trials.json', window.location.href).toString();
+    const candidates = [];
+
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        candidates.push(`/api/trials?limit=50000`);
     }
-    const payload = await response.json();
-    return payload.data || [];
+
+    if (location.hostname.includes('github.io')) {
+        candidates.unshift(staticUrl);
+    } else {
+        candidates.push(staticUrl);
+    }
+
+    let lastError = null;
+    for (const url of candidates) {
+        try {
+            const response = await fetch(url, { cache: 'no-store' });
+            if (!response.ok) continue;
+            const payload = await response.json();
+            if (Array.isArray(payload)) return payload;
+            if (payload && Array.isArray(payload.data)) return payload.data;
+            if (payload && Array.isArray(payload.rows)) return payload.rows;
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    const detail = lastError ? lastError.message : 'No data source responded';
+    throw new Error(`Failed to load trial data. ${detail}`);
 }
 
 function refreshView() {
