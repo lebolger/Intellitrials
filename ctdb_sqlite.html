@@ -1,329 +1,472 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clinical Trials Dashboard (SQLite)</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #111827;
-      color: #e5e7eb;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    .topbar {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      margin: 0;
-      font-size: 2rem;
-    }
-    .filters {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      padding: 12px;
-      background: #1f2937;
-      border-radius: 10px;
-      margin-bottom: 18px;
-    }
-    label {
-      display: block;
-      font-size: 0.8rem;
-      margin-bottom: 6px;
-      color: #9ca3af;
-    }
-    input, select, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #374151;
-      background: #111827;
-      color: #fff;
-      font-size: 0.95rem;
-    }
-    button {
-      background: #2563eb;
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .card {
-      background: #1f2937;
-      border-radius: 10px;
-      padding: 16px;
-    }
-    .card .label {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      margin-bottom: 8px;
-    }
-    .card .value {
-      font-size: 1.8rem;
-      font-weight: 700;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #1f2937;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #374151;
-      text-align: left;
-      vertical-align: top;
-      font-size: 0.9rem;
-    }
-    th {
-      background: #111827;
-      position: sticky;
-      top: 0;
-    }
-    a {
-      color: #60a5fa;
-      text-decoration: none;
-    }
-    .status {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .muted {
-      color: #9ca3af;
-    }
-    @media (max-width: 640px) {
-      body { padding: 12px; }
-      h1 { font-size: 1.5rem; }
-      th, td { font-size: 0.78rem; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Clinical Trials Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #111827; -webkit-text-size-adjust: 100%; }
+        .chart-container { position: relative; height: 240px; width: 100%; }
+        @media (max-width: 640px) { .chart-container { height: 200px; } }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+        fieldset:disabled { opacity: 0.5; pointer-events: none; }
+        #filtersBody { display: none; }
+        .trial-card { background: #1f2937; border-radius: 8px; padding: 12px; border-left: 3px solid #00ACFF; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        @media (max-width: 768px) { #desktopTable { display: none; } #filtersBody { display: none; } }
+        @media (min-width: 769px) { #mobileCards { display: none; } #filtersBody { display: grid; } }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <div class="topbar">
-      <h1>Clinical Trials Dashboard</h1>
-      <div class="muted">SQLite-backed local data</div>
+<body class="text-gray-200 p-3 sm:p-4">
+    <header class="mb-4">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-1">
+            <div>
+                <h1 class="text-xl sm:text-3xl font-bold text-white">Clinical Trial Dashboard</h1>
+                <p class="text-xs sm:text-sm text-gray-400 mt-0.5">Industry-sponsored interventional trials &middot; <a href="https://clinicaltrials.gov" target="_blank" class="text-blue-400">ClinicalTrials.gov</a></p>
+            </div>
+            <div class="text-xs text-gray-500 shrink-0">Updated: <span id="lastUpdated"></span></div>
+        </div>
+    </header>
+
+    <div class="bg-gray-800 rounded-lg mb-4 overflow-hidden">
+        <button id="toggleBtn" aria-expanded="false"
+            class="w-full flex justify-between items-center p-2.5 text-left focus:outline-none">
+            <span class="text-xs font-semibold text-white flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h18M6 8h12M9 12h6"/>
+                </svg>
+                Filters
+            </span>
+            <svg id="toggleIcon" class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+        </button>
+        <fieldset id="filterSet">
+            <div id="filtersBody" class="flex flex-col xl:flex-row xl:items-end gap-2 p-2 border-t border-gray-700">
+                <div class="w-full xl:flex-1 min-w-0">
+                    <label class="hidden xl:block text-[9px] uppercase tracking-wide text-gray-400 mb-1">Keyword</label>
+                    <input type="search" id="fKeyword" autocomplete="off" inputmode="search"
+                        class="w-full bg-gray-700 border border-gray-600 rounded py-1.5 px-2 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search...">
+                </div>
+                <div class="w-full xl:flex-1 min-w-0">
+                    <label class="hidden xl:block text-[9px] uppercase tracking-wide text-gray-400 mb-1">Sponsor</label>
+                    <input type="text" id="fSponsor" list="sponsorList" autocomplete="off"
+                        class="w-full bg-gray-700 border border-gray-600 rounded py-1.5 px-2 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Sponsor...">
+                    <datalist id="sponsorList"></datalist>
+                </div>
+                <div class="w-full sm:w-[48%] xl:w-[140px] min-w-0">
+                    <label class="hidden xl:block text-[9px] uppercase tracking-wide text-gray-400 mb-1">Status</label>
+                    <select id="fStatus" class="w-full bg-gray-700 border border-gray-600 rounded py-1.5 px-2 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+                <div class="w-full sm:w-[48%] xl:w-[140px] min-w-0">
+                    <label class="hidden xl:block text-[9px] uppercase tracking-wide text-gray-400 mb-1">Phase</label>
+                    <select id="fPhase" class="w-full bg-gray-700 border border-gray-600 rounded py-1.5 px-2 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">All Phases</option>
+                    </select>
+                </div>
+                <div class="w-full sm:w-[48%] xl:w-[150px] min-w-0">
+                    <label class="hidden xl:block text-[9px] uppercase tracking-wide text-gray-400 mb-1">Start</label>
+                    <input type="date" id="fStartDate"
+                        class="w-full bg-gray-700 border border-gray-600 rounded py-1.5 px-2 text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="w-full sm:w-[48%] xl:w-[90px] min-w-0">
+                    <button id="resetBtn" class="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded py-1.5 px-2 text-white text-xs font-semibold touch-manipulation">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </fieldset>
     </div>
 
-    <div class="filters">
-      <div>
-        <label for="keyword">Keyword</label>
-        <input id="keyword" type="text" placeholder="NCT, title, condition, sponsor" />
-      </div>
-      <div>
-        <label for="sponsor">Sponsor</label>
-        <input id="sponsor" type="text" placeholder="Type sponsor name" />
-      </div>
-      <div>
-        <label for="status">Status</label>
-        <select id="status">
-          <option value="">All statuses</option>
-        </select>
-      </div>
-      <div>
-        <label for="phase">Phase</label>
-        <select id="phase">
-          <option value="">All phases</option>
-        </select>
-      </div>
-      <div>
-        <label for="start_date">Start date from</label>
-        <input id="start_date" type="date" />
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button id="resetBtn" type="button">Reset</button>
-      </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg">
+            <p class="text-gray-400 text-xs">Total Trials</p>
+            <p id="kTotal" class="text-2xl sm:text-3xl font-bold text-white mt-1">0</p>
+        </div>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg">
+            <p class="text-gray-400 text-xs">Recruiting</p>
+            <p id="kRecruiting" class="text-2xl sm:text-3xl font-bold text-green-400 mt-1">0</p>
+        </div>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg">
+            <p class="text-gray-400 text-xs">Completed</p>
+            <p id="kCompleted" class="text-2xl sm:text-3xl font-bold text-blue-400 mt-1">0</p>
+        </div>
+        <div class="bg-gray-800 p-3 sm:p-4 rounded-lg">
+            <p class="text-gray-400 text-xs">Participants</p>
+            <p id="kParticipants" class="text-2xl sm:text-3xl font-bold text-white mt-1">0</p>
+        </div>
     </div>
 
-    <div class="stats">
-      <div class="card">
-        <div class="label">Total trials</div>
-        <div id="totalTrials" class="value">0</div>
-      </div>
-      <div class="card">
-        <div class="label">Recruiting</div>
-        <div id="recruiting" class="value">0</div>
-      </div>
-      <div class="card">
-        <div class="label">Completed</div>
-        <div id="completed" class="value">0</div>
-      </div>
-      <div class="card">
-        <div class="label">Participants</div>
-        <div id="participants" class="value">0</div>
-      </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="text-sm font-semibold text-white mb-3 text-center">Trials by Phase</h3>
+            <div class="chart-container"><canvas id="cPhase"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="text-sm font-semibold text-white mb-3 text-center">Trials by Status</h3>
+            <div class="chart-container"><canvas id="cStatus"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2 lg:col-span-1">
+            <h3 class="text-sm font-semibold text-white mb-3 text-center">Started Over Time</h3>
+            <div class="chart-container"><canvas id="cTime"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg sm:col-span-2">
+            <h3 class="text-sm font-semibold text-white mb-3 text-center">Top 10 Sponsors</h3>
+            <div class="chart-container" style="height:320px"><canvas id="cSponsor"></canvas></div>
+        </div>
+        <div class="bg-gray-800 p-4 rounded-lg">
+            <h3 class="text-sm font-semibold text-white mb-3 text-center">Top Conditions</h3>
+            <div class="chart-container" style="height:320px"><canvas id="cConditions"></canvas></div>
+        </div>
     </div>
 
-    <div class="muted" style="margin-bottom: 10px;">Showing <span id="recordCount">0</span> records</div>
-
-    <div style="overflow:auto; max-height:620px; border-radius:10px; background:#1f2937;">
-      <table>
-        <thead>
-          <tr>
-            <th>NCT</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Phase</th>
-            <th>Sponsor</th>
-            <th>Start</th>
-            <th>Enrolled</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+    <div class="bg-gray-800 rounded-lg overflow-hidden">
+        <div class="p-3 flex justify-between items-center border-b border-gray-700">
+            <h3 class="font-semibold text-white text-sm">Trial Details</h3>
+            <span id="recordCount" class="text-xs text-gray-400">0</span>
+        </div>
+        <div id="desktopTable" class="overflow-x-auto" style="max-height:480px; overflow-y:auto;">
+            <table class="w-full text-xs text-left text-gray-300">
+                <thead class="uppercase bg-gray-700 sticky top-0 z-10">
+                    <tr>
+                        <th class="px-3 py-3" style="min-width:110px">NCT #</th>
+                        <th class="px-3 py-3" style="min-width:260px">Title</th>
+                        <th class="px-3 py-3 text-center" style="min-width:130px">Status</th>
+                        <th class="px-3 py-3" style="min-width:90px">Phase</th>
+                        <th class="px-3 py-3" style="min-width:180px">Sponsor</th>
+                        <th class="px-3 py-3" style="min-width:90px">Start</th>
+                        <th class="px-3 py-3 text-right" style="min-width:90px">Enrolled</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div id="mobileCards" class="p-3 space-y-2" style="max-height:520px; overflow-y:auto; -webkit-overflow-scrolling:touch;"></div>
     </div>
-  </div>
 
-  <script>
-    const state = {
-      keyword: '',
-      sponsor: '',
-      status: '',
-      phase: '',
-      startDate: '',
-      data: []
+<script>
+const PAL = { blue: '#00ACFF', teal: '#00DAC8', navy: '#001E63', lime: '#CAFF5E', sky: '#6EC3FA' };
+const state = { rows: [] };
+let charts = {};
+
+const mobile = () => window.innerWidth < 769;
+
+function getFilters() {
+    return {
+        keyword: document.getElementById('fKeyword').value.toLowerCase().trim(),
+        sponsor: document.getElementById('fSponsor').value.toLowerCase().trim(),
+        status: document.getElementById('fStatus').value,
+        phase: document.getElementById('fPhase').value,
+        start_date: document.getElementById('fStartDate').value
     };
+}
 
-    function getFilters() {
-      return {
-        keyword: document.getElementById('keyword').value.trim(),
-        sponsor: document.getElementById('sponsor').value.trim(),
-        status: document.getElementById('status').value,
-        phase: document.getElementById('phase').value,
-        start_date: document.getElementById('start_date').value
-      };
+function statusStyle(s) {
+    const map = {
+        RECRUITING: `background:${PAL.lime};color:${PAL.navy}`,
+        COMPLETED: `background:${PAL.sky};color:${PAL.navy}`,
+        TERMINATED: `background:#F87171;color:#7f1d1d`,
+        NOT_YET_RECRUITING: `background:#FBBF24;color:#78350f`,
+    };
+    return map[s] || `background:#4B5563;color:#F9FAFB`;
+}
+
+function renderRows(rows) {
+    if (mobile()) {
+        const c = document.getElementById('mobileCards');
+        c.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        rows.forEach(t => {
+            const div = document.createElement('div');
+            div.className = 'trial-card';
+            div.innerHTML = `
+                <div class="flex items-start justify-between gap-2 mb-1">
+                    <a href="https://clinicaltrials.gov/study/${t.nct_id}" target="_blank" class="text-blue-400 text-xs font-medium hover:underline">${t.nct_id}</a>
+                    <span class="badge" style="${statusStyle(t.status)}">${(t.status || 'Unknown').replace(/_/g,' ')}</span>
+                 </div>
+                 <p class="text-gray-200 text-xs leading-snug mb-1">${t.title || 'No title'}</p>
+                 <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-400">
+                    <span>${t.phase || 'Not Applicable'}</span><span>${t.start_date || 'N/A'}</span>
+                    <span>${Number(t.enrollment || 0).toLocaleString()} enrolled</span>
+                 </div>
+                 <p class="text-xs text-gray-500 mt-0.5 truncate">${t.sponsor || 'N/A'}</p>`;
+            frag.appendChild(div);
+        });
+        c.appendChild(frag);
+    } else {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        rows.forEach(t => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-700/50 hover:bg-gray-700/30';
+            tr.innerHTML = `
+                <td class="px-3 py-2 whitespace-nowrap"><a href="https://clinicaltrials.gov/study/${t.nct_id}" target="_blank" class="text-blue-400 hover:underline">${t.nct_id}</a></td>
+                <td class="px-3 py-2">${t.title || 'No title'}</td>
+                <td class="px-3 py-2 text-center whitespace-nowrap"><span class="badge" style="${statusStyle(t.status)}">${(t.status || 'Unknown').replace(/_/g,' ')}</span></td>
+                <td class="px-3 py-2 whitespace-nowrap">${t.phase || 'Not Applicable'}</td>
+                <td class="px-3 py-2">${t.sponsor || 'N/A'}</td>
+                <td class="px-3 py-2 whitespace-nowrap">${t.start_date || 'N/A'}</td>
+                <td class="px-3 py-2 text-right">${Number(t.enrollment || 0).toLocaleString()}</td>`;
+            frag.appendChild(tr);
+        });
+        tbody.appendChild(frag);
     }
+}
 
-    function statusColor(status) {
-      const map = {
-        RECRUITING: '#bbf7d0',
-        COMPLETED: '#bfdbfe',
-        TERMINATED: '#fecaca',
-        'NOT YET RECRUITING': '#fde68a',
-        UNKNOWN: '#e5e7eb',
-        WITHDRAWN: '#fca5a5'
-      };
-      return map[status] || '#d1d5db';
-    }
+function updateKPIs(rows) {
+    const total = rows.length;
+    const recruiting = rows.filter(r => r.status === 'RECRUITING').length;
+    const completed = rows.filter(r => r.status === 'COMPLETED').length;
+    const participants = rows.reduce((sum, r) => sum + Number(r.enrollment || 0), 0);
+    document.getElementById('kTotal').textContent = total.toLocaleString();
+    document.getElementById('kRecruiting').textContent = recruiting.toLocaleString();
+    document.getElementById('kCompleted').textContent = completed.toLocaleString();
+    document.getElementById('kParticipants').textContent = participants.toLocaleString();
+    document.getElementById('recordCount').textContent = `Showing ${total.toLocaleString()}`;
+}
 
-    function renderTable(rows) {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
+function buildCountMap(items) {
+    return items.reduce((acc, item) => {
+        const key = item || 'Unknown';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
+}
 
-      rows.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><a href="https://clinicaltrials.gov/study/${row.nct_id}" target="_blank" rel="noreferrer">${row.nct_id}</a></td>
-          <td>${row.title || 'No title'}</td>
-          <td><span class="status" style="background:${statusColor(row.status)}; color:#111827;">${row.status || 'Unknown'}</span></td>
-          <td>${row.phase || 'Not Applicable'}</td>
-          <td>${row.sponsor || 'N/A'}</td>
-          <td>${row.start_date || 'N/A'}</td>
-          <td>${Number(row.enrollment || 0).toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+function truncateLabel(value, maxLen = 18) {
+    const text = String(value || 'Unknown');
+    return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
+}
 
-    function renderStats(rows) {
-      const recruiting = rows.filter(r => r.status === 'RECRUITING').length;
-      const completed = rows.filter(r => r.status === 'COMPLETED').length;
-      const participants = rows.reduce((sum, r) => sum + Number(r.enrollment || 0), 0);
-      document.getElementById('totalTrials').textContent = rows.length.toLocaleString();
-      document.getElementById('recruiting').textContent = recruiting.toLocaleString();
-      document.getElementById('completed').textContent = completed.toLocaleString();
-      document.getElementById('participants').textContent = participants.toLocaleString();
-      document.getElementById('recordCount').textContent = rows.length.toLocaleString();
-    }
+function buildChartData(rows) {
+    const phaseMap = buildCountMap(rows.map(r => r.phase || 'Not Applicable'));
+    const statusMap = buildCountMap(rows.map(r => r.status || 'Unknown'));
+    const timeMap = {};
+    const sponsorMap = {};
+    const conditionMap = {};
 
-    async function loadData() {
-      const filters = getFilters();
-      const params = new URLSearchParams();
-      if (filters.keyword) params.set('keyword', filters.keyword);
-      if (filters.sponsor) params.set('sponsor', filters.sponsor);
-      if (filters.status) params.set('status', filters.status);
-      if (filters.phase) params.set('phase', filters.phase);
-      if (filters.start_date) params.set('start_date', filters.start_date);
-      params.set('limit', '200');
-
-      try {
-        const response = await fetch(`/api/trials?${params.toString()}`);
-        if (!response.ok) throw new Error('Failed to load data');
-        const payload = await response.json();
-        const rows = payload.data || [];
-        state.data = rows;
-        renderTable(rows);
-        renderStats(rows);
-      } catch (err) {
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" style="padding:18px; color:#fca5a5;">${err.message}</td></tr>`;
-      }
-    }
-
-    async function populateOptions() {
-      const response = await fetch('/api/trials?limit=1');
-      const payload = await response.json();
-      const rows = payload.data || [];
-      if (!rows.length) return;
-
-      const statuses = [...new Set(rows.map(r => r.status).filter(Boolean))].sort();
-      const phases = [...new Set(rows.map(r => r.phase).filter(Boolean))].sort();
-
-      const statusSelect = document.getElementById('status');
-      const phaseSelect = document.getElementById('phase');
-
-      statuses.forEach(value => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        statusSelect.appendChild(option);
-      });
-
-      phases.forEach(value => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        phaseSelect.appendChild(option);
-      });
-    }
-
-    document.getElementById('keyword').addEventListener('input', loadData);
-    document.getElementById('sponsor').addEventListener('input', loadData);
-    document.getElementById('status').addEventListener('change', loadData);
-    document.getElementById('phase').addEventListener('change', loadData);
-    document.getElementById('start_date').addEventListener('change', loadData);
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      document.getElementById('keyword').value = '';
-      document.getElementById('sponsor').value = '';
-      document.getElementById('status').value = '';
-      document.getElementById('phase').value = '';
-      document.getElementById('start_date').value = '';
-      loadData();
+    rows.forEach(row => {
+        const year = (row.start_date || '').slice(0, 4);
+        if (year && year.length === 4) timeMap[year] = (timeMap[year] || 0) + 1;
+        const sponsor = row.sponsor || 'N/A';
+        sponsorMap[sponsor] = (sponsorMap[sponsor] || 0) + 1;
+        const conds = (row.conditions || '').split(' | ').map(c => c.trim()).filter(Boolean);
+        conds.forEach(c => {
+            if (!c.toLowerCase().includes('healthy')) {
+                conditionMap[c] = (conditionMap[c] || 0) + 1;
+            }
+        });
     });
 
-    populateOptions();
-    loadData();
-  </script>
+    const sortedPhase = Object.entries(phaseMap).sort(([, a], [, b]) => b - a).slice(0, 6);
+    const sortedStatus = Object.entries(statusMap).sort(([, a], [, b]) => b - a).slice(0, 7);
+    const sortedYear = Object.entries(timeMap).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
+    const topSponsor = Object.entries(sponsorMap).sort(([, a], [, b]) => b - a).slice(0, 8).reverse();
+    const topCondition = Object.entries(conditionMap).sort(([, a], [, b]) => b - a).slice(0, 8).reverse();
+
+    return {
+        phase: { labels: sortedPhase.map(([k]) => truncateLabel(k, 18)), data: sortedPhase.map(([, v]) => v) },
+        status: { labels: sortedStatus.map(([k]) => truncateLabel(k.replace(/_/g,' '), 18)), data: sortedStatus.map(([, v]) => v) },
+        time: { labels: sortedYear.map(([k]) => k), data: sortedYear.map(([, v]) => v) },
+        sponsor: { labels: topSponsor.map(([k]) => truncateLabel(k, 18)), data: topSponsor.map(([, v]) => v) },
+        conditions: { labels: topCondition.map(([k]) => truncateLabel(k, 18)), data: topCondition.map(([, v]) => v) }
+    };
+}
+
+function initCharts() {
+    Chart.register(ChartDataLabels);
+    const noAnim = { duration: 0 };
+    const grid = 'rgba(255,255,255,0.07)';
+    const tick = { color: '#9ca3af', font: { size: 10 } };
+    const noLeg = { display: false };
+    const base = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: noAnim,
+        layout: { padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+        plugins: { legend: noLeg, datalabels: { display: false }, tooltip: { enabled: true } },
+        scales: {
+            x: { ticks: { ...tick, maxTicksLimit: 6 }, grid: { color: grid } },
+            y: { ticks: { ...tick, maxTicksLimit: 6 }, grid: { color: grid } }
+        }
+    };
+    const horiz = { ...base, indexAxis: 'y', scales: { x: { ...base.scales.x, ticks: { ...base.scales.x.ticks, maxTicksLimit: 6 } }, y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, autoSkip: false, maxTicksLimit: 8 }, grid: { color: grid } } } };
+    const labelsOnDesktop = { display: !mobile(), color: '#FFF', anchor: 'end', align: 'end', font: { weight: 'bold', size: 10 } };
+
+    charts.phase = new Chart(document.getElementById('cPhase'), {
+        type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: [PAL.blue,PAL.teal,PAL.lime,PAL.sky,PAL.navy], borderColor: '#1f2937', borderWidth: 2 }] },
+        options: {
+            responsive: true, maintainAspectRatio: false, animation: noAnim,
+            plugins: {
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    formatter: (v, ctx) => {
+                        const tot = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
+                        const pct = v / tot * 100;
+                        if (pct < 5) return '';
+                        let l = ctx.chart.data.labels[ctx.dataIndex];
+                        l = l.includes('Not Applicable') ? 'N/A' : l.replace('Phase ', 'P');
+                        return `${l}\n${pct.toFixed(0)}%`;
+                    },
+                    color: ctx => {
+                        const c = ctx.dataset.backgroundColor[ctx.dataIndex] || '#FFF';
+                        const r=parseInt(c.slice(1,3),16), g=parseInt(c.slice(3,5),16), b=parseInt(c.slice(5,7),16);
+                        return (r*299+g*587+b*114)/1000 > 155 ? PAL.navy : '#FFF';
+                    },
+                    textAlign: 'center', font: { weight: 'bold', size: 10, family: 'Inter' }
+                }
+            }
+        }
+    });
+
+    charts.status = new Chart(document.getElementById('cStatus'), {
+        type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: PAL.blue, borderRadius: 3 }] },
+        options: { ...base, scales: { ...base.scales, x: { ...base.scales.x, ticks: { ...base.scales.x.ticks, maxTicksLimit: 6, autoSkip: false } }, y: { ...base.scales.y, ticks: { ...base.scales.y.ticks, maxTicksLimit: 6 } } }, plugins: { ...base.plugins, legend: noLeg } }
+    });
+
+    charts.time = new Chart(document.getElementById('cTime'), {
+        type: 'line', data: { labels: [], datasets: [{ label: 'Started', data: [], borderColor: PAL.teal, backgroundColor: 'rgba(0,218,200,0.12)', tension: 0.3, fill: true, pointRadius: 2 }] },
+        options: { ...base, plugins: { ...base.plugins, legend: noLeg }, scales: { x: { ...base.scales.x, ticks: { ...base.scales.x.ticks, maxTicksLimit: 6, autoSkip: false } }, y: { ...base.scales.y, beginAtZero: true, ticks: { ...base.scales.y.ticks, maxTicksLimit: 6 } } } }
+    });
+
+    charts.sponsor = new Chart(document.getElementById('cSponsor'), {
+        type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: PAL.sky, borderRadius: 3 }] },
+        options: { ...horiz, plugins: { legend: noLeg, datalabels: labelsOnDesktop, tooltip: { enabled: true } }, scales: { x: { ...horiz.scales.x, ticks: { ...horiz.scales.x.ticks, maxTicksLimit: 6 } }, y: { ...horiz.scales.y, ticks: { ...horiz.scales.y.ticks, autoSkip: false, maxTicksLimit: 8 }, grid: { color: grid } } } }
+    });
+
+    charts.conditions = new Chart(document.getElementById('cConditions'), {
+        type: 'bar', data: { labels: [], datasets: [{ label: 'Trials', data: [], backgroundColor: PAL.lime, borderRadius: 3 }] },
+        options: { ...horiz, plugins: { legend: noLeg, datalabels: labelsOnDesktop, tooltip: { enabled: true } }, scales: { x: { ...horiz.scales.x, ticks: { ...horiz.scales.x.ticks, maxTicksLimit: 6 } }, y: { ...horiz.scales.y, ticks: { ...horiz.scales.y.ticks, autoSkip: false, maxTicksLimit: 8 }, grid: { color: grid } } } }
+    });
+
+    window.addEventListener('resize', debounce(() => {
+        Object.values(charts).forEach(chart => chart.resize());
+    }, 120));
+}
+
+function updateCharts(rows) {
+    const data = buildChartData(rows);
+    const pairMap = [
+        [charts.phase, data.phase],
+        [charts.status, data.status],
+        [charts.time, data.time],
+        [charts.sponsor, data.sponsor],
+        [charts.conditions, data.conditions],
+    ];
+    pairMap.forEach(([chart, payload]) => {
+        chart.data.labels = payload.labels;
+        chart.data.datasets[0].data = payload.data;
+        chart.update('none');
+        chart.resize();
+    });
+}
+
+function populateFilters(rows) {
+    const statusOpts = [...new Set(rows.map(r => r.status).filter(Boolean))].sort();
+    const phaseOpts = [...new Set(rows.map(r => r.phase).filter(Boolean))].sort();
+    const sponsorOpts = [...new Set(rows.map(r => r.sponsor).filter(Boolean))].sort();
+    const s1 = document.getElementById('fStatus');
+    const s2 = document.getElementById('fPhase');
+    const dl = document.getElementById('sponsorList');
+    s1.length = 1; s2.length = 1; dl.innerHTML = '';
+    statusOpts.forEach(s => s1.add(new Option(s.replace(/_/g,' '), s)));
+    phaseOpts.forEach(p => s2.add(new Option(p, p)));
+    const frag = document.createDocumentFragment();
+    sponsorOpts.forEach(s => frag.appendChild(new Option(s, s)));
+    dl.appendChild(frag);
+}
+
+function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+function applyLocalFilter(rows) {
+    const filters = getFilters();
+    const filtered = rows.filter(row => {
+        const text = `${row.nct_id || ''} ${row.title || ''} ${row.sponsor || ''} ${row.conditions || ''}`.toLowerCase();
+        if (filters.keyword && !text.includes(filters.keyword)) return false;
+        if (filters.sponsor && !(row.sponsor || '').toLowerCase().includes(filters.sponsor)) return false;
+        if (filters.status && row.status !== filters.status) return false;
+        if (filters.phase && row.phase !== filters.phase) return false;
+        if (filters.start_date && row.start_date && row.start_date < filters.start_date) return false;
+        return true;
+    });
+    filtered.sort((a, b) => {
+        const da = (a.start_date || ''); const db = (b.start_date || '');
+        if (!da || da === 'N/A') return 1;
+        if (!db || db === 'N/A') return -1;
+        return db.localeCompare(da);
+    });
+    return filtered;
+}
+
+async function fetchRows() {
+    const params = new URLSearchParams({ limit: '50000' });
+    const response = await fetch(`/api/trials?${params.toString()}`);
+    if (!response.ok) throw new Error('Failed to load data');
+    const payload = await response.json();
+    return payload.data || [];
+}
+
+function refreshView() {
+    const filtered = applyLocalFilter(state.rows);
+    updateKPIs(filtered);
+    updateCharts(filtered);
+    renderRows(filtered.slice(0, 50));
+}
+
+async function initPage() {
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    initCharts();
+
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+        if (!mobile()) return;
+        const body = document.getElementById('filtersBody');
+        const icon = document.getElementById('toggleIcon');
+        const btn = document.getElementById('toggleBtn');
+        const open = body.style.display === 'grid';
+        body.style.display = open ? 'none' : 'grid';
+        icon.style.transform = open ? '' : 'rotate(180deg)';
+        btn.setAttribute('aria-expanded', String(!open));
+    });
+
+    const db = debounce(() => refreshView(), 250);
+    document.getElementById('fKeyword').addEventListener('input', db);
+    document.getElementById('fSponsor').addEventListener('input', db);
+    document.getElementById('fStatus').addEventListener('change', refreshView);
+    document.getElementById('fPhase').addEventListener('change', refreshView);
+    document.getElementById('fStartDate').addEventListener('change', refreshView);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+        ['fKeyword','fStatus','fPhase','fStartDate','fSponsor'].forEach(id => document.getElementById(id).value = '');
+        refreshView();
+    });
+
+    try {
+        state.rows = await fetchRows();
+        populateFilters(state.rows);
+        refreshView();
+    } catch (err) {
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="p-4 text-red-400 text-sm">${err.message}</td></tr>`;
+        document.getElementById('mobileCards').innerHTML = `<p class="text-red-400 p-4 text-sm">${err.message}</p>`;
+    }
+}
+
+initPage();
+</script>
 </body>
 </html>

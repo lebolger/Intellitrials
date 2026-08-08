@@ -25,46 +25,52 @@ class TrialHandler(SimpleHTTPRequestHandler):
         status = (params.get("status", [""])[0] or "").strip()
         phase = (params.get("phase", [""])[0] or "").strip()
         start_date = (params.get("start_date", [""])[0] or "").strip()
-        limit = int(params.get("limit", ["50"])[0] or 50)
-        offset = int(params.get("offset", ["0"])[0] or 0)
+        raw_limit = (params.get("limit", ["0"])[0] or "0").strip()
+        raw_offset = (params.get("offset", ["0"])[0] or "0").strip()
+        limit = int(raw_limit) if raw_limit else 0
+        offset = int(raw_offset) if raw_offset else 0
 
         with sqlite3.connect(DB_PATH) as conn:
-            sql = [
+            where_sql = [
                 "SELECT nct_id, title, status, phase, sponsor, start_date, enrollment, conditions FROM trials WHERE 1=1"
             ]
             values: list[str] = []
 
             if keyword:
-                sql.append("AND (")
-                sql.append("LOWER(title) LIKE ? OR LOWER(sponsor_lower) LIKE ? OR LOWER(nct_id) LIKE ? OR LOWER(conditions) LIKE ?")
-                sql.append(")")
+                where_sql.append("AND (")
+                where_sql.append("LOWER(title) LIKE ? OR LOWER(sponsor_lower) LIKE ? OR LOWER(nct_id) LIKE ? OR LOWER(conditions) LIKE ?")
+                where_sql.append(")")
                 pattern = f"%{keyword}%"
                 values.extend([pattern, pattern, pattern, pattern])
 
             if sponsor:
-                sql.append("AND LOWER(sponsor_lower) LIKE ?")
+                where_sql.append("AND LOWER(sponsor_lower) LIKE ?")
                 values.append(f"%{sponsor}%")
 
             if status:
-                sql.append("AND status = ?")
+                where_sql.append("AND status = ?")
                 values.append(status)
 
             if phase:
-                sql.append("AND phase = ?")
+                where_sql.append("AND phase = ?")
                 values.append(phase)
 
             if start_date:
-                sql.append("AND start_date >= ?")
+                where_sql.append("AND start_date >= ?")
                 values.append(start_date)
 
-            sql.append("ORDER BY start_date DESC, nct_id DESC")
-            sql.append("LIMIT ? OFFSET ?")
-            values.extend([limit, offset])
+            base_sql = " ".join(where_sql)
+            count_sql = f"SELECT COUNT(*) FROM ({base_sql})"
+            total_count = conn.execute(count_sql, values).fetchone()[0]
 
-            rows = conn.execute(" ".join(sql), values).fetchall()
+            final_sql = base_sql + " ORDER BY start_date DESC, nct_id DESC"
+            if limit > 0:
+                final_sql += " LIMIT ? OFFSET ?"
+                values.extend([limit, offset])
+            rows = conn.execute(final_sql, values).fetchall()
 
         payload = {
-            "count": len(rows),
+            "count": total_count,
             "data": [
                 {
                     "nct_id": row[0],
