@@ -309,12 +309,14 @@ async function fetchAll() {
         allTrials = studies.map(s => {
             const p    = s.protocolSection;
             const conds = p.conditionsModule?.conditions || [];
+            const sponsor = p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A';
             return {
                 nct:        p.identificationModule?.nctId || 'N/A',
                 title:      p.identificationModule?.officialTitle || 'No title',
                 status:     p.statusModule?.overallStatus || 'Unknown',
                 phase:      p.designModule?.phases?.slice(-1)[0] || 'Not Applicable',
-                sponsor:    p.sponsorCollaboratorsModule?.leadSponsor?.name || 'N/A',
+                sponsor,
+                sponsorLower: sponsor.toLowerCase(),
                 startDate:  p.statusModule?.startDateStruct?.date || 'N/A',
                 enrollment: p.designModule?.enrollmentInfo?.count || 0,
                 conditions: conds,
