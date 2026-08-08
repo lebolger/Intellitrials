@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clinical Trials Dashboard (SQLite)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: #e5e7eb;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      padding: 12px;
+      background: #1f2937;
+      border-radius: 10px;
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+      color: #9ca3af;
+    }
+    input, select, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background: #111827;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    button {
+      background: #2563eb;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: #1f2937;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card .label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+    .card .value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #1f2937;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #374151;
+      text-align: left;
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #111827;
+      position: sticky;
+      top: 0;
+    }
+    a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .muted {
+      color: #9ca3af;
+    }
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      h1 { font-size: 1.5rem; }
+      th, td { font-size: 0.78rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <h1>Clinical Trials Dashboard</h1>
+      <div class="muted">SQLite-backed local data</div>
+    </div>
+
+    <div class="filters">
+      <div>
+        <label for="keyword">Keyword</label>
+        <input id="keyword" type="text" placeholder="NCT, title, condition, sponsor" />
+      </div>
+      <div>
+        <label for="sponsor">Sponsor</label>
+        <input id="sponsor" type="text" placeholder="Type sponsor name" />
+      </div>
+      <div>
+        <label for="status">Status</label>
+        <select id="status">
+          <option value="">All statuses</option>
+        </select>
+      </div>
+      <div>
+        <label for="phase">Phase</label>
+        <select id="phase">
+          <option value="">All phases</option>
+        </select>
+      </div>
+      <div>
+        <label for="start_date">Start date from</label>
+        <input id="start_date" type="date" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="card">
+        <div class="label">Total trials</div>
+        <div id="totalTrials" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Recruiting</div>
+        <div id="recruiting" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Completed</div>
+        <div id="completed" class="value">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Participants</div>
+        <div id="participants" class="value">0</div>
+      </div>
+    </div>
+
+    <div class="muted" style="margin-bottom: 10px;">Showing <span id="recordCount">0</span> records</div>
+
+    <div style="overflow:auto; max-height:620px; border-radius:10px; background:#1f2937;">
+      <table>
+        <thead>
+          <tr>
+            <th>NCT</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Phase</th>
+            <th>Sponsor</th>
+            <th>Start</th>
+            <th>Enrolled</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      keyword: '',
+      sponsor: '',
+      status: '',
+      phase: '',
+      startDate: '',
+      data: []
+    };
+
+    function getFilters() {
+      return {
+        keyword: document.getElementById('keyword').value.trim(),
+        sponsor: document.getElementById('sponsor').value.trim(),
+        status: document.getElementById('status').value,
+        phase: document.getElementById('phase').value,
+        start_date: document.getElementById('start_date').value
+      };
+    }
+
+    function statusColor(status) {
+      const map = {
+        RECRUITING: '#bbf7d0',
+        COMPLETED: '#bfdbfe',
+        TERMINATED: '#fecaca',
+        'NOT YET RECRUITING': '#fde68a',
+        UNKNOWN: '#e5e7eb',
+        WITHDRAWN: '#fca5a5'
+      };
+      return map[status] || '#d1d5db';
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      rows.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><a href="https://clinicaltrials.gov/study/${row.nct_id}" target="_blank" rel="noreferrer">${row.nct_id}</a></td>
+          <td>${row.title || 'No title'}</td>
+          <td><span class="status" style="background:${statusColor(row.status)}; color:#111827;">${row.status || 'Unknown'}</span></td>
+          <td>${row.phase || 'Not Applicable'}</td>
+          <td>${row.sponsor || 'N/A'}</td>
+          <td>${row.start_date || 'N/A'}</td>
+          <td>${Number(row.enrollment || 0).toLocaleString()}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderStats(rows) {
+      const recruiting = rows.filter(r => r.status === 'RECRUITING').length;
+      const completed = rows.filter(r => r.status === 'COMPLETED').length;
+      const participants = rows.reduce((sum, r) => sum + Number(r.enrollment || 0), 0);
+      document.getElementById('totalTrials').textContent = rows.length.toLocaleString();
+      document.getElementById('recruiting').textContent = recruiting.toLocaleString();
+      document.getElementById('completed').textContent = completed.toLocaleString();
+      document.getElementById('participants').textContent = participants.toLocaleString();
+      document.getElementById('recordCount').textContent = rows.length.toLocaleString();
+    }
+
+    async function loadData() {
+      const filters = getFilters();
+      const params = new URLSearchParams();
+      if (filters.keyword) params.set('keyword', filters.keyword);
+      if (filters.sponsor) params.set('sponsor', filters.sponsor);
+      if (filters.status) params.set('status', filters.status);
+      if (filters.phase) params.set('phase', filters.phase);
+      if (filters.start_date) params.set('start_date', filters.start_date);
+      params.set('limit', '200');
+
+      try {
+        const response = await fetch(`/api/trials?${params.toString()}`);
+        if (!response.ok) throw new Error('Failed to load data');
+        const payload = await response.json();
+        const rows = payload.data || [];
+        state.data = rows;
+        renderTable(rows);
+        renderStats(rows);
+      } catch (err) {
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" style="padding:18px; color:#fca5a5;">${err.message}</td></tr>`;
+      }
+    }
+
+    async function populateOptions() {
+      const response = await fetch('/api/trials?limit=1');
+      const payload = await response.json();
+      const rows = payload.data || [];
+      if (!rows.length) return;
+
+      const statuses = [...new Set(rows.map(r => r.status).filter(Boolean))].sort();
+      const phases = [...new Set(rows.map(r => r.phase).filter(Boolean))].sort();
+
+      const statusSelect = document.getElementById('status');
+      const phaseSelect = document.getElementById('phase');
+
+      statuses.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        statusSelect.appendChild(option);
+      });
+
+      phases.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        phaseSelect.appendChild(option);
+      });
+    }
+
+    document.getElementById('keyword').addEventListener('input', loadData);
+    document.getElementById('sponsor').addEventListener('input', loadData);
+    document.getElementById('status').addEventListener('change', loadData);
+    document.getElementById('phase').addEventListener('change', loadData);
+    document.getElementById('start_date').addEventListener('change', loadData);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('keyword').value = '';
+      document.getElementById('sponsor').value = '';
+      document.getElementById('status').value = '';
+      document.getElementById('phase').value = '';
+      document.getElementById('start_date').value = '';
+      loadData();
+    });
+
+    populateOptions();
+    loadData();
+  </script>
+</body>
+</html>
