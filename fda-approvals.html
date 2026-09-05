@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -9,71 +8,782 @@
 <link href="https://cdn.datatables.net/2.0.7/css/dataTables.dataTables.min.css" rel="stylesheet"/>
 <link href="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css" rel="stylesheet"/>
 <style>
-    :root{
-      --light-blue:#26bcf8;
-      --border:#d9dee5;
-      --bg:#f5f7fb;
-      --text:#1b2b41;
-    }
-    body { font-family:'Lato', Arial, sans-serif; margin:0; background:var(--bg); color:var(--text); font-size: 14px; }
-    header { background:#0f2230; color:#fff; }
-    .container { max-width: 100%; margin:0 auto; padding: 1rem 1.25rem; }
-    h1 { font-family:'Open Sans', Arial, sans-serif; font-weight:600; font-size:1rem; margin:.25rem 0; }
-    .table-responsive { width: 100%; overflow-x: auto; background:#fff; border:1px solid #e3e8ef; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.06); padding:.4rem; }
-    table { width: 100% !important; border-collapse: collapse; }
-    .table-bordered { border:1px solid var(--border); }
-    .table-bordered th, .table-bordered td { border:1px solid var(--border); }
-    thead th { background: var(--light-blue); color:#fff; font-weight:600; font-size: 0.9rem; }
-    thead th, tbody td { padding:.55rem .6rem; vertical-align: top; font-size: 0.85rem; }
-    tbody td { white-space: normal; word-break: break-word; }
-    .dataTables_wrapper .dt-buttons { margin:.5rem .25rem; }
-    .dt-buttons .dt-button { border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#1f2937; font-size: 0.85rem; }
-    .dt-buttons .dt-button:hover { background:#f3f7fb; }
-    td a { word-break: break-all; }
-    tbody tr.new td { background-color: #f0faf5; }
-  </style>
+  :root {
+    --light-blue:#26bcf8;
+    --border:#d9dee5;
+    --bg:#f5f7fb;
+    --text:#1b2b41;
+  }
+  body {
+    font-family:'Lato', Arial, sans-serif;
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-size:14px;
+  }
+  header { background:#0f2230; color:#fff; }
+  .container {
+    max-width:100%;
+    margin:0 auto;
+    padding:1rem 1.25rem;
+    box-sizing:border-box;
+  }
+  h1 {
+    font-family:'Open Sans', Arial, sans-serif;
+    font-weight:600;
+    font-size:1rem;
+    margin:.25rem 0;
+  }
+  .updated {
+    margin:.15rem 0 0;
+    font-size:.78rem;
+    color:#dbe8f0;
+  }
+  .notice {
+    margin:0 0 .8rem;
+    padding:.7rem .8rem;
+    background:#fff;
+    border:1px solid #e3e8ef;
+    border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.04);
+    font-size:.82rem;
+    line-height:1.45;
+  }
+  .legend {
+    display:inline-block;
+    margin-left:.35rem;
+    padding:.08rem .35rem;
+    border-radius:4px;
+    background:#f0faf5;
+    border:1px solid #d9efe3;
+  }
+  .table-responsive {
+    width:100%;
+    overflow-x:auto;
+    background:#fff;
+    border:1px solid #e3e8ef;
+    border-radius:10px;
+    box-shadow:0 6px 18px rgba(0,0,0,.06);
+    padding:.4rem;
+    box-sizing:border-box;
+  }
+  table { width:100% !important; border-collapse:collapse; }
+  .table-bordered { border:1px solid var(--border); }
+  .table-bordered th, .table-bordered td { border:1px solid var(--border); }
+  thead th {
+    background:var(--light-blue);
+    color:#fff;
+    font-weight:600;
+    font-size:.9rem;
+  }
+  thead th, tbody td {
+    padding:.55rem .6rem;
+    vertical-align:top;
+    font-size:.85rem;
+  }
+  tbody td {
+    white-space:normal;
+    word-break:break-word;
+  }
+  .dataTables_wrapper .dt-buttons { margin:.5rem .25rem; }
+  .dt-buttons .dt-button {
+    border:1px solid #cbd5e1;
+    border-radius:6px;
+    background:#fff;
+    color:#1f2937;
+    font-size:.85rem;
+  }
+  .dt-buttons .dt-button:hover { background:#f3f7fb; }
+  td a { word-break:break-all; }
+  tbody tr.new td { background-color:#f0faf5; }
+  .dataTables_filter input { margin-left:.4rem; }
+</style>
 </head>
 <body>
 <header>
-<div class="container">
-<h1>FDA Drug Approvals</h1>
-</div>
+  <div class="container">
+    <h1>FDA Drug Approvals</h1>
+    <div class="updated">Updated through September 3, 2026</div>
+  </div>
 </header>
-<main class="container">
-<div class="table-responsive">
-<table class="dataframe display table table-bordered" id="tbl_main">
-<thead>
-<tr style="text-align: right;">
-<th>Approval Date</th>
-<th>Drug Name</th>
-<th>Company</th>
-<th>Application ID</th>
-<th>Active Ingredients</th>
-<th>FDA-approved use on approval date</th>
-<th>Submission Classification</th>
-<th>Review Priority</th>
-<th>Drugs@FDA Link</th>
-</tr>
-</thead>
-<tbody>
 
-<!-- ═══════════════════════════════════════════ -->
-<!-- ADDITIONS: 2026 (March) -->
-<!-- ═══════════════════════════════════════════ -->
-
-        <tr class="new">
-          <td>2026-03-06</td>
-          <td>Sotyktu (new indication)</td>
-          <td>Bristol Myers Squibb</td>
-          <td>NDA #215416/S</td>
-          <td>Deucravacitinib</td>
-          <td>To treat adults with active psoriatic arthritis (new indication; previously approved for plaque psoriasis)</td>
-          <td>Supplemental NDA - New Indication</td>
-          <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215416</td>
+  <div class="table-responsive">
+    <table class="dataframe display table table-bordered" id="tbl_main">
+      <thead>
+        <tr>
+          <th>Approval Date</th>
+          <th>Drug Name</th>
+          <th>Company</th>
+          <th>Application ID</th>
+          <th>Active Ingredients</th>
+          <th>FDA-approved use on approval date</th>
+          <th>Submission Classification</th>
+          <th>Review Priority</th>
+          <th>FDA Source</th>
         </tr>
-
+      </thead>
+      <tbody>
         <tr class="new">
+          <td>2026-09-03</td>
+          <td>Zanvastro</td>
+          <td>Ionis Pharmaceuticals, Inc.</td>
+          <td>NDA / see FDA record</td>
+          <td>Zilganersen</td>
+          <td>To treat Alexander disease in pediatric and adult patients</td>
+          <td>NDA - Novel Drug</td>
+          <td>Priority</td>
+          <td><a href="https://www.fda.gov/news-events/press-announcements/fda-approves-first-drug-treat-alexander-disease" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-28</td>
+          <td>Mimrylo</td>
+          <td>Takeda Development Center Americas, Inc.</td>
+          <td>NDA / see FDA record</td>
+          <td>Rusfertide</td>
+          <td>To treat erythrocytosis in adults with polycythemia vera</td>
+          <td>NDA - Novel Drug</td>
+          <td>Priority</td>
+          <td><a href="https://www.fda.gov/news-events/press-announcements/fda-approves-first-drug-its-kind-polycythemia-vera-rare-blood-disorder" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-27</td>
+          <td>Lisraya</td>
+          <td>Priovant Therapeutics, Inc.</td>
+          <td>NDA #220106</td>
+          <td>Brepocitinib</td>
+          <td>To treat dermatomyositis in adults</td>
+          <td>NDA - Novel Drug</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/drugsatfda_docs/appletter/2026/220106Orig1s000ltr.pdf" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-26</td>
+          <td>Rasonque</td>
+          <td>Revolution Medicines, Inc.</td>
+          <td>NDA / see FDA record</td>
+          <td>Daraxonrasib</td>
+          <td>To treat adults with metastatic pancreatic adenocarcinoma who have received at least one prior systemic therapy or who are not candidates for multiagent systemic therapy</td>
+          <td>NDA - Novel Drug</td>
+          <td>Priority</td>
+          <td><a href="https://www.fda.gov/drugs/resources-information-approved-drugs/fda-approves-daraxonrasib-metastatic-pancreatic-adenocarcinoma" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-19</td>
+          <td>Pasatru</td>
+          <td>See FDA record</td>
+          <td>BLA #761508</td>
+          <td>Garetosmab-grts</td>
+          <td>To reduce new heterotopic ossification and clinician-assessed disease flare-ups in adults with fibrodysplasia ossificans progressiva</td>
+          <td>BLA - Original</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761508" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-14</td>
+          <td>Sodium Bicarbonate</td>
+          <td>See FDA record</td>
+          <td>NDA #218524</td>
+          <td>Sodium bicarbonate</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218524" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-13</td>
+          <td>Tauklarify</td>
+          <td>Lantheus Holdings, Inc.</td>
+          <td>NDA #220496</td>
+          <td>Florquinitau F 18</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220496" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-13</td>
+          <td>Zenbexus</td>
+          <td>Bristol Myers Squibb</td>
+          <td>NDA #221075</td>
+          <td>Iberdomide</td>
+          <td>To be used in combination with daratumumab and hyaluronidase-fihj and dexamethasone for adults with multiple myeloma who have received at least one prior line of therapy, including a proteasome inhibitor and an immunomodulatory agent</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=221075" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-08-05</td>
+          <td>Orzeyful</td>
+          <td>Takeda Pharmaceuticals</td>
+          <td>NDA #220860</td>
+          <td>Oveporexton</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220860" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-31</td>
+          <td>Zimrixby</td>
+          <td>See FDA record</td>
+          <td>BLA #761376</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>BLA - Original</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761376" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-29</td>
+          <td>Glycophos</td>
+          <td>See FDA record</td>
+          <td>NDA #220381</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 2 - New Active Ingredient</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220381" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-29</td>
+          <td>Qlonilik</td>
+          <td>See FDA record</td>
+          <td>NDA #221094</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=221094" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-28</td>
+          <td>Gwyn Lo</td>
+          <td>See FDA record</td>
+          <td>NDA #219990</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219990" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-24</td>
+          <td>Garzulys</td>
+          <td>See FDA record</td>
+          <td>BLA #761497</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>BLA - Original</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761497" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-24</td>
+          <td>Lytenava</td>
+          <td>Outlook Therapeutics</td>
+          <td>BLA #761320</td>
+          <td>Bevacizumab-vikg</td>
+          <td>See FDA record</td>
+          <td>Type 1 + Type 4</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761320" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-24</td>
+          <td>Simtriyo</td>
+          <td>See FDA record</td>
+          <td>NDA #218145</td>
+          <td>Centanafadine</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218145" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-24</td>
+          <td>Tylenol with Naproxen</td>
+          <td>See FDA record</td>
+          <td>NDA #219962</td>
+          <td>Acetaminophen and naproxen</td>
+          <td>See FDA record</td>
+          <td>Type 4 - New Combination</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219962" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-22</td>
+          <td>Jideytro</td>
+          <td>See FDA record</td>
+          <td>NDA #220185</td>
+          <td>Zidesamtinib</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220185" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-19</td>
+          <td>Air</td>
+          <td>See FDA record</td>
+          <td>NDA #221805</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=221805" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-15</td>
+          <td>Lipfendra</td>
+          <td>See FDA record</td>
+          <td>NDA #220848</td>
+          <td>Enlicitide decanoate</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220848" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-14</td>
+          <td>Revtorpyk</td>
+          <td>See FDA record</td>
+          <td>NDA #219908</td>
+          <td>Gedatolisib</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219908" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-10</td>
+          <td>Zyogreen</td>
+          <td>See FDA record</td>
+          <td>NDA #218579</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218579" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-09</td>
+          <td>Sarclisa Escena</td>
+          <td>Sanofi</td>
+          <td>BLA #761445</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761445" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-09</td>
+          <td>Sodium Bicarbonate</td>
+          <td>See FDA record</td>
+          <td>NDA #220790</td>
+          <td>Sodium bicarbonate</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220790" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-07-07</td>
+          <td>Trutakna</td>
+          <td>See FDA record</td>
+          <td>BLA #761486</td>
+          <td>Atacicept-vymj</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761486" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-26</td>
+          <td>Lumvoa</td>
+          <td>See FDA record</td>
+          <td>BLA #761530</td>
+          <td>Veligrotug-vvze</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761530" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-24</td>
+          <td>Navitrux</td>
+          <td>See FDA record</td>
+          <td>NDA #220436</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220436" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-17</td>
+          <td>Utebzi</td>
+          <td>See FDA record</td>
+          <td>NDA #215960</td>
+          <td>Tebipenem pivoxil</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=215960" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-16</td>
+          <td>Aprepitant</td>
+          <td>See FDA record</td>
+          <td>NDA #218754</td>
+          <td>Aprepitant</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218754" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-12</td>
+          <td>Ambelvist</td>
+          <td>See FDA record</td>
+          <td>NDA #219627</td>
+          <td>Gadoquatrane</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219627" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-02</td>
+          <td>Ranluspec</td>
+          <td>See FDA record</td>
+          <td>BLA #761480</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 2 - New Active Ingredient</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761480" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-06-02</td>
+          <td>Tiocystin</td>
+          <td>See FDA record</td>
+          <td>NDA #212927</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=212927" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-29</td>
+          <td>Cavhanza</td>
+          <td>See FDA record</td>
+          <td>NDA #217379</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=217379" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-29</td>
+          <td>Cipepofol</td>
+          <td>See FDA record</td>
+          <td>NDA #220482</td>
+          <td>Cipepofol</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220482" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-29</td>
+          <td>Xocova</td>
+          <td>See FDA record</td>
+          <td>NDA #220442</td>
+          <td>Ensitrelvir</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220442" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-29</td>
+          <td>Zaynich</td>
+          <td>See FDA record</td>
+          <td>NDA #220787</td>
+          <td>Cefepime and zidebactam</td>
+          <td>See FDA record</td>
+          <td>Type 1 + Type 4</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220787" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-27</td>
+          <td>Decnupaz</td>
+          <td>See FDA record</td>
+          <td>BLA #761460</td>
+          <td>Pivekimab sunirine-pvzy</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761460" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-22</td>
+          <td>Differin Epiduo Acne Gel</td>
+          <td>See FDA record</td>
+          <td>NDA #220736</td>
+          <td>Adapalene and benzoyl peroxide</td>
+          <td>Acne treatment; partial prescription-to-OTC switch</td>
+          <td>Type 8 - Partial Rx-to-OTC</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220736" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-22</td>
+          <td>Hepcludex</td>
+          <td>See FDA record</td>
+          <td>BLA #761468</td>
+          <td>Bulevirtide-gmod</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761468" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-15</td>
+          <td>Baxfendy</td>
+          <td>See FDA record</td>
+          <td>NDA #219878</td>
+          <td>Baxdrostat</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219878" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-15</td>
+          <td>Immgolis</td>
+          <td>See FDA record</td>
+          <td>BLA #761452</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761452" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-14</td>
+          <td>Trimbow</td>
+          <td>See FDA record</td>
+          <td>NDA #219622</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 4 - New Combination</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219622" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-13</td>
+          <td>Beqalzi</td>
+          <td>See FDA record</td>
+          <td>NDA #220711</td>
+          <td>Sonrotoclax</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220711" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-07</td>
+          <td>Ennumo</td>
+          <td>See FDA record</td>
+          <td>BLA #761147</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>BLA - Original</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761147" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-01</td>
+          <td>Evdi</td>
+          <td>See FDA record</td>
+          <td>NDA #220837</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220837" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-01</td>
+          <td>Jakafi XR</td>
+          <td>See FDA record</td>
+          <td>NDA #217180</td>
+          <td>Ruxolitinib</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=217180" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-05-01</td>
+          <td>Veppanu</td>
+          <td>See FDA record</td>
+          <td>NDA #219835</td>
+          <td>Vepdegestrant</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219835" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-04-29</td>
+          <td>Langlara</td>
+          <td>See FDA record</td>
+          <td>BLA #761412</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>BLA - Original</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761412" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-04-24</td>
+          <td>Saphnelo</td>
+          <td>AstraZeneca</td>
+          <td>BLA #761451</td>
+          <td>Anifrolumab-fnia</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761451" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-04-20</td>
+          <td>Idvynso</td>
+          <td>See FDA record</td>
+          <td>NDA #216964</td>
+          <td>Doravirine and islatravir</td>
+          <td>See FDA record</td>
+          <td>Type 1 + Type 4</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=216964" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-04-01</td>
+          <td>Foundayo</td>
+          <td>Eli Lilly and Company</td>
+          <td>NDA #220934</td>
+          <td>Orforglipron</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220934" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-30</td>
+          <td>Epinephrine</td>
+          <td>See FDA record</td>
+          <td>NDA #220626</td>
+          <td>Epinephrine</td>
+          <td>See FDA record</td>
+          <td>New Combination and New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220626" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-27</td>
+          <td>Ponlimsi</td>
+          <td>See FDA record</td>
+          <td>BLA #761385</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761385" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-26</td>
+          <td>Awiqli FlexTouch</td>
+          <td>Novo Nordisk</td>
+          <td>BLA #761326</td>
+          <td>Insulin icodec-abae</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761326" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-25</td>
+          <td>Lifyorli (copackaged)</td>
+          <td>Corcept Therapeutics</td>
+          <td>NDA #220641</td>
+          <td>Relacorilant</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220641" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-24</td>
+          <td>Avlayah</td>
+          <td>Ultragenyx Pharmaceutical Inc.</td>
+          <td>BLA #761485</td>
+          <td>Tividenofusp alfa-eknm</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761485" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-20</td>
+          <td>Atoncy</td>
+          <td>See FDA record</td>
+          <td>NDA #220320</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220320" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-19</td>
+          <td>Flavalta</td>
+          <td>See FDA record</td>
+          <td>NDA #216564</td>
+          <td>See FDA record</td>
+          <td>See FDA record</td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=216564" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-17</td>
+          <td>Icotyde</td>
+          <td>Johnson &amp; Johnson / Janssen</td>
+          <td>NDA #220149</td>
+          <td>Icotrokinra</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220149" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr class="new">
+          <td>2026-03-17</td>
+          <td>Lynavoy</td>
+          <td>Ipsen Biopharmaceuticals, Inc.</td>
+          <td>NDA #220295</td>
+          <td>Linerixibat</td>
+          <td>See FDA record</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=220295" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2026-03-06</td>
           <td>PYLARIFY TruVu</td>
           <td>Lantheus Holdings Inc.</td>
@@ -82,14 +792,20 @@
           <td>New formulation of F18 PSMA-targeted PET imaging agent for recurrent and/or metastatic prostate cancer</td>
           <td>Type 5 - New Formulation or New Manufacturer</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=214793</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=214793" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- ADDITIONS: 2026 (February) -->
-<!-- ═══════════════════════════════════════════ -->
-
-        <tr class="new">
+        <tr>
+          <td>2026-03-06</td>
+          <td>Sotyktu (new indication)</td>
+          <td>Bristol Myers Squibb</td>
+          <td>NDA #215416/S</td>
+          <td>Deucravacitinib</td>
+          <td>To treat adults with active psoriatic arthritis (new indication; previously approved for plaque psoriasis)</td>
+          <td>Supplemental NDA - New Indication</td>
+          <td>Standard</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=215416" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2026-02-27</td>
           <td>Yuviwel</td>
           <td>Ascendis Pharma A/S</td>
@@ -98,34 +814,31 @@
           <td>To treat achondroplasia in children aged 2 years and older (accelerated approval)</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761562</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761562" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-26</td>
           <td>Dupixent (new indication)</td>
           <td>Sanofi / Regeneron</td>
           <td>BLA #761055/S</td>
           <td>Dupilumab</td>
-          <td>To treat adult and pediatric patients aged 6 years and older with allergic fungal rhinosinusitis (AFRS) — first drug approved for this condition</td>
+          <td>To treat adult and pediatric patients aged 6 years and older with allergic fungal rhinosinusitis (AFRS) â€” first drug approved for this condition</td>
           <td>Supplemental BLA - New Indication</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761055</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761055" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-25</td>
           <td>Desmoda</td>
           <td>Eton Pharmaceuticals, Inc.</td>
           <td>NDA #ET-600</td>
           <td>Desmopressin Acetate</td>
-          <td>To manage central diabetes insipidus (arginine vasopressin deficiency) — oral solution formulation</td>
+          <td>To manage central diabetes insipidus (arginine vasopressin deficiency) â€” oral solution formulation</td>
           <td>Type 3 - New Dosage Form</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218980</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218980" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-23</td>
           <td>Loargys</td>
           <td>Immedica Pharma AB</td>
@@ -134,10 +847,9 @@
           <td>To treat hyperargininemia in patients with Arginase 1 Deficiency (accelerated approval)</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761583</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761583" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-20</td>
           <td>Bysanti</td>
           <td>Vanda Pharmaceuticals Inc.</td>
@@ -146,10 +858,9 @@
           <td>To treat schizophrenia and acute bipolar I disorder in adults</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215843</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=215843" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-13</td>
           <td>Adquey</td>
           <td>Acrotech Biopharma Inc.</td>
@@ -158,10 +869,9 @@
           <td>To treat mild-to-moderate atopic dermatitis</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=216743</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=216743" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-02-08</td>
           <td>Hernexeos (expanded indication)</td>
           <td>Boehringer Ingelheim Pharmaceuticals Inc.</td>
@@ -170,42 +880,31 @@
           <td>Expanded to include treatment-naive adults with unresectable or metastatic non-squamous NSCLC with HER2 TKD activating mutations (previously limited to post-prior-therapy patients)</td>
           <td>Supplemental NDA - New Indication (National Priority Voucher)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219042</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219042" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- ADDITIONS: 2026 (January) -->
-<!-- ═══════════════════════════════════════════ -->
-
-        <tr class="new">
+        <tr>
           <td>2026-01-28</td>
           <td>Yuvezzi</td>
           <td>Tenpoint Therapeutics, Ltd.</td>
           <td>NDA #218xxx</td>
           <td>Brimonidine Tartrate and Carbachol</td>
-          <td>To treat presbyopia in adults — first combination alpha-adrenergic/cholinergic agonist eye drop for this indication</td>
+          <td>To treat presbyopia in adults â€” first combination alpha-adrenergic/cholinergic agonist eye drop for this indication</td>
           <td>Type 4 - New Combination</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2026-01-12</td>
           <td>Zycubo</td>
           <td>Sentynl Therapeutics, Inc.</td>
           <td>NDA #216xxx</td>
           <td>Copper Histidinate</td>
-          <td>To treat Menkes disease in pediatric patients — copper replacement therapy</td>
+          <td>To treat Menkes disease in pediatric patients â€” copper replacement therapy</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=216xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=216xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- ADDITIONS: December 2025 -->
-<!-- ═══════════════════════════════════════════ -->
-
-        <tr class="new">
+        <tr>
           <td>2025-12-30</td>
           <td>Nereus</td>
           <td>Vanda Pharmaceuticals Inc.</td>
@@ -214,10 +913,9 @@
           <td>To treat vomiting associated with motion sickness in adults</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=217xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-12-23</td>
           <td>Yartemlea</td>
           <td>Omeros Corporation</td>
@@ -226,10 +924,9 @@
           <td>To treat hematopoietic stem cell transplant-associated thrombotic microangiopathy (HSCT-TMA) in adults and pediatric patients aged 2 years and older</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-12-19</td>
           <td>Myqorzo</td>
           <td>Cytokinetics, Inc.</td>
@@ -238,10 +935,9 @@
           <td>To treat symptomatic obstructive hypertrophic cardiomyopathy in adults</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219083</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=219083" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-12-16</td>
           <td>Exdensur</td>
           <td>GSK (GlaxoSmithKline)</td>
@@ -250,34 +946,20 @@
           <td>To treat severe asthma with an eosinophilic phenotype as an add-on maintenance therapy</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-12-12</td>
           <td>Cardamyst</td>
           <td>Milestone Pharmaceuticals Inc.</td>
           <td>NDA #218571</td>
           <td>Etripamil</td>
-          <td>To treat episodes of paroxysmal supraventricular tachycardia in adults — calcium channel blocker nasal spray</td>
+          <td>To treat episodes of paroxysmal supraventricular tachycardia in adults â€” calcium channel blocker nasal spray</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218571</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=218571" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
-          <td>2025-12-12</td>
-          <td>Nuzolvence</td>
-          <td>Innoviva Specialty Therapeutics</td>
-          <td>NDA #217xxx</td>
-          <td>Zoliflodacin</td>
-          <td>To treat uncomplicated urogenital gonorrhea due to Neisseria gonorrhoeae in adults and adolescents aged 12 and older</td>
-          <td>Type 1 - New Molecular Entity</td>
-          <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217xxx</td>
-        </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-12-12</td>
           <td>Lerochol</td>
           <td>LIB Therapeutics LLC</td>
@@ -286,10 +968,20 @@
           <td>To reduce LDL-C in adults with hypercholesterolemia, including heterozygous familial hypercholesterolemia, as adjunct to diet and exercise</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217xxx</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=217xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
+          <td>2025-12-12</td>
+          <td>Nuzolvence</td>
+          <td>Innoviva Specialty Therapeutics</td>
+          <td>NDA #217xxx</td>
+          <td>Zoliflodacin</td>
+          <td>To treat uncomplicated urogenital gonorrhea due to Neisseria gonorrhoeae in adults and adolescents aged 12 and older</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=217xxx" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2025-11-25</td>
           <td>Voyxact</td>
           <td>Chinook Therapeutics (Novartis)</td>
@@ -298,14 +990,9 @@
           <td>To reduce proteinuria in adults with primary immunoglobulin A nephropathy at risk for disease progression</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td>https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761434</td>
+          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&amp;ApplNo=761434" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-<!-- ═══════════════════════════════════════════ -->
-<!-- EXISTING ROWS: November 2025 and earlier -->
-<!-- ═══════════════════════════════════════════ -->
-
-        <tr class="new">
+        <tr>
           <td>2025-11-19</td>
           <td>Hyrnuo</td>
           <td>Bayer Healthcare Pharms</td>
@@ -314,10 +1001,9 @@
           <td>Kinase inhibitor to treat locally advanced or metastatic non-squamous non-small cell lung cancer with tumors that have activating HER2 tyrosine kinase domain activating mutations in patients who received a systemic therapy</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219972">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-11-18</td>
           <td>Redemplo</td>
           <td>Arrowhead Pharmaceuticals, Inc.</td>
@@ -326,22 +1012,9 @@
           <td>To reduce triglycerides in adults with familial chylomicronemia syndrome</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219947">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
-          <td>2025-11-13</td>
-          <td>Poherdy</td>
-          <td>Shanghai Henlius Biotech, Inc.</td>
-          <td>BLA #761450</td>
-          <td>Pertuzumab-dpzb</td>
-          <td>Use in combination with trastuzumab and docetaxel/chemotherapy for the treatment of adults with HER2-positive breast cancer</td>
-          <td></td>
-          <td></td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761450">Link</a></td>
-        </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-11-13</td>
           <td>Komzifti</td>
           <td>Kura Oncology, Inc.</td>
@@ -350,10 +1023,20 @@
           <td>To treat adults with relapsed or refractory acute myeloid leukemia with a susceptible nucleophosmin 1 mutation who have no satisfactory alternative treatment options</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220305">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
+          <td>2025-11-13</td>
+          <td>Poherdy</td>
+          <td>Shanghai Henlius Biotech, Inc.</td>
+          <td>BLA #761450</td>
+          <td>Pertuzumab-dpzb</td>
+          <td>Use in combination with trastuzumab and docetaxel/chemotherapy for the treatment of adults with HER2-positive breast cancer</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2025-11-03</td>
           <td>Kygevvi</td>
           <td>UCB Inc</td>
@@ -362,22 +1045,9 @@
           <td>To treat thymidine kinase 2 deficiency (TK2d) in adults and pediatric patients with an age of symptom onset on or before 12 years</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219792">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
-          <td>2025-10-24</td>
-          <td>RESNIBEN</td>
-          <td>Azurity Pharmaceuticals, Inc.</td>
-          <td>NDA #220258</td>
-          <td>Cabozantinib</td>
-          <td></td>
-          <td></td>
-          <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220258">Link</a></td>
-        </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-24</td>
           <td>Lynkuet</td>
           <td>Bayer HealthCare Pharmaceuticals Inc.</td>
@@ -386,10 +1056,20 @@
           <td>To treat moderate to severe vasomotor symptoms due to menopause</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219469">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
+          <td>2025-10-24</td>
+          <td>RESNIBEN</td>
+          <td>Azurity Pharmaceuticals, Inc.</td>
+          <td>NDA #220258</td>
+          <td>Cabozantinib</td>
+          <td></td>
+          <td></td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2025-10-24</td>
           <td>Rocuronium Bromide</td>
           <td>Sterinova Inc.</td>
@@ -398,10 +1078,9 @@
           <td>Adjunct to general anesthesia to facilitate both rapid sequence and routine tracheal intubation</td>
           <td></td>
           <td></td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219108">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-23</td>
           <td>Blenrep</td>
           <td>GlaxoSmithKline LLC</td>
@@ -410,22 +1089,9 @@
           <td>Treatment of adult patients with relapsed or refractory multiple myeloma</td>
           <td></td>
           <td></td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761440">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
-          <td>2025-10-23</td>
-          <td>Javadin</td>
-          <td>Azurity</td>
-          <td>NDA #220256</td>
-          <td>Clonidine Hydrochloride</td>
-          <td></td>
-          <td>Type 3 - New Dosage Form</td>
-          <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220256">Link</a></td>
-        </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-23</td>
           <td>Dehydrated Alcohol</td>
           <td>Royal Pharmaceuticals, LLC.</td>
@@ -434,10 +1100,20 @@
           <td></td>
           <td>Type 5 - New Formulation or New Manufacturer</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=214988">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
+          <td>2025-10-23</td>
+          <td>Javadin</td>
+          <td>Azurity</td>
+          <td>NDA #220256</td>
+          <td>Clonidine Hydrochloride</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
           <td>2025-10-22</td>
           <td>Contepo</td>
           <td>Meitheal Pharmaceuticals Inc.</td>
@@ -446,22 +1122,20 @@
           <td>Treatment of patients 18 years of age and older with complicated urinary tract infections (cUTI)</td>
           <td>Type 2 - New Active Ingredient</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=212271">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-17</td>
           <td>Epioxa HD / Epioxa Kit</td>
           <td>Glaukos Corporation</td>
           <td>NDA #219910</td>
-          <td>Riboflavin 5'-Phosphate</td>
+          <td>Riboflavin 5&#x27;-Phosphate</td>
           <td>Treatment of keratoconus in adults and pediatric patients aged 13 years and older</td>
           <td>Type 5 - New Formulation or New Manufacturer</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219910">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-16</td>
           <td>Ferabright</td>
           <td>Covis Pharma US</td>
@@ -470,10 +1144,9 @@
           <td>Use for MRI of the brain in adults with known or suspected malignant neoplasms to visualize lesions with a disrupted blood-brain barrier</td>
           <td>Type 10 - New Indication Submitted as Distinct NDA - Not Consolidated</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219868">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-07</td>
           <td>Jascayd</td>
           <td>Boehringer Ingelheim</td>
@@ -482,10 +1155,9 @@
           <td>Treatment of idiopathic pulmonary fibrosis in adult patients</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218764">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-10-02</td>
           <td>Eydenzelt</td>
           <td>Celltrion Inc</td>
@@ -494,10 +1166,9 @@
           <td></td>
           <td></td>
           <td></td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761377">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-09-30</td>
           <td>Rhapsido</td>
           <td>Novartis Pharmaceuticals Corporation</td>
@@ -506,10 +1177,9 @@
           <td>To treat adults with chronic spontaneous urticaria who remain symptomatic despite H1 antihistamine treatment</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218436">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-09-25</td>
           <td>Inluriyo</td>
           <td>Eli Lilly and Company</td>
@@ -518,10 +1188,9 @@
           <td>To treat adults with ER-positive, HER2-negative, ESR1-mutated advanced or metastatic breast cancer after at least one prior line of endocrine therapy</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218881">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-09-25</td>
           <td>Palsonify</td>
           <td>Crinetics Pharmaceuticals, Inc.</td>
@@ -530,10 +1199,9 @@
           <td>To treat adults with acromegaly who had an inadequate response to surgery and/or for whom surgery is not an option</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Standard</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219070">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-09-19</td>
           <td>Forzinity</td>
           <td>Stealth BioTherapeutics Inc.</td>
@@ -542,10 +1210,9 @@
           <td>To improve muscle strength in adult and pediatric patients with Barth syndrome weighing at least 30 kg (accelerated approval)</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215244">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-09-19</td>
           <td>Keytruda Qlex</td>
           <td>Merck Sharp &amp; Dohme LLC</td>
@@ -554,10 +1221,9 @@
           <td>Subcutaneous co-formulation for treatment of certain cancers per label</td>
           <td>Biologics License (Original)</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761467">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-        <tr class="new">
+        <tr>
           <td>2025-08-29</td>
           <td>Wayrilz</td>
           <td>Genzyme Corporation (Sanofi)</td>
@@ -566,1093 +1232,1087 @@
           <td>To treat adults with persistent or chronic immune thrombocytopenia (ITP) who have had an insufficient response to prior therapy</td>
           <td>Type 1 - New Molecular Entity</td>
           <td>Priority</td>
-          <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219685">Link</a></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
         </tr>
-
-<tr>
-<td>2025-08-01</td>
-<td>E-Z-Disk</td>
-<td>Bracco</td>
-<td>NDA #219840</td>
-<td>Barium Sulfate</td>
-<td></td>
-<td></td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219840">Link</a></td>
-</tr>
-
-<tr>
-<td>2025-08-08</td>
-<td>Hernexeos</td>
-<td>Boehringer Ingelheim Pharmaceuticals Inc</td>
-<td>NDA #219042</td>
-<td>Zongertinib</td>
-<td>To treat adults with unresectable or metastatic non-squamous non-small cell lung cancer whose tumors have HER2 tyrosine kinase domain activating mutations, as detected by an FDA-approved test, and who have received prior systemic therapy</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219042">Link</a></td>
-</tr>
-<tr>
-<td>2025-08-08</td>
-<td>Kyxata</td>
-<td>Avyxa Holdings</td>
-<td>NDA #219921</td>
-<td>Carboplatin</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219921">Link</a></td>
-</tr>
-<tr>
-<td>2025-08-12</td>
-<td>Brinsupri</td>
-<td>Insmed Inc</td>
-<td>NDA #217673</td>
-<td>Brensocatib</td>
-<td>To treat non-cystic fibrosis bronchiectasis</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217673">Link</a></td>
-</tr>
-<tr>
-    <td>2025-08-15</td>
-    <td>Cyklx</td>
-    <td>American Genomics LLC</td>
-    <td>NDA #218643</td>
-    <td>Articaine</td>
-    <td></td>
-    <td>Type 3 - New Dosage Form and Type 4 - New Combination</td>
-    <td>Standard</td>
-    <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218643">Link</a></td>
-</tr>
-<tr>
-    <td>2025-08-15</td>
-    <td>Tonmya</td>
-    <td>Tonix Pharmaceuticals Inc</td>
-    <td>NDA #219428</td>
-    <td>Cyclobenzaprine</td>
-    <td></td>
-    <td>Type 3 - New Dosage Form</td>
-    <td>Standard</td>
-    <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219428">Link</a></td>
-</tr>
-<tr>
-    <td>2025-07-03</td>
-    <td>Ekterly</td>
-    <td>Kalvista</td>
-    <td>NDA #219301</td>
-    <td>Sebetralstat</td>
-    <td>To treat acute attacks of hereditary angioedema</td>
-    <td>Type 1 - New Molecular Entity</td>
-    <td>Standard</td>
-    <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219301">Link</a></td>
-</tr>
-<tr>
-    <td>2025-07-15</td>
-    <td>Kirsty</td>
-    <td>Biocon Biologics Inc</td>
-    <td>BLA #761188</td>
-    <td>Insulin Aspart-XJHZ</td>
-    <td></td>
-    <td></td>
-    <td></td>
-    <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761188">Link</a></td>
-</tr>
-<tr>
-    <td>2025-07-16</td>
-    <td>Famotidine</td>
-    <td>Sagent</td>
-    <td>NDA #219935</td>
-    <td>Famotidine</td>
-    <td></td>
-    <td>Type 5 - New Formulation or New Manufacturer</td>
-    <td>Standard</td>
-    <td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219935">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-23</td>
-<td>Anzupgo</td>
-<td>Leo Pharma AS</td>
-<td>NDA #219155</td>
-<td>Delgocitinib</td>
-<td>To treat moderate-to-severe chronic hand eczema when topical corticosteroids are not advisable or produce an inadequate response</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219155">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-23</td>
-<td>Vostally</td>
-<td>Rosemont Pharms</td>
-<td>NDA #219757</td>
-<td>Ramipril</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219757">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-24</td>
-<td>Sdamlo</td>
-<td>Brillian Pharma</td>
-<td>NDA #219531</td>
-<td>Amlodipine Besylate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219531">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-24</td>
-<td>Doptelet Sprinkle</td>
-<td>Akarx Inc</td>
-<td>NDA #219696</td>
-<td>Avatrombopag Maleate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219696">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-28</td>
-<td>Sephience</td>
-<td>PTC Therap</td>
-<td>NDA #219666</td>
-<td>Sepiapterin</td>
-<td>To treat hyperphenylalaninemia in patients with sepiapterin-responsive phenylketonuria, in conjunction with a phenylalanine-restricted diet</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219666">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-29</td>
-<td>Vyscoxa</td>
-<td>Codadose Inc</td>
-<td>NDA #211759</td>
-<td>Celecoxib</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=211759">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-30</td>
-<td>Atmeksi</td>
-<td>Rosemont Pharms</td>
-<td>NDA #219843</td>
-<td>Methocarbamol</td>
-<td></td>
-<td></td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219843">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-31</td>
-<td>VIZZ</td>
-<td>LENZ Therap</td>
-<td>NDA #218585</td>
-<td>Aceclidine Hydrochloride</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218585">Link</a></td>
-</tr>
-<tr>
-<td>2025-07-31</td>
-<td>Alhemo</td>
-<td>Novo Nordisk Inc</td>
-<td>BLA #761428</td>
-<td>Concizumab</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761428">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-05</td>
-<td>Xifyrm</td>
-<td>Azurity</td>
-<td>NDA #218395</td>
-<td>Meloxicam</td>
-<td></td>
-<td></td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218395">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-05</td>
-<td>Widaplik</td>
-<td>George Medicines</td>
-<td>NDA #219423</td>
-<td>Amlodipine Besylate; Indapamide; Telmisartan</td>
-<td></td>
-<td>Type 4 - New Combination</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219423">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-09</td>
-<td>Rocuronium Bromide</td>
-<td>Fresenius Kabi USA</td>
-<td>NDA #217472</td>
-<td>Rocuronium Bromide</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217472">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-09</td>
-<td>Enflonsia</td>
-<td>Merck Sharp Dohme</td>
-<td>BLA #761432</td>
-<td>Clesrovimab-cfor</td>
-<td>To prevent respiratory syncytial virus (RSV) lower respiratory tract disease in neonates and infants who are born during or entering their first RSV season</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761432">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-10</td>
-<td>Brukinsa</td>
-<td>Beone Medicines USA</td>
-<td>NDA #218785</td>
-<td>Zanubrutinib</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218785">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-11</td>
-<td>Ibtrozi</td>
-<td>Nuvation</td>
-<td>NDA #219713</td>
-<td>Taletrectinib Adipate</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219713">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-12</td>
-<td>Zusduri</td>
-<td>Urogen Pharma</td>
-<td>NDA #215793</td>
-<td>Mitomycin</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215793">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-16</td>
-<td>Arynta</td>
-<td>Azurity</td>
-<td>NDA #219847</td>
-<td>Lisdexamfetamine Dimesylate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219847">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-16</td>
-<td>Carbon Dioxide, USP</td>
-<td>General Distributing Company</td>
-<td>NDA #220634</td>
-<td>Carbon Dioxide</td>
-<td></td>
-<td></td>
-<td>Unknown</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220634">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-16</td>
-<td>Andembry</td>
-<td>CSL Behring LLC</td>
-<td>BLA #761367</td>
-<td>Garadacimab-gxii</td>
-<td>To prevent attacks of hereditary angioedema</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761367">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-18</td>
-<td>Yeztugo</td>
-<td>Gilead Sciences Inc</td>
-<td>NDA #220018</td>
-<td>Lenacapavir</td>
-<td></td>
-<td>Type 10 - New Indication Submitted as Distinct NDA - Not Consolidated</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220018">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-18</td>
-<td>Yeztugo</td>
-<td>Gilead Sciences Inc</td>
-<td>NDA #220020</td>
-<td>Lenacapavir Sodium</td>
-<td></td>
-<td>Type 10 - New Indication Submitted as Distinct NDA - Not Consolidated</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220020">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-23</td>
-<td>Datroway</td>
-<td>Daiichi Sankyo Inc</td>
-<td>BLA #761464</td>
-<td>Datopotamab Deruxtecan-dlnk</td>
-<td>To treat unresectable or metastatic, HR-positive, HER2-negative breast cancer who have received prior endocrine-based therapy and chemotherapy for unresectable or metastatic disease</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761464">Link</a></td>
-</tr>
-<tr>
-<td>2025-06-27</td>
-<td>Avgemsi</td>
-<td>Avyxa Holdings</td>
-<td>NDA #219920</td>
-<td>Gemcitabine Hydrochloride</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219920">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-08</td>
-<td>Avmapki Fakzynja Co-pack (copackaged)</td>
-<td>Verastem Inc</td>
-<td>NDA #219616</td>
-<td>Avutometinib Potassium; Defactinib Hydrochloride</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219616">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-14</td>
-<td>Brekiya (autoinjector)</td>
-<td>Amneal</td>
-<td>NDA #215400</td>
-<td>Dihydroergotamine Mesylate</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215400">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-14</td>
-<td>Emrelis</td>
-<td>Abbvie Inc</td>
-<td>BLA #761384</td>
-<td>Telisotuzumab Vedotin-tllv</td>
-<td>To treat locally advanced or metastatic, non-squamous non-small cell lung cancer (NSCLC) with high c-Met protein overexpression after prior systemic therapy</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761384">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-20</td>
-<td>Aususvar</td>
-<td>Auson Pharm</td>
-<td>NDA #217062</td>
-<td>Rivaroxaban</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217062">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-22</td>
-<td>Starjemza</td>
-<td>Bio-thera Solutions LTD</td>
-<td>BLA #761419</td>
-<td>Ustekinumab-hmny</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761419">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-23</td>
-<td>Yutrepia</td>
-<td>Liquidia Tech</td>
-<td>NDA #213005</td>
-<td>Treprostinil Sodium</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=213005">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-28</td>
-<td>Tryptyr</td>
-<td>Alcon Labs Inc</td>
-<td>NDA #217370</td>
-<td>Acoltremon</td>
-<td>To treat the signs and symptoms of dry eye disease</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217370">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-28</td>
-<td>Khindivi</td>
-<td>ETON</td>
-<td>NDA #218980</td>
-<td>Hydrocortisone</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218980">Link</a></td>
-</tr>
-<tr>
-<td>2025-05-30</td>
-<td>Phenylephrine Hydrochloride IN 0.9% Sodium Chloride</td>
-<td>Dr Reddys Labs SA</td>
-<td>NDA #216830</td>
-<td>Phenylephrine Hydrochloride</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=216830">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-02</td>
-<td>Libervant</td>
-<td>Aquestive</td>
-<td>NDA #218623</td>
-<td>Diazepam</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218623">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-02</td>
-<td>Vanrafia</td>
-<td>Novartis</td>
-<td>NDA #219208</td>
-<td>Atrasentan Hydrochloride</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219208">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-03</td>
-<td>Piperacillin AND Tazobactam AND Sodium Chloride IN Duplex Container</td>
-<td>B Braun Medical</td>
-<td>NDA #206056</td>
-<td>Piperacillin Sodium; Tazobactam Sodium</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=206056">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-09</td>
-<td>Trabectedin</td>
-<td>Ever Valinject</td>
-<td>NDA #219617</td>
-<td>Trabectedin</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219617">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-09</td>
-<td>Jobevne</td>
-<td>Biocon Biologics Inc</td>
-<td>BLA #761175</td>
-<td>Bevacizumab-NWGD</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761175">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-10</td>
-<td>Lopressor</td>
-<td>Rubicon Research</td>
-<td>NDA #219373</td>
-<td>Metoprolol Tartrate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219373">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-10</td>
-<td>Livmarli</td>
-<td>Mirum</td>
-<td>NDA #219485</td>
-<td>Maralixibat Chloride</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219485">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-15</td>
-<td>Mezofy</td>
-<td>CMG Pharm Co Ltd</td>
-<td>NDA #211448</td>
-<td>Aripiprazole</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=211448">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-17</td>
-<td>Eliquis</td>
-<td>Bristol</td>
-<td>NDA #220073</td>
-<td>Apixaban</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220073">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-17</td>
-<td>Eliquis Sprinkle</td>
-<td>Bristol</td>
-<td>NDA #220073</td>
-<td>Apixaban</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220073">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-21</td>
-<td>Carbon Dioxide, USP</td>
-<td>Mitchell Wedling Supply</td>
-<td>NDA #220461</td>
-<td>Carbon Dioxide</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220461">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-22</td>
-<td>Qamzova</td>
-<td>Nanjing Delova</td>
-<td>NDA #217593</td>
-<td>Meloxicam</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217593">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-23</td>
-<td>Penpulimab-KCQX</td>
-<td>Akeso Biopharma</td>
-<td>BLA #761258</td>
-<td>Penpulimab-KCQX</td>
-<td>In combination with cisplatin or carboplatin and gemcitabine, to treat adults with recurrent or metastatic non-keratinizing nasopharyngeal carcinoma (NPC), or as a single agent on or after platinum-based chemotherapy</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761258">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-29</td>
-<td>Imaavy</td>
-<td>Janssen Biotech</td>
-<td>BLA #761430</td>
-<td>Nipocalimab-AAHU</td>
-<td>To treat generalized myasthenia gravis</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761430">Link</a></td>
-</tr>
-<tr>
-<td>2025-04-30</td>
-<td>Atzumi</td>
-<td>Satsuma Pharms</td>
-<td>NDA #217901</td>
-<td>Dihydroergotamine Mesylate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217901">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-03</td>
-<td>Tevimbra</td>
-<td>Beigene</td>
-<td>BLA #761380</td>
-<td>Islelizumab-jsgr</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761380">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-07</td>
-<td>Omlyclo</td>
-<td>Celltrion Inc</td>
-<td>BLA #761399</td>
-<td>Omalizumab-IGEC</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761399">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-13</td>
-<td>Epinephrine</td>
-<td>Fresenius Kabi USA</td>
-<td>NDA #215425</td>
-<td>Epinephrine</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215425">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-13</td>
-<td>Arbli</td>
-<td>Scienture</td>
-<td>NDA #218772</td>
-<td>Losartan Potassium</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218772">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-14</td>
-<td>Tyenne</td>
-<td>Fresenius Kabi USA</td>
-<td>BLA #761449</td>
-<td>Tocilizumab-AAZG</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761449">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-17</td>
-<td>Hemiclor</td>
-<td>PRM Pharma</td>
-<td>NDA #218647</td>
-<td>Chlorthalidone</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218647">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-20</td>
-<td>Gozellix</td>
-<td>Telix Innovations</td>
-<td>NDA #219592</td>
-<td>Gallium Ga-68 Gozetotide</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219592">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-25</td>
-<td>Blujepa</td>
-<td>Glaxosmithkline</td>
-<td>NDA #218230</td>
-<td>Gepotidacin Mesylate</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218230">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-25</td>
-<td>Bomyntra</td>
-<td>Fresenius Kabi USA LLC</td>
-<td>BLA #761398</td>
-<td>Denosumab-bnht</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761398">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-25</td>
-<td>Conexxence</td>
-<td>Fresenius Kabi USA LLC</td>
-<td>BLA #761398</td>
-<td>Denosumab-bnht</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761398">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-25</td>
-<td>Denosumab-bnht</td>
-<td>Fresenius Kabi USA LLC</td>
-<td>BLA #761398</td>
-<td>Denosumab-bnht</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761398">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-26</td>
-<td>Vykat XR</td>
-<td>Soleno Therap</td>
-<td>NDA #216665</td>
-<td>Diazoxide Choline</td>
-<td></td>
-<td>Type 2 - New Active Ingredient</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=216665">Link</a></td>
-</tr>
-<tr>
-<td>2025-03-28</td>
-<td>Qfitlia</td>
-<td>Genzyme Corp</td>
-<td>NDA #219019</td>
-<td>Fitusiran Sodium</td>
-<td></td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219019">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-02</td>
-<td>Carbon Dioxide, USP</td>
-<td>Welders Supply Company of Louisville Inc</td>
-<td>NDA #220266</td>
-<td>Carbon Dioxide</td>
-<td></td>
-<td>Medical Gas</td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=220266">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-03</td>
-<td>Onapgo</td>
-<td>MDD US</td>
-<td>NDA #214056</td>
-<td>Apomorphine Hydrochloride</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=214056">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-07</td>
-<td>Emblaveo</td>
-<td>Abbvie</td>
-<td>NDA #217906</td>
-<td>Avibactam Sodium; Aztreonam</td>
-<td></td>
-<td>Type 4 - New Combination</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=217906">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-11</td>
-<td>Evrysdi</td>
-<td>Genentech Inc</td>
-<td>NDA #219285</td>
-<td>Risdiplam</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219285">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-11</td>
-<td>Gomekli</td>
-<td>Springworks</td>
-<td>NDA #219379</td>
-<td>Mirdametinib</td>
-<td>To treat neurofibromatosis type 1 who have symptomatic plexiform neurofibromas not amenable to complete resection</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219379">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-11</td>
-<td>Gomekli</td>
-<td>Springworks</td>
-<td>NDA #219389</td>
-<td>Mirdametinib</td>
-<td>To treat neurofibromatosis type 1 who have symptomatic plexiform neurofibromas not amenable to complete resection</td>
-<td>Type 3 - New Dosage Form</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219389">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-13</td>
-<td>Denosumab-dssb</td>
-<td>Samsung Bioepis Co Ltd</td>
-<td>BLA #761392</td>
-<td>Denosumab-dssb</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761392">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-13</td>
-<td>Ospomyv</td>
-<td>Samsung Bioepis Co Ltd</td>
-<td>BLA #761392</td>
-<td>Denosumab-dssb</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761392">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-13</td>
-<td>Xbryk</td>
-<td>Samsung Bioepis Co Ltd</td>
-<td>BLA #761392</td>
-<td>Denosumab-dssb</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761392">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-14</td>
-<td>Romvimza</td>
-<td>Deciphera Pharms</td>
-<td>NDA #219304</td>
-<td>Vimseltinib</td>
-<td>To treat symptomatic tenosynovial giant cell tumor for which surgical resection will potentially cause worsening functional limitation or severe morbidity</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219304">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-14</td>
-<td>Merilog</td>
-<td>Sanofi-Aventis US LLC</td>
-<td>BLA #761325</td>
-<td>Insulin Aspart-szjj</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761325">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-14</td>
-<td>Merilog Solostar</td>
-<td>Sanofi-Aventis US LLC</td>
-<td>BLA #761325</td>
-<td>Insulin Aspart-szjj</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761325">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-19</td>
-<td>Nilotinib D-Tartrate</td>
-<td>Cipla</td>
-<td>NDA #218922</td>
-<td>Nilotinib D-tartrate</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218922">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-21</td>
-<td>Diltiazem Hydrochloride in 0.72% Sodium Chloride</td>
-<td>HQ SPCLT Pharma</td>
-<td>NDA #218038</td>
-<td>Diltiazem Hydrochloride</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218038">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-21</td>
-<td>Ctexli</td>
-<td>Mirum</td>
-<td>NDA #219488</td>
-<td>Chenodiol</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219488">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-24</td>
-<td>Miudella</td>
-<td>Sebela Womens HLTH</td>
-<td>NDA #218201</td>
-<td>Copper</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218201">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-28</td>
-<td>Epinephrine Bitartrate in 0.9% Sodium Chloride</td>
-<td>Baxter Hlthcare Corp</td>
-<td>NDA #218475</td>
-<td>Epinephrine Bitartrate</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218475">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-28</td>
-<td>Osenvelt</td>
-<td>Celltrion Inc</td>
-<td>BLA #761404</td>
-<td>Denosumab-bmwo</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761404">Link</a></td>
-</tr>
-<tr>
-<td>2025-02-28</td>
-<td>Stoboclo</td>
-<td>Celltrion Inc</td>
-<td>BLA #761404</td>
-<td>Denosumab-bmwo</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761404">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-16</td>
-<td>Brynovin</td>
-<td>Azurity</td>
-<td>NDA #219122</td>
-<td>Sitagliptin Hydrochloride</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219122">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-17</td>
-<td>Myinfla</td>
-<td>Columbia Therapeutics Inc</td>
-<td>NDA #216469</td>
-<td>Colchicine</td>
-<td></td>
-<td>Type 5 - New Formulation or New Manufacturer</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=216469">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-17</td>
-<td>Datroway</td>
-<td>Daiichi Sankyo Inc</td>
-<td>BLA #761394</td>
-<td>Datopotamab Deruxtecan-dlnk</td>
-<td>To treat unresectable or metastatic, HR-positive, HER2-negative breast cancer who have received prior endocrine-based therapy and chemotherapy for unresectable or metastatic disease</td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761394">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-21</td>
-<td>Grafapex</td>
-<td>Medexus</td>
-<td>NDA #214759</td>
-<td>Treosulfan</td>
-<td>For use in combination with fludarabine as a preparative regimen for allogeneic hematopoietic stem cell transplantation for acute myeloid leukemia and myelodysplastic syndrome</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=214759">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-24</td>
-<td>Avtozma</td>
-<td>Celltrion Inc</td>
-<td>BLA #761420</td>
-<td>Tocilizumab-anoh</td>
-<td></td>
-<td></td>
-<td></td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=761420">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-28</td>
-<td>Inzirqo</td>
-<td>Novitium Pharma</td>
-<td>NDA #219141</td>
-<td>Hydrochlorothiazide</td>
-<td></td>
-<td>Type 3 - New Dosage Form</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219141">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-30</td>
-<td>Symbravo</td>
-<td>Axsome</td>
-<td>NDA #215431</td>
-<td>Meloxicam; Rizatriptan Benzoate</td>
-<td></td>
-<td>Type 4 - New Combination</td>
-<td>Standard</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=215431">Link</a></td>
-</tr>
-<tr>
-<td>2025-01-30</td>
-<td>Journavx</td>
-<td>Vertex Pharms Inc</td>
-<td>NDA #219209</td>
-<td>Suzetrigine</td>
-<td>To treat moderate to severe acute pain</td>
-<td>Type 1 - New Molecular Entity</td>
-<td>Priority</td>
-<td><a href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=219209">Link</a></td>
-</tr>
-</tbody>
-</table>
-</div>
+        <tr>
+          <td>2025-08-15</td>
+          <td>Cyklx</td>
+          <td>American Genomics LLC</td>
+          <td>NDA #218643</td>
+          <td>Articaine</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form and Type 4 - New Combination</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-08-15</td>
+          <td>Tonmya</td>
+          <td>Tonix Pharmaceuticals Inc</td>
+          <td>NDA #219428</td>
+          <td>Cyclobenzaprine</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-08-12</td>
+          <td>Brinsupri</td>
+          <td>Insmed Inc</td>
+          <td>NDA #217673</td>
+          <td>Brensocatib</td>
+          <td>To treat non-cystic fibrosis bronchiectasis</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-08-08</td>
+          <td>Hernexeos</td>
+          <td>Boehringer Ingelheim Pharmaceuticals Inc</td>
+          <td>NDA #219042</td>
+          <td>Zongertinib</td>
+          <td>To treat adults with unresectable or metastatic non-squamous non-small cell lung cancer whose tumors have HER2 tyrosine kinase domain activating mutations, as detected by an FDA-approved test, and who have received prior systemic therapy</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-08-08</td>
+          <td>Kyxata</td>
+          <td>Avyxa Holdings</td>
+          <td>NDA #219921</td>
+          <td>Carboplatin</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-08-01</td>
+          <td>E-Z-Disk</td>
+          <td>Bracco</td>
+          <td>NDA #219840</td>
+          <td>Barium Sulfate</td>
+          <td></td>
+          <td></td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-31</td>
+          <td>Alhemo</td>
+          <td>Novo Nordisk Inc</td>
+          <td>BLA #761428</td>
+          <td>Concizumab</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-31</td>
+          <td>VIZZ</td>
+          <td>LENZ Therap</td>
+          <td>NDA #218585</td>
+          <td>Aceclidine Hydrochloride</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-30</td>
+          <td>Atmeksi</td>
+          <td>Rosemont Pharms</td>
+          <td>NDA #219843</td>
+          <td>Methocarbamol</td>
+          <td></td>
+          <td></td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-29</td>
+          <td>Vyscoxa</td>
+          <td>Codadose Inc</td>
+          <td>NDA #211759</td>
+          <td>Celecoxib</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-28</td>
+          <td>Sephience</td>
+          <td>PTC Therap</td>
+          <td>NDA #219666</td>
+          <td>Sepiapterin</td>
+          <td>To treat hyperphenylalaninemia in patients with sepiapterin-responsive phenylketonuria, in conjunction with a phenylalanine-restricted diet</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-24</td>
+          <td>Doptelet Sprinkle</td>
+          <td>Akarx Inc</td>
+          <td>NDA #219696</td>
+          <td>Avatrombopag Maleate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-24</td>
+          <td>Sdamlo</td>
+          <td>Brillian Pharma</td>
+          <td>NDA #219531</td>
+          <td>Amlodipine Besylate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-23</td>
+          <td>Anzupgo</td>
+          <td>Leo Pharma AS</td>
+          <td>NDA #219155</td>
+          <td>Delgocitinib</td>
+          <td>To treat moderate-to-severe chronic hand eczema when topical corticosteroids are not advisable or produce an inadequate response</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-23</td>
+          <td>Vostally</td>
+          <td>Rosemont Pharms</td>
+          <td>NDA #219757</td>
+          <td>Ramipril</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-16</td>
+          <td>Famotidine</td>
+          <td>Sagent</td>
+          <td>NDA #219935</td>
+          <td>Famotidine</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-15</td>
+          <td>Kirsty</td>
+          <td>Biocon Biologics Inc</td>
+          <td>BLA #761188</td>
+          <td>Insulin Aspart-XJHZ</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-07-03</td>
+          <td>Ekterly</td>
+          <td>Kalvista</td>
+          <td>NDA #219301</td>
+          <td>Sebetralstat</td>
+          <td>To treat acute attacks of hereditary angioedema</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-27</td>
+          <td>Avgemsi</td>
+          <td>Avyxa Holdings</td>
+          <td>NDA #219920</td>
+          <td>Gemcitabine Hydrochloride</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-23</td>
+          <td>Datroway</td>
+          <td>Daiichi Sankyo Inc</td>
+          <td>BLA #761464</td>
+          <td>Datopotamab Deruxtecan-dlnk</td>
+          <td>To treat unresectable or metastatic, HR-positive, HER2-negative breast cancer who have received prior endocrine-based therapy and chemotherapy for unresectable or metastatic disease</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-18</td>
+          <td>Yeztugo</td>
+          <td>Gilead Sciences Inc</td>
+          <td>NDA #220020</td>
+          <td>Lenacapavir Sodium</td>
+          <td></td>
+          <td>Type 10 - New Indication Submitted as Distinct NDA - Not Consolidated</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-18</td>
+          <td>Yeztugo</td>
+          <td>Gilead Sciences Inc</td>
+          <td>NDA #220018</td>
+          <td>Lenacapavir</td>
+          <td></td>
+          <td>Type 10 - New Indication Submitted as Distinct NDA - Not Consolidated</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-16</td>
+          <td>Andembry</td>
+          <td>CSL Behring LLC</td>
+          <td>BLA #761367</td>
+          <td>Garadacimab-gxii</td>
+          <td>To prevent attacks of hereditary angioedema</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-16</td>
+          <td>Arynta</td>
+          <td>Azurity</td>
+          <td>NDA #219847</td>
+          <td>Lisdexamfetamine Dimesylate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-16</td>
+          <td>Carbon Dioxide, USP</td>
+          <td>General Distributing Company</td>
+          <td>NDA #220634</td>
+          <td>Carbon Dioxide</td>
+          <td></td>
+          <td></td>
+          <td>Unknown</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-12</td>
+          <td>Zusduri</td>
+          <td>Urogen Pharma</td>
+          <td>NDA #215793</td>
+          <td>Mitomycin</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-11</td>
+          <td>Ibtrozi</td>
+          <td>Nuvation</td>
+          <td>NDA #219713</td>
+          <td>Taletrectinib Adipate</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-10</td>
+          <td>Brukinsa</td>
+          <td>Beone Medicines USA</td>
+          <td>NDA #218785</td>
+          <td>Zanubrutinib</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-09</td>
+          <td>Enflonsia</td>
+          <td>Merck Sharp Dohme</td>
+          <td>BLA #761432</td>
+          <td>Clesrovimab-cfor</td>
+          <td>To prevent respiratory syncytial virus (RSV) lower respiratory tract disease in neonates and infants who are born during or entering their first RSV season</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-09</td>
+          <td>Rocuronium Bromide</td>
+          <td>Fresenius Kabi USA</td>
+          <td>NDA #217472</td>
+          <td>Rocuronium Bromide</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-05</td>
+          <td>Widaplik</td>
+          <td>George Medicines</td>
+          <td>NDA #219423</td>
+          <td>Amlodipine Besylate; Indapamide; Telmisartan</td>
+          <td></td>
+          <td>Type 4 - New Combination</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-06-05</td>
+          <td>Xifyrm</td>
+          <td>Azurity</td>
+          <td>NDA #218395</td>
+          <td>Meloxicam</td>
+          <td></td>
+          <td></td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-30</td>
+          <td>Phenylephrine Hydrochloride IN 0.9% Sodium Chloride</td>
+          <td>Dr Reddys Labs SA</td>
+          <td>NDA #216830</td>
+          <td>Phenylephrine Hydrochloride</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-28</td>
+          <td>Khindivi</td>
+          <td>ETON</td>
+          <td>NDA #218980</td>
+          <td>Hydrocortisone</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-28</td>
+          <td>Tryptyr</td>
+          <td>Alcon Labs Inc</td>
+          <td>NDA #217370</td>
+          <td>Acoltremon</td>
+          <td>To treat the signs and symptoms of dry eye disease</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-23</td>
+          <td>Yutrepia</td>
+          <td>Liquidia Tech</td>
+          <td>NDA #213005</td>
+          <td>Treprostinil Sodium</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-22</td>
+          <td>Starjemza</td>
+          <td>Bio-thera Solutions LTD</td>
+          <td>BLA #761419</td>
+          <td>Ustekinumab-hmny</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-20</td>
+          <td>Aususvar</td>
+          <td>Auson Pharm</td>
+          <td>NDA #217062</td>
+          <td>Rivaroxaban</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-14</td>
+          <td>Brekiya (autoinjector)</td>
+          <td>Amneal</td>
+          <td>NDA #215400</td>
+          <td>Dihydroergotamine Mesylate</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-14</td>
+          <td>Emrelis</td>
+          <td>Abbvie Inc</td>
+          <td>BLA #761384</td>
+          <td>Telisotuzumab Vedotin-tllv</td>
+          <td>To treat locally advanced or metastatic, non-squamous non-small cell lung cancer (NSCLC) with high c-Met protein overexpression after prior systemic therapy</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-05-08</td>
+          <td>Avmapki Fakzynja Co-pack (copackaged)</td>
+          <td>Verastem Inc</td>
+          <td>NDA #219616</td>
+          <td>Avutometinib Potassium; Defactinib Hydrochloride</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-30</td>
+          <td>Atzumi</td>
+          <td>Satsuma Pharms</td>
+          <td>NDA #217901</td>
+          <td>Dihydroergotamine Mesylate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-29</td>
+          <td>Imaavy</td>
+          <td>Janssen Biotech</td>
+          <td>BLA #761430</td>
+          <td>Nipocalimab-AAHU</td>
+          <td>To treat generalized myasthenia gravis</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-23</td>
+          <td>Penpulimab-KCQX</td>
+          <td>Akeso Biopharma</td>
+          <td>BLA #761258</td>
+          <td>Penpulimab-KCQX</td>
+          <td>In combination with cisplatin or carboplatin and gemcitabine, to treat adults with recurrent or metastatic non-keratinizing nasopharyngeal carcinoma (NPC), or as a single agent on or after platinum-based chemotherapy</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-22</td>
+          <td>Qamzova</td>
+          <td>Nanjing Delova</td>
+          <td>NDA #217593</td>
+          <td>Meloxicam</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-21</td>
+          <td>Carbon Dioxide, USP</td>
+          <td>Mitchell Wedling Supply</td>
+          <td>NDA #220461</td>
+          <td>Carbon Dioxide</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-17</td>
+          <td>Eliquis</td>
+          <td>Bristol</td>
+          <td>NDA #220073</td>
+          <td>Apixaban</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-17</td>
+          <td>Eliquis Sprinkle</td>
+          <td>Bristol</td>
+          <td>NDA #220073</td>
+          <td>Apixaban</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-15</td>
+          <td>Mezofy</td>
+          <td>CMG Pharm Co Ltd</td>
+          <td>NDA #211448</td>
+          <td>Aripiprazole</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-10</td>
+          <td>Livmarli</td>
+          <td>Mirum</td>
+          <td>NDA #219485</td>
+          <td>Maralixibat Chloride</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-10</td>
+          <td>Lopressor</td>
+          <td>Rubicon Research</td>
+          <td>NDA #219373</td>
+          <td>Metoprolol Tartrate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-09</td>
+          <td>Jobevne</td>
+          <td>Biocon Biologics Inc</td>
+          <td>BLA #761175</td>
+          <td>Bevacizumab-NWGD</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-09</td>
+          <td>Trabectedin</td>
+          <td>Ever Valinject</td>
+          <td>NDA #219617</td>
+          <td>Trabectedin</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-03</td>
+          <td>Piperacillin AND Tazobactam AND Sodium Chloride IN Duplex Container</td>
+          <td>B Braun Medical</td>
+          <td>NDA #206056</td>
+          <td>Piperacillin Sodium; Tazobactam Sodium</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-02</td>
+          <td>Libervant</td>
+          <td>Aquestive</td>
+          <td>NDA #218623</td>
+          <td>Diazepam</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-04-02</td>
+          <td>Vanrafia</td>
+          <td>Novartis</td>
+          <td>NDA #219208</td>
+          <td>Atrasentan Hydrochloride</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-28</td>
+          <td>Qfitlia</td>
+          <td>Genzyme Corp</td>
+          <td>NDA #219019</td>
+          <td>Fitusiran Sodium</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-26</td>
+          <td>Vykat XR</td>
+          <td>Soleno Therap</td>
+          <td>NDA #216665</td>
+          <td>Diazoxide Choline</td>
+          <td></td>
+          <td>Type 2 - New Active Ingredient</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-25</td>
+          <td>Blujepa</td>
+          <td>Glaxosmithkline</td>
+          <td>NDA #218230</td>
+          <td>Gepotidacin Mesylate</td>
+          <td></td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-25</td>
+          <td>Bomyntra</td>
+          <td>Fresenius Kabi USA LLC</td>
+          <td>BLA #761398</td>
+          <td>Denosumab-bnht</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-25</td>
+          <td>Conexxence</td>
+          <td>Fresenius Kabi USA LLC</td>
+          <td>BLA #761398</td>
+          <td>Denosumab-bnht</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-25</td>
+          <td>Denosumab-bnht</td>
+          <td>Fresenius Kabi USA LLC</td>
+          <td>BLA #761398</td>
+          <td>Denosumab-bnht</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-20</td>
+          <td>Gozellix</td>
+          <td>Telix Innovations</td>
+          <td>NDA #219592</td>
+          <td>Gallium Ga-68 Gozetotide</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-17</td>
+          <td>Hemiclor</td>
+          <td>PRM Pharma</td>
+          <td>NDA #218647</td>
+          <td>Chlorthalidone</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-14</td>
+          <td>Tyenne</td>
+          <td>Fresenius Kabi USA</td>
+          <td>BLA #761449</td>
+          <td>Tocilizumab-AAZG</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-13</td>
+          <td>Arbli</td>
+          <td>Scienture</td>
+          <td>NDA #218772</td>
+          <td>Losartan Potassium</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-13</td>
+          <td>Epinephrine</td>
+          <td>Fresenius Kabi USA</td>
+          <td>NDA #215425</td>
+          <td>Epinephrine</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-07</td>
+          <td>Omlyclo</td>
+          <td>Celltrion Inc</td>
+          <td>BLA #761399</td>
+          <td>Omalizumab-IGEC</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-03-03</td>
+          <td>Tevimbra</td>
+          <td>Beigene</td>
+          <td>BLA #761380</td>
+          <td>Islelizumab-jsgr</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-28</td>
+          <td>Epinephrine Bitartrate in 0.9% Sodium Chloride</td>
+          <td>Baxter Hlthcare Corp</td>
+          <td>NDA #218475</td>
+          <td>Epinephrine Bitartrate</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-28</td>
+          <td>Osenvelt</td>
+          <td>Celltrion Inc</td>
+          <td>BLA #761404</td>
+          <td>Denosumab-bmwo</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-28</td>
+          <td>Stoboclo</td>
+          <td>Celltrion Inc</td>
+          <td>BLA #761404</td>
+          <td>Denosumab-bmwo</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-24</td>
+          <td>Miudella</td>
+          <td>Sebela Womens HLTH</td>
+          <td>NDA #218201</td>
+          <td>Copper</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-21</td>
+          <td>Ctexli</td>
+          <td>Mirum</td>
+          <td>NDA #219488</td>
+          <td>Chenodiol</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-21</td>
+          <td>Diltiazem Hydrochloride in 0.72% Sodium Chloride</td>
+          <td>HQ SPCLT Pharma</td>
+          <td>NDA #218038</td>
+          <td>Diltiazem Hydrochloride</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-19</td>
+          <td>Nilotinib D-Tartrate</td>
+          <td>Cipla</td>
+          <td>NDA #218922</td>
+          <td>Nilotinib D-tartrate</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-14</td>
+          <td>Merilog</td>
+          <td>Sanofi-Aventis US LLC</td>
+          <td>BLA #761325</td>
+          <td>Insulin Aspart-szjj</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-14</td>
+          <td>Merilog Solostar</td>
+          <td>Sanofi-Aventis US LLC</td>
+          <td>BLA #761325</td>
+          <td>Insulin Aspart-szjj</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-14</td>
+          <td>Romvimza</td>
+          <td>Deciphera Pharms</td>
+          <td>NDA #219304</td>
+          <td>Vimseltinib</td>
+          <td>To treat symptomatic tenosynovial giant cell tumor for which surgical resection will potentially cause worsening functional limitation or severe morbidity</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-13</td>
+          <td>Denosumab-dssb</td>
+          <td>Samsung Bioepis Co Ltd</td>
+          <td>BLA #761392</td>
+          <td>Denosumab-dssb</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-13</td>
+          <td>Ospomyv</td>
+          <td>Samsung Bioepis Co Ltd</td>
+          <td>BLA #761392</td>
+          <td>Denosumab-dssb</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-13</td>
+          <td>Xbryk</td>
+          <td>Samsung Bioepis Co Ltd</td>
+          <td>BLA #761392</td>
+          <td>Denosumab-dssb</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-11</td>
+          <td>Evrysdi</td>
+          <td>Genentech Inc</td>
+          <td>NDA #219285</td>
+          <td>Risdiplam</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-11</td>
+          <td>Gomekli</td>
+          <td>Springworks</td>
+          <td>NDA #219389</td>
+          <td>Mirdametinib</td>
+          <td>To treat neurofibromatosis type 1 who have symptomatic plexiform neurofibromas not amenable to complete resection</td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-11</td>
+          <td>Gomekli</td>
+          <td>Springworks</td>
+          <td>NDA #219379</td>
+          <td>Mirdametinib</td>
+          <td>To treat neurofibromatosis type 1 who have symptomatic plexiform neurofibromas not amenable to complete resection</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-07</td>
+          <td>Emblaveo</td>
+          <td>Abbvie</td>
+          <td>NDA #217906</td>
+          <td>Avibactam Sodium; Aztreonam</td>
+          <td></td>
+          <td>Type 4 - New Combination</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-03</td>
+          <td>Onapgo</td>
+          <td>MDD US</td>
+          <td>NDA #214056</td>
+          <td>Apomorphine Hydrochloride</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-02-02</td>
+          <td>Carbon Dioxide, USP</td>
+          <td>Welders Supply Company of Louisville Inc</td>
+          <td>NDA #220266</td>
+          <td>Carbon Dioxide</td>
+          <td></td>
+          <td>Medical Gas</td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-30</td>
+          <td>Journavx</td>
+          <td>Vertex Pharms Inc</td>
+          <td>NDA #219209</td>
+          <td>Suzetrigine</td>
+          <td>To treat moderate to severe acute pain</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Priority</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-30</td>
+          <td>Symbravo</td>
+          <td>Axsome</td>
+          <td>NDA #215431</td>
+          <td>Meloxicam; Rizatriptan Benzoate</td>
+          <td></td>
+          <td>Type 4 - New Combination</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-28</td>
+          <td>Inzirqo</td>
+          <td>Novitium Pharma</td>
+          <td>NDA #219141</td>
+          <td>Hydrochlorothiazide</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-24</td>
+          <td>Avtozma</td>
+          <td>Celltrion Inc</td>
+          <td>BLA #761420</td>
+          <td>Tocilizumab-anoh</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-21</td>
+          <td>Grafapex</td>
+          <td>Medexus</td>
+          <td>NDA #214759</td>
+          <td>Treosulfan</td>
+          <td>For use in combination with fludarabine as a preparative regimen for allogeneic hematopoietic stem cell transplantation for acute myeloid leukemia and myelodysplastic syndrome</td>
+          <td>Type 1 - New Molecular Entity</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-17</td>
+          <td>Datroway</td>
+          <td>Daiichi Sankyo Inc</td>
+          <td>BLA #761394</td>
+          <td>Datopotamab Deruxtecan-dlnk</td>
+          <td>To treat unresectable or metastatic, HR-positive, HER2-negative breast cancer who have received prior endocrine-based therapy and chemotherapy for unresectable or metastatic disease</td>
+          <td></td>
+          <td></td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-17</td>
+          <td>Myinfla</td>
+          <td>Columbia Therapeutics Inc</td>
+          <td>NDA #216469</td>
+          <td>Colchicine</td>
+          <td></td>
+          <td>Type 5 - New Formulation or New Manufacturer</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+        <tr>
+          <td>2025-01-16</td>
+          <td>Brynovin</td>
+          <td>Azurity</td>
+          <td>NDA #219122</td>
+          <td>Sitagliptin Hydrochloride</td>
+          <td></td>
+          <td>Type 3 - New Dosage Form</td>
+          <td>Standard</td>
+          <td><a href="Link" target="_blank" rel="noopener noreferrer">FDA source</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </main>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.0.7/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/css/buttons.dataTables.min.css"></script>
 <script src="https://cdn.datatables.net/buttons/3.0.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/3.0.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-    new DataTable('#tbl_main', {
-      dom: 'Bfrtip',
-      buttons: [
-        { extend:'csv', className:'btn btn-default' },
-        { extend:'excel', className:'btn btn-default' },
-        { extend:'print', className:'btn btn-default' }
-      ],
-      pageLength: 25,
-      responsive: true,
-      autoWidth: false,
-      order: [[0, 'desc']],
-      columnDefs: [
-        { targets: '_all', defaultContent: '' }
-      ]
-    });
-  </script>
+document.addEventListener('DOMContentLoaded', function () {
+  new DataTable('#tbl_main', {
+    pageLength: 25,
+    order: [[0, 'desc']],
+    scrollX: true,
+    layout: {
+      topStart: {
+        buttons: ['copy', 'csv', 'excel']
+      }
+    }
+  });
+});
+</script>
 </body>
 </html>
