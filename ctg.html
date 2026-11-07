@@ -57,6 +57,7 @@
                 <div id="progressBar" class="bg-blue-500 h-1.5 rounded-full" style="width:2%"></div>
             </div>
         </div>
+        <div id="mobileNotice" class="mt-2 hidden rounded bg-yellow-400/10 px-3 py-2 text-xs text-yellow-400"></div>
     </header>
 
     <div class="bg-gray-800 rounded-lg mb-4">
@@ -191,7 +192,13 @@
      The worker owns all data; only aggregates + one page of rows cross threads. -->
 <script type="text/plain" id="workerSrc">
 'use strict';
-const API_BASE   = __API_BASE__;
+const API_BASE   = 'https://clinicaltrials.gov/api/v2/studies';
+const API_QUERY  = 'AREA[StartDate]RANGE[2020-01-01,MAX] AND AREA[OrgClass]INDUSTRY AND AREA[StudyType]INTERVENTIONAL';
+const API_FIELDS = 'NCTId,OfficialTitle,BriefTitle,OverallStatus,Phase,LeadSponsorName,StartDate,EnrollmentCount,Condition';
+const API_PAGE   = 1000;
+const USE_DATABASE = __USE_DATABASE__;
+const IS_MOBILE  = __IS_MOBILE__;
+const MAX_PAGES  = IS_MOBILE ? 5 : 50;
 const CACHE_TTL  = 12 * 60 * 60 * 1000;   // 12 hours
 const CACHE_KEY  = 'trials-v2';
 
@@ -264,9 +271,42 @@ function toTrial(row) {
 }
 
 async function fetchAll() {
-    const payload = await getJSON(API_BASE + '/api/trials?limit=100000');
-    const out = (payload.data || []).map(toTrial);
-    postMessage({ type: 'progress', page: 1, pages: 1, loaded: out.length, total: payload.count });
+    let out, fetchedAt, lastSyncedAt, limited = false;
+    if (USE_DATABASE) {
+        const payload = await getJSON(API_BASE + '/api/trials?limit=100000');
+        out = (payload.data || []).map(toTrial);
+        fetchedAt = payload.last_synced_at
+            ? Date.parse(payload.last_synced_at.replace(' ', 'T') + 'Z')
+            : Date.now();
+        lastSyncedAt = payload.last_synced_at;
+        postMessage({ type: 'progress', page: 1, pages: 1, loaded: out.length, total: payload.count });
+    } else {
+        out = [];
+        let token = null, page = 0, pages = MAX_PAGES, total = null;
+        do {
+            const params = new URLSearchParams({
+                format: 'json',
+                pageSize: String(API_PAGE),
+                fields: API_FIELDS,
+                'query.term': API_QUERY
+            });
+            if (page === 0) params.set('countTotal', 'true');
+            if (token) params.set('pageToken', token);
+            const payload = await getJSON(API_BASE + '?' + params.toString());
+            if (page === 0 && payload.totalCount) {
+                total = payload.totalCount;
+                pages = Math.min(MAX_PAGES, Math.ceil(total / API_PAGE));
+            }
+            if (payload.studies) {
+                for (const study of payload.studies) out.push(toClinicalTrial(study));
+            }
+            token = payload.nextPageToken;
+            page++;
+            postMessage({ type: 'progress', page, pages, loaded: out.length, total });
+        } while (token && page < MAX_PAGES);
+        limited = !!token;
+        fetchedAt = Date.now();
+    }
 
     // Sort once by start date (newest first, N/A last). Filtering keeps this order for free.
     out.sort((a, b) => {
@@ -275,10 +315,27 @@ async function fetchAll() {
         if (B === 'N/A') return -1;
         return A < B ? 1 : A > B ? -1 : 0;
     });
-    const fetchedAt = payload.last_synced_at
-        ? Date.parse(payload.last_synced_at.replace(' ', 'T') + 'Z')
-        : Date.now();
-    return { trials: out, fetchedAt, lastSyncedAt: payload.last_synced_at };
+    return { trials: out, fetchedAt, lastSyncedAt, limited };
+}
+
+function toClinicalTrial(study) {
+    const protocol = study.protocolSection || {};
+    const id = protocol.identificationModule || {};
+    const status = protocol.statusModule || {};
+    const design = protocol.designModule || {};
+    const sponsor = (protocol.sponsorCollaboratorsModule || {}).leadSponsor || {};
+    const conditions = (protocol.conditionsModule || {}).conditions || [];
+    const phases = design.phases || [];
+    return {
+        nct: id.nctId || 'N/A',
+        title: id.officialTitle || id.briefTitle || 'No title',
+        status: status.overallStatus || 'Unknown',
+        phase: phases.length ? phases[phases.length - 1] : 'Not Applicable',
+        sponsor: sponsor.name || 'N/A',
+        startDate: (status.startDateStruct || {}).date || 'N/A',
+        enrollment: (design.enrollmentInfo || {}).count || 0,
+        conditions
+    };
 }
 
 // Build lookup arrays once, so filtering never lowercases or joins strings again
@@ -386,18 +443,18 @@ async function load(force, filters, pageSize) {
         let fromCache = !force && !!data && (Date.now() - data.fetchedAt < CACHE_TTL);
 
         if (force) {
-            await refreshDatabase();
+            if (USE_DATABASE) await refreshDatabase();
             const fresh = await fetchAll();
-            data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials };
+            data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials, limited: fresh.limited };
             idbPut(data).catch(() => {});
         } else if (!fromCache) {
             try {
                 let fresh = await fetchAll();
-                if (!fresh.trials.length && !fresh.lastSyncedAt) {
+                if (USE_DATABASE && !fresh.trials.length && !fresh.lastSyncedAt) {
                     await refreshDatabase();
                     fresh = await fetchAll();
                 }
-                data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials };
+                data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials, limited: fresh.limited };
                 idbPut(data).catch(() => {});
             } catch (e) {
                 if (!data) throw e;     // no fallback available
@@ -409,7 +466,8 @@ async function load(force, filters, pageSize) {
         applyFilters(filters || {});
         const s = buildStats();
         postMessage({ type: 'ready', ...s, total: filtered.length, firstPage: getPage(0, pageSize),
-                      filterOptions: filterOptions(), fetchedAt: data.fetchedAt, fromCache });
+                      filterOptions: filterOptions(), fetchedAt: data.fetchedAt, fromCache,
+                      limited: !!data.limited, loaded: trials.length });
     } catch (e) {
         postMessage({ type: 'error', error: e.message });
     }
@@ -450,7 +508,11 @@ const queued = [];
 
 // ─── START WORKER IMMEDIATELY (fetch starts before charts/fonts finish) ───────
 try {
-    const workerSource = $('workerSrc').textContent.replace('__API_BASE__', JSON.stringify(location.origin));
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 769;
+    const isLocalServer = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const workerSource = $('workerSrc').textContent
+        .replace('__USE_DATABASE__', JSON.stringify(isLocalServer))
+        .replace('__IS_MOBILE__', JSON.stringify(isMobile));
     const blobUrl = URL.createObjectURL(new Blob([workerSource], { type: 'application/javascript' }));
     worker = new Worker(blobUrl);
     URL.revokeObjectURL(blobUrl);
@@ -691,6 +753,10 @@ function handleMessage(msg) {
             $('progressBar').style.width = '100%';
             setTimeout(() => $('progressWrap').classList.add('hidden'), 400);
             $('lastUpdated').textContent = formatStamp(msg.fetchedAt) + (msg.fromCache ? ' (cached)' : '');
+            $('mobileNotice').textContent = msg.limited
+                ? `Showing ${msg.loaded.toLocaleString()} trials to keep this page responsive. Open on desktop to load more.`
+                : '';
+            $('mobileNotice').classList.toggle('hidden', !msg.limited);
             populateFilters(msg.filterOptions);
             lastFilterKey = JSON.stringify(getFilters());
             filterId++;

@@ -15,3 +15,5 @@ The server provides `GET /api/trials` for saved trial records and `POST /api/tri
 ```powershell
 python data/build_trials_db.py
 ```
+
+When hosted as a static GitHub Pages site, the dashboard fetches ClinicalTrials.gov directly instead of calling the local database server. Mobile browsers load at most 5,000 trials to reduce memory use; desktop browsers load at most 50,000.
