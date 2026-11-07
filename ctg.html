@@ -195,12 +195,13 @@
 const API_BASE   = 'https://clinicaltrials.gov/api/v2/studies';
 const API_QUERY  = 'AREA[StartDate]RANGE[2020-01-01,MAX] AND AREA[OrgClass]INDUSTRY AND AREA[StudyType]INTERVENTIONAL';
 const API_FIELDS = 'NCTId,OfficialTitle,BriefTitle,OverallStatus,Phase,LeadSponsorName,StartDate,EnrollmentCount,Condition';
+const MOBILE_STATUSES = 'RECRUITING,NOT_YET_RECRUITING,ACTIVE_NOT_RECRUITING,ENROLLING_BY_INVITATION,SUSPENDED,WITHDRAWN,UNKNOWN';
 const API_PAGE   = 1000;
 const USE_DATABASE = __USE_DATABASE__;
 const IS_MOBILE  = __IS_MOBILE__;
 const MAX_PAGES  = IS_MOBILE ? 5 : 50;
 const CACHE_TTL  = 12 * 60 * 60 * 1000;   // 12 hours
-const CACHE_KEY  = 'trials-v2';
+const CACHE_KEY  = 'trials-v3';
 
 let trials   = [];                   // pre-sorted newest first (sorted ONCE, not on every filter)
 let HAY      = [];                   // lowercase search text per trial (parallel array)
@@ -290,6 +291,7 @@ async function fetchAll() {
                 fields: API_FIELDS,
                 'query.term': API_QUERY
             });
+            if (IS_MOBILE) params.set('filter.overallStatus', MOBILE_STATUSES);
             if (page === 0) params.set('countTotal', 'true');
             if (token) params.set('pageToken', token);
             const payload = await getJSON(API_BASE + '?' + params.toString());
