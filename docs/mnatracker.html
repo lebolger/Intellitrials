@@ -1,169 +1,633 @@
-<!-- Intellitrials: Daily Life Sciences M&A Tracker -->
-<section class="it-ma">
+<!-- Intellitrials: Pharma / Biotech M&A Tracker | Updated November 7, 2026 -->
+<section class="it-ma" aria-label="Pharma and biotech mergers and acquisitions tracker">
   <style>
-    .it-ma { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-    .it-ma h2 { margin: 0 0 10px 0; font-size: 20px; }
-    .it-ma .meta { margin: 0 0 14px 0; color: #555; font-size: 13px; }
-    .it-ma table { width: 100%; border-collapse: collapse; border: 1px solid #e6e6e6; }
-    .it-ma th, .it-ma td { padding: 10px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
-    .it-ma th { text-align: left; font-size: 13px; letter-spacing: .02em; text-transform: uppercase; background: #fafafa; }
-    .it-ma td { font-size: 14px; }
-    .it-ma a { text-decoration: none; }
-    .it-ma a:hover { text-decoration: underline; }
-    .it-ma .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #f2f2f2; margin-right: 6px; }
-    .it-ma .muted { color: #666; font-size: 13px; }
-    .it-ma tr.new { background-color: #f0faf5; }
+    .it-ma {
+      --ma-ink: #202a35;
+      --ma-muted: #65717d;
+      --ma-line: #dfe5ea;
+      --ma-head: #f3f6f8;
+      --ma-link: #145b82;
+      --ma-soft: #f8fafb;
+      color: var(--ma-ink);
+      font-family: Roboto, Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+    .it-ma * { box-sizing: border-box; }
+    .it-ma h2 {
+      margin: 0 0 6px;
+      font-size: 23px;
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+    .it-ma .intro {
+      margin: 0 0 12px;
+      color: #43515d;
+      max-width: 950px;
+    }
+    .it-ma .meta {
+      margin: 0 0 18px;
+      color: var(--ma-muted);
+      font-size: 12px;
+    }
+    .it-ma .scope {
+      background: var(--ma-soft);
+      border-left: 3px solid #9aaebb;
+      padding: 10px 13px;
+      margin: 0 0 18px;
+      color: #46535e;
+      font-size: 13px;
+    }
+    .it-ma .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--ma-line);
+      border-radius: 7px;
+      background: #fff;
+      -webkit-overflow-scrolling: touch;
+    }
+    .it-ma table {
+      width: 100%;
+      min-width: 1050px;
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+    .it-ma th, .it-ma td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--ma-line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .it-ma th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: var(--ma-head);
+      color: #3c4852;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .055em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .it-ma td { font-size: 13px; }
+    .it-ma tbody tr:last-child td { border-bottom: 0; }
+    .it-ma tbody tr:hover { background: #fafcfd; }
+    .it-ma .date { white-space: nowrap; color: #4e5b66; }
+    .it-ma .company { font-weight: 700; color: #243746; }
+    .it-ma .value { white-space: nowrap; font-weight: 600; }
+    .it-ma .muted { color: var(--ma-muted); font-size: 12px; }
+    .it-ma .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid #d7e0e6;
+      border-radius: 4px;
+      background: #f5f7f8;
+      color: #42515d;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .it-ma .tag.pending { background: #fff8e9; border-color: #ead9aa; color: #795b16; }
+    .it-ma .tag.completed { background: #edf6f1; border-color: #c9dfd2; color: #315d45; }
+    .it-ma a {
+      color: var(--ma-link);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+    .it-ma a:hover { color: #0b3f5d; }
+    .it-ma .section-label {
+      margin: 23px 0 9px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .it-ma .footnote {
+      margin: 12px 0 0;
+      color: var(--ma-muted);
+      font-size: 12px;
+    }
+    .it-ma .source-note { white-space: nowrap; }
+    @media (max-width: 640px) {
+      .it-ma h2 { font-size: 20px; }
+      .it-ma .intro { font-size: 13px; }
+      .it-ma th, .it-ma td { padding: 9px 10px; }
+    }
   </style>
-  <h2>M&A Tracker</h2>
-  <p class="meta"><strong>Last updated:</strong> 2026-03-13 (America/New_York) • Source links included</p>
-  <table>
-    <thead>
-      <tr>
-        <th style="width:110px;">Date</th>
-        <th>Acquirer / Buyer</th>
-        <th>Target / Asset</th>
-        <th style="width:140px;">Deal value</th>
-        <th style="width:130px;">Stage</th>
-        <th>Notes</th>
-        <th style="width:110px;">Source</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="new">
-        <td>2026-03-10</td>
-        <td><strong>Servier</strong></td>
-        <td><strong>Day One Biopharmaceuticals</strong></td>
-        <td>~$2.5 billion</td>
-        <td><span class="tag">Announced</span></td>
-        <td>French pharma Servier acquires Day One, adding OJEMDA (tovorafenib) for pediatric low-grade glioma and a broader rare oncology pipeline. Expected to close Q2 2026.</td>
-        <td><a href="https://www.financierworldwide.com/fw-news/2026/3/10/servier-acquires-cancer-biotech-day-one-in-25bn-deal" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-02-23</td>
-        <td><strong>Gilead Sciences</strong></td>
-        <td><strong>Arcellx</strong></td>
-        <td>~$7.8 billion</td>
-        <td><span class="tag">Announced</span></td>
-        <td>Gilead acquires its existing CAR-T development partner to gain full control of anito-cel (BCMA-directed, multiple myeloma). $115/share cash + $5 CVR; 79% premium. FDA PDUFA date Dec. 23, 2026. Expected to close Q2 2026. Gilead's largest deal since Immunomedics ($21B, 2020).</td>
-        <td><a href="https://www.gilead.com/news/news-details/2026/gilead-sciences-to-acquire-arcellx-to-maximize-long-term-potential-of-anito-cel" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-02-09</td>
-        <td><strong>Eli Lilly</strong></td>
-        <td><strong>Orna Therapeutics</strong></td>
-        <td>~$2.4 billion</td>
-        <td><span class="tag">Announced</span></td>
-        <td>All-cash deal adds Orna's in vivo CAR-T platform using circular RNA and lipid nanoparticles. Lead program ORN-252 targets CD19 for B cell-driven autoimmune diseases. Early-stage but "clinical-trial ready" per Lilly.</td>
-        <td><a href="https://investor.lilly.com/news-releases/news-release-details/lilly-acquire-orna-therapeutics-advance-cell-therapies" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-01-20</td>
-        <td><strong>Worldwide Clinical Trials</strong></td>
-        <td><strong>Catalyst Clinical Research</strong></td>
-        <td class="muted">Not disclosed</td>
-        <td><span class="tag">Announced</span></td>
-        <td>CRO consolidation: Worldwide (Kohlberg-backed) acquires Catalyst, a specialist in early-phase oncology trials and FSP services. Catalyst Oncology and Catalyst Flex offerings to be integrated into Worldwide's portfolio. Expected to close Q1 2026.</td>
-        <td><a href="https://www.worldwide.com/newsroom/worldwide-clinical-trials-acquires-catalyst-clinical-research/" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-13</td>
-        <td><strong>Eli Lilly</strong></td>
-        <td><strong>Ventyx Biosciences</strong></td>
-        <td>~$1.2 billion</td>
-        <td><span class="tag">Announced</span></td>
-        <td>Lilly acquires Ventyx and its IL-15 inhibitor for recurrent pericarditis and other cardiovascular/autoimmune conditions.</td>
-        <td><a href="https://pharmaphorum.com/news/abivax-climbs-lilly-takeover-speculation" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-01-12</td>
-        <td><strong>Hippocratic AI</strong></td>
-        <td><strong>Grove AI</strong></td>
-        <td class="muted">Not disclosed</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Strengthens Hippocratic AI's generative AI capabilities across pharma, biotech, and CRO settings; expands patient engagement and medical affairs AI agent offerings.</td>
-        <td><a href="https://www.businesswire.com/news/home/20260112959357/en/Hippocratic-AI-Consolidates-Life-Sciences-Leadership-with-Acquisition-of-Grove-AI-and-Key-Executive-Appointments" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-12</td>
-        <td><strong>Eli Lilly (rumored)</strong></td>
-        <td><strong>Abivax</strong></td>
-        <td>€15 billion (~$17.5B)</td>
-        <td><span class="tag">Rumored</span></td>
-        <td>French reports suggest Lilly is preparing offer for Abivax's obefazimod (ulcerative colitis/IBD). Abivax CEO has dismissed reports as "noise" with no formal discussions confirmed.</td>
-        <td><a href="https://www.pharmaceutical-technology.com/news/jpm26-eli-lilly-reportedly-eyes-e15bn-takeover-of-abivax/" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-01-08</td>
-        <td><strong>Verana Health + COTA</strong></td>
-        <td><strong>Merger</strong></td>
-        <td class="muted">+$52M equity raise</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Merger of two real-world data firms creates a combined platform with 95M+ patient records and 20,000+ clinicians. Strengthens oncology, ophthalmology, urology, and neurology RWD offerings for biopharma partners.</td>
-        <td><a href="https://veranahealth.com/verana-health-merges-with-cota-to-dramatically-expand-scale-velocity-and-depth-of-real-world-data-offerings-across-oncology-and-other-specialties/" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-08</td>
-        <td><strong>Merck (rumored)</strong></td>
-        <td><strong>Revolution Medicines</strong></td>
-        <td>$28–32 billion</td>
-        <td><span class="tag">Rumored</span></td>
-        <td>MSD reportedly in talks to acquire Revolution Medicines for its late-stage oral RAS-targeted cancer therapies, including daraxonrasib. Would be among the largest biotech deals since Pfizer–Seagen. No formal agreement confirmed as of March 2026.</td>
-        <td><a href="https://sherwood.news/business/big-pharma-enters-2026-with-an-appetite-for-deals/" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-07</td>
-        <td><strong>Merck &amp; Co.</strong></td>
-        <td><strong>Cidara Therapeutics</strong></td>
-        <td>~$9.2 billion</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Merck completed acquisition of Cidara for its Phase 3 long-acting flu antiviral CD388 (now MK-1406). Deal closed via tender offer at $221.50/share.</td>
-        <td><a href="https://www.merck.com/news/merck-to-complete-acquisition-of-cidara-therapeutics/" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr class="new">
-        <td>2026-01-06</td>
-        <td><strong>Day One Biopharmaceuticals</strong></td>
-        <td><strong>Mersana Therapeutics</strong></td>
-        <td>$25/share + CVR (up to $30.25)</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Day One closed acquisition of Mersana, adding Emi-Le (emiltatug ledadotin), a B7-H4–directed ADC in early clinical trials for adenoid cystic carcinoma (ACC), a rare adult cancer with no approved therapies.</td>
-        <td><a href="https://www.sec.gov/Archives/edgar/data/0001845337/000110465926001127/tm261757d1_ex99-1.htm" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-05</td>
-        <td><strong>PharmaDrug</strong></td>
-        <td><strong>Canurta Inc.</strong> (initial 19.9% interest)</td>
-        <td class="muted">Not disclosed</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Initial minority stake acquisition + debt restructuring (per company announcement).</td>
-        <td><a href="https://www.biospace.com/press-releases/pharmadrug-completes-acquisition-of-initial-19-9-interest-in-canurta-inc-and-completes-debt-restructuring" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-05</td>
-        <td><strong>W. L. Gore &amp; Associates</strong></td>
-        <td><strong>Medtech company</strong> behind foam-based LAAO system</td>
-        <td class="muted">Not disclosed</td>
-        <td><span class="tag">Announced</span></td>
-        <td>Expansion of Gore's medical division via acquisition of an LAAO technology platform (per report).</td>
-        <td><a href="https://cardiovascularbusiness.com/topics/clinical/interventional-cardiology/w-l-gore-associates-acquire-medtech-company-behind-foam-based-laao-system" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2026-01-05</td>
-        <td><strong>Inspira</strong></td>
-        <td><strong>Advanced liquid biopsy (cancer)</strong> (term sheet)</td>
-        <td class="muted">~$12M earmarked (structure noted)</td>
-        <td><span class="tag">Term sheet</span></td>
-        <td>Signed a term sheet for acquisition; details include planned allocation of proceeds to fund ongoing ops (per release).</td>
-        <td><a href="https://natlawreview.com/press-releases/inspira-signs-term-sheet-acquisition-advanced-liquid-biopsy-cancer" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-      <tr>
-        <td>2025-12-28</td>
-        <td><strong>Johnson &amp; Johnson</strong></td>
-        <td><strong>Halda Therapeutics</strong></td>
-        <td>~$3.05 billion</td>
-        <td><span class="tag">Completed</span></td>
-        <td>Closed acquisition adding Halda's RIPTAC™ platform and clinical-stage prostate cancer program HLD-0915 (per J&amp;J press release).</td>
-        <td><a href="https://www.jnj.com/media-center/press-releases/johnson-johnson-completes-acquisition-of-halda-therapeutics-and-its-novel-platform-to-revolutionize-cancer-treatment-and-enable-next-generation-oral-therapies" target="_blank" rel="noopener">Link</a></td>
-      </tr>
-    </tbody>
-  </table>
+
+  <h2>Pharma / Biotech M&amp;A Tracker</h2>
+  <p class="intro">
+    Selected pharmaceutical, biotechnology, CRO, diagnostics and life sciences technology acquisitions announced in 2026.
+    Transactions are listed by announcement date, with deal value and status based on information available at the time of this update.
+  </p>
+  <p class="meta"><strong>Last updated:</strong> November 7, 2026 (America/New_York) &nbsp;|&nbsp; <strong>Coverage:</strong> January–November 2026</p>
+
+  <div class="scope">
+    <strong>How to read this tracker:</strong> Deal values reflect the headline amount reported by the companies or cited sources. “Up to” values may include contingent milestones or other payments and should not be read as guaranteed cash consideration. Equity value and enterprise value are identified where reported. Announced transactions are not treated as completed until closing is confirmed.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:105px;">Announced</th>
+          <th>Acquirer / Buyer</th>
+          <th>Target / Asset</th>
+          <th style="width:145px;">Deal value</th>
+          <th style="width:115px;">Status</th>
+          <th>Strategic rationale / key assets</th>
+          <th style="width:95px;">Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="date">2026-11-05</td>
+          <td class="company">ANI Pharmaceuticals</td>
+          <td><strong>Egetis Therapeutics</strong></td>
+          <td class="value">Approx. $560M offer value<br><span class="muted">Approx. $434M net EV</span></td>
+          <td><span class="tag pending">Offer announced</span></td>
+          <td>Recommended public cash offer of SEK 11.25 per share, a 27% premium to the 60-day VWAP. Adds EMCITATE (tiratricol), an approved treatment for MCT8 deficiency. Net enterprise value reflects estimated proceeds from Egetis’ separate sale of its priority review voucher. Offer period expected to begin Nov. 20; closing subject to conditions.</td>
+          <td><a href="https://investor.anipharmaceuticals.com/news-releases/news-release-details/ani-pharmaceuticals-announces-offer-acquire-egetis-therapeutics" target="_blank" rel="noopener">ANI</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-11-04</td>
+          <td class="company">Agilent Technologies</td>
+          <td><strong>Proscia</strong></td>
+          <td class="value">$240M upfront + up to $30M</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds digital pathology software and AI-enabled image analysis capabilities to Agilent’s pathology portfolio. Agilent paid $240M at closing, with up to another $30M tied to future performance milestones.</td>
+          <td><a href="https://www.investor.agilent.com/news-and-events/news/news-details/2026/Agilent-Completes-Acquisition-of-Proscia/default.aspx" target="_blank" rel="noopener">Agilent</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-11-02</td>
+          <td class="company">Supernus Pharmaceuticals + Indivior</td>
+          <td><strong>Merger of equals</strong></td>
+          <td class="value">All-stock; terms in merger filing</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Completed Nov. 2. The combined company operates as Supernus, Inc. and trades as SUPN. The merger creates a broader CNS business, combining marketed medicines and pipelines across neurology and addiction treatment.</td>
+          <td><a href="https://supernus.gcs-web.com/news-releases/news-release-details/supernus-and-indivior-complete-merger-creating-diversified-cns" target="_blank" rel="noopener">Supernus</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-27</td>
+          <td class="company">Ferring Pharmaceuticals</td>
+          <td><strong>Gameto</strong></td>
+          <td class="value">Up to $1.3825B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds Gameto’s cell-engineering approach to reproductive medicine, including Fertilo, an investigational ovarian support-cell technology. Headline value includes potential milestones; upfront payment was not disclosed.</td>
+          <td><a href="https://www.gametogen.com/" target="_blank" rel="noopener">Gameto</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-20</td>
+          <td class="company">Alcon</td>
+          <td><strong>Neurotech Pharmaceuticals</strong></td>
+          <td class="value">$550M + contingent payments</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds ENCELTO (revakinagene taroretcel-lwey), an approved cell therapy for macular telangiectasia type 2, and a sustained-delivery cell-therapy platform.</td>
+          <td><a href="https://www.alcon.com/" target="_blank" rel="noopener">Alcon</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-19</td>
+          <td class="company">Merck KGaA</td>
+          <td><strong>Silence Therapeutics</strong></td>
+          <td class="value">Approx. $1.3B equity value</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Agreed to acquire the RNAi-focused biotech for $20 per ADS in cash. Adds divesiran, a Phase 2 siRNA program for polycythemia vera, and the mRNAi GOLD platform. Expected to close in Q1 2027, subject to approvals.</td>
+          <td><a href="https://www.sec.gov/edgar/search/" target="_blank" rel="noopener">SEC</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-14</td>
+          <td class="company">Galderma</td>
+          <td><strong>ZO Skin Health</strong></td>
+          <td class="value">Approx. $1.5B EV</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands Galderma’s physician-dispensed skincare business and complements its existing Alastin portfolio.</td>
+          <td><a href="https://www.galderma.com/" target="_blank" rel="noopener">Galderma</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-08</td>
+          <td class="company">Viatris</td>
+          <td><strong>Pacira BioSciences</strong></td>
+          <td class="value">Approx. $1.65B equity value</td>
+          <td><span class="tag pending">Tender offer</span></td>
+          <td>Agreed to acquire Pacira for $36.50 per share in cash. Adds EXPAREL and ZILRETTA, expanding Viatris’ non-opioid pain portfolio and U.S. innovative-medicines capabilities. Expected to close by year-end 2026, subject to conditions.</td>
+          <td><a href="https://newsroom.viatris.com/2026-10-08-Viatris-Agrees-to-Acquire-Pacira-BioSciences%2C-Advancing-Its-Innovative-Medicines-Strategy-and-Becoming-a-Leader-in-Non-Opioid-Pain-Therapies" target="_blank" rel="noopener">Viatris</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-05</td>
+          <td class="company">Shionogi</td>
+          <td><strong>IntraBio</strong></td>
+          <td class="value">$2.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Agreed to acquire all issued shares. Adds AQNEURSA (levacetylleucine), approved for neurological manifestations of Niemann-Pick disease type C and ataxia in patients with ataxia-telangiectasia. Closing planned for Nov–Dec 2026, subject to approvals.</td>
+          <td><a href="https://www.shionogi.com/us/en/news/2026/10/Shionogi-continues-rare-disease-expansion-with-planned-acquisition-of-intrabio-inc.html" target="_blank" rel="noopener">Shionogi</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-10-01</td>
+          <td class="company">Fresenius Kabi</td>
+          <td><strong>mAbxience</strong> (remaining 45% stake)</td>
+          <td class="value">Up to €750M (approx. $850M)</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Fresenius acquired the remaining 45% stake, taking full ownership of the biosimilar development, manufacturing and commercialization platform. The reported consideration includes a contingent component.</td>
+          <td><a href="https://www.fresenius.com/" target="_blank" rel="noopener">Fresenius</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-09-21</td>
+          <td class="company">Telix Pharmaceuticals</td>
+          <td><strong>ITM Isotope Technologies Munich</strong></td>
+          <td class="value">Up to approx. $2.35B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands Telix’s radiopharmaceutical pipeline and isotope manufacturing capabilities. Reported structure includes approximately $1.65B upfront plus potential milestone payments.</td>
+          <td><a href="https://www.telixpharma.com/" target="_blank" rel="noopener">Telix</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-31</td>
+          <td class="company">Eli Lilly</td>
+          <td><strong>Merida Biosciences</strong></td>
+          <td class="value">Up to approx. $2.88B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds an antibody-engineering platform designed to selectively remove disease-causing autoantibodies. Lead program MER511 is being developed for autoimmune and allergic diseases.</td>
+          <td><a href="https://investor.lilly.com/news-releases/news-release-details/lilly-acquire-merida-biosciences-advance-treatments-serious" target="_blank" rel="noopener">Lilly</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-25</td>
+          <td class="company">McKesson</td>
+          <td><strong>Precision Medicine Group</strong></td>
+          <td class="value">Approx. $2.25B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands McKesson’s oncology services and clinical research capabilities through the acquisition of the Blackstone-backed precision medicine and CRO services business.</td>
+          <td><a href="https://www.mckesson.com/" target="_blank" rel="noopener">McKesson</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-18</td>
+          <td class="company">BioMarin</td>
+          <td><strong>Alesta Therapeutics</strong></td>
+          <td class="value">Up to approx. $490M</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds ALE1, an oral therapy in development for rare bone disease. Reported consideration includes upfront and potential milestone payments.</td>
+          <td><a href="https://www.biomarin.com/" target="_blank" rel="noopener">BioMarin</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-10</td>
+          <td class="company">Jazz Pharmaceuticals</td>
+          <td><strong>Actio Biosciences</strong></td>
+          <td class="value">Up to approx. $1.32B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds a precision-medicine neuroscience pipeline, including ABS-1230, a clinical-stage program for KCNT1-related epilepsy. Headline value includes potential milestones.</td>
+          <td><a href="https://www.jazzpharma.com/" target="_blank" rel="noopener">Jazz</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-06</td>
+          <td class="company">Tarsus Pharmaceuticals</td>
+          <td><strong>Alkeus Pharmaceuticals</strong></td>
+          <td class="value">Up to approx. $800M</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds gildeuretinol, a late-stage investigational treatment for Stargardt disease, expanding Tarsus’ ophthalmology pipeline beyond its commercial eye-care franchise.</td>
+          <td><a href="https://www.tarsusrx.com/" target="_blank" rel="noopener">Tarsus</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-03</td>
+          <td class="company">Curium (CapVest-backed)</td>
+          <td><strong>Lantheus Holdings</strong></td>
+          <td class="value">Approx. $8.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Proposed acquisition strengthens Curium’s radiopharmaceutical and molecular imaging footprint, including Lantheus’ commercial imaging portfolio and Pylarify.</td>
+          <td><a href="https://www.lantheus.com/" target="_blank" rel="noopener">Lantheus</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-08-03</td>
+          <td class="company">Supernus Pharmaceuticals</td>
+          <td><strong>Indivior</strong></td>
+          <td class="value">Approx. $1.0B upfront</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Combination broadens Supernus’ CNS and addiction-treatment portfolio, including Indivior’s long-acting injectable SUBLOCADE.</td>
+          <td><a href="https://www.supernus.com/" target="_blank" rel="noopener">Supernus</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-27</td>
+          <td class="company">argenx</td>
+          <td><strong>Forte Biosciences</strong></td>
+          <td class="value">Approx. $2.2B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds FB102, an anti-CD122 antibody in development for autoimmune disease, supporting argenx’s expansion beyond its lead neuromuscular franchise.</td>
+          <td><a href="https://www.argenx.com/" target="_blank" rel="noopener">argenx</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-23</td>
+          <td class="company">Dassault Systèmes</td>
+          <td><strong>ArisGlobal</strong></td>
+          <td class="value">Approx. $2.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds LifeSphere, a cloud-based life sciences software platform spanning regulatory, safety and clinical operations workflows.</td>
+          <td><a href="https://www.3ds.com/" target="_blank" rel="noopener">Dassault Systèmes</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-22</td>
+          <td class="company">Repligen</td>
+          <td><strong>BioLife Solutions</strong></td>
+          <td class="value">Approx. $1.5B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands bioprocessing and cell-therapy manufacturing capabilities, including cryopreservation media and cold-chain solutions.</td>
+          <td><a href="https://www.repligen.com/" target="_blank" rel="noopener">Repligen</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-20</td>
+          <td class="company">Samsung Biologics</td>
+          <td><strong>PolyPeptide Group</strong></td>
+          <td class="value">Approx. $1.8B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Would expand Samsung’s biologics CDMO business into peptide manufacturing and broaden its end-to-end development and production offering.</td>
+          <td><a href="https://samsungbiologics.com/" target="_blank" rel="noopener">Samsung Biologics</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-20</td>
+          <td class="company">Tempus AI</td>
+          <td><strong>Personalis</strong></td>
+          <td class="value">Approx. $1.5B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Strengthens precision oncology and minimal residual disease testing capabilities, adding Personalis’ NeXT Personal assay and genomic testing platform.</td>
+          <td><a href="https://www.tempus.com/" target="_blank" rel="noopener">Tempus</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-16</td>
+          <td class="company">Eli Lilly</td>
+          <td><strong>AtaiBeckley</strong></td>
+          <td class="value">Up to approx. $3.8B</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds neuroplastogen programs for mental health conditions, including BPL-003 for treatment-resistant depression. Lilly announced completion on September 11, 2026.</td>
+          <td><a href="https://investor.lilly.com/news-releases/news-release-details/lilly-completes-acquisition-ataibeckley-advance-therapies" target="_blank" rel="noopener">Lilly</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-06</td>
+          <td class="company">Vertex Pharmaceuticals</td>
+          <td><strong>Crinetics Pharmaceuticals</strong></td>
+          <td class="value">Approx. $10.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands Vertex into endocrinology and rare endocrine disease, adding PALSONIFY (paltusotine), an oral treatment for acromegaly, and a broader endocrine pipeline.</td>
+          <td><a href="https://www.vrtx.com/" target="_blank" rel="noopener">Vertex</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-07-06</td>
+          <td class="company">Novartis</td>
+          <td><strong>Myricx Bio</strong></td>
+          <td class="value">Up to approx. $1.5B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds a next-generation antibody-drug conjugate platform using N-myristoyltransferase inhibitor payloads, including preclinical oncology programs.</td>
+          <td><a href="https://www.novartis.com/news" target="_blank" rel="noopener">Novartis</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-29</td>
+          <td class="company">Ipsen</td>
+          <td><strong>Kartos Therapeutics</strong></td>
+          <td class="value">Up to approx. $1.75B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds navtemadlin, an investigational MDM2 inhibitor in development for myelofibrosis and other cancers.</td>
+          <td><a href="https://www.ipsen.com/" target="_blank" rel="noopener">Ipsen</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-29</td>
+          <td class="company">Zymeworks</td>
+          <td><strong>Theravance Biopharma</strong></td>
+          <td class="value">Approx. $929M</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds Yupelri (revefenacin), a marketed COPD treatment, and expands Zymeworks’ commercial respiratory footprint.</td>
+          <td><a href="https://www.zymeworks.com/" target="_blank" rel="noopener">Zymeworks</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-25</td>
+          <td class="company">Merck KGaA</td>
+          <td><strong>Bio-Techne</strong></td>
+          <td class="value">Approx. $11.3B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Large life-sciences tools and diagnostics transaction, combining complementary research reagents, analytical instruments and diagnostics capabilities.</td>
+          <td><a href="https://www.merckgroup.com/" target="_blank" rel="noopener">Merck KGaA</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-22</td>
+          <td class="company">AbbVie</td>
+          <td><strong>Apogee Therapeutics</strong></td>
+          <td class="value">Approx. $10.9B</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds long-acting IL-13 antibody zumilokibart (APG777) and a clinical-stage immunology pipeline focused on inflammatory diseases, including atopic dermatitis.</td>
+          <td><a href="https://www.abbvie.com/" target="_blank" rel="noopener">AbbVie</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-17</td>
+          <td class="company">Biogen</td>
+          <td><strong>RayThera</strong></td>
+          <td class="value">Up to approx. $1.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds early-stage small-molecule immunology programs and expands Biogen’s inflammation research capabilities.</td>
+          <td><a href="https://www.biogen.com/" target="_blank" rel="noopener">Biogen</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-09</td>
+          <td class="company">GSK</td>
+          <td><strong>Nuvalent</strong></td>
+          <td class="value">Approx. $10.6B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Acquisition adds late-stage precision oncology assets, including ROS1 inhibitor zidesamtinib and ALK inhibitor neladalkib for non-small cell lung cancer.</td>
+          <td><a href="https://us.gsk.com/en-us/media/press-releases/gsk-enters-agreement-to-acquire-nuvalent-inc/" target="_blank" rel="noopener">GSK</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-08</td>
+          <td class="company">Incyte</td>
+          <td><strong>Vega Therapeutics</strong></td>
+          <td class="value">Up to approx. $2.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds VGA039, a late-stage investigational therapy targeting protein S for bleeding disorders, expanding Incyte’s hematology pipeline.</td>
+          <td><a href="https://www.incyte.com/" target="_blank" rel="noopener">Incyte</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-08</td>
+          <td class="company">Johnson &amp; Johnson</td>
+          <td><strong>Firefly Bio</strong></td>
+          <td class="value">Up to approx. $1.0B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds a preclinical degrader-antibody conjugate platform for oncology, broadening J&amp;J’s targeted cancer-therapy research.</td>
+          <td><a href="https://www.jnj.com/" target="_blank" rel="noopener">J&amp;J</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-06-01</td>
+          <td class="company">Servier</td>
+          <td><strong>Edgewise Therapeutics’ muscular dystrophy business</strong></td>
+          <td class="value">Up to approx. $2.65B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Acquires rights to sevasemten and related neuromuscular assets, expanding Servier’s rare-disease and muscle-disorder portfolio.</td>
+          <td><a href="https://servier.com/" target="_blank" rel="noopener">Servier</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-26</td>
+          <td class="company">Eli Lilly</td>
+          <td><strong>Curevo Vaccine</strong></td>
+          <td class="value">Up to approx. $1.5B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds amezosvatein, a Phase 2 shingles vaccine candidate, to Lilly’s infectious-disease and vaccine portfolio.</td>
+          <td><a href="https://investor.lilly.com/" target="_blank" rel="noopener">Lilly</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-22</td>
+          <td class="company">CVC / GBL-led consortium</td>
+          <td><strong>Recordati</strong></td>
+          <td class="value">Approx. €10.7B / $12.4B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Proposed take-private of the Italian specialty pharmaceutical company, whose portfolio includes primary care, specialty medicines and rare-disease therapies.</td>
+          <td><a href="https://www.recordati.com/" target="_blank" rel="noopener">Recordati</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-07</td>
+          <td class="company">Angelini Pharma</td>
+          <td><strong>Catalyst Pharmaceuticals</strong></td>
+          <td class="value">Approx. $4.1B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands Angelini’s U.S. rare-disease and neurology presence, including FIRDAPSE for Lambert-Eaton myasthenic syndrome.</td>
+          <td><a href="https://www.angelinipharma.com/" target="_blank" rel="noopener">Angelini</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-07</td>
+          <td class="company">Roche</td>
+          <td><strong>PathAI</strong></td>
+          <td class="value">Up to approx. $1.05B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands digital pathology and AI-enabled tissue analysis capabilities, with potential applications in drug development, diagnostics and precision medicine.</td>
+          <td><a href="https://www.roche.com/" target="_blank" rel="noopener">Roche</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-06</td>
+          <td class="company">Bayer</td>
+          <td><strong>Perfuse Therapeutics</strong></td>
+          <td class="value">Up to approx. $2.45B</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds PER-001, an investigational therapy for retinal diseases, strengthening Bayer’s ophthalmology pipeline.</td>
+          <td><a href="https://www.bayer.com/" target="_blank" rel="noopener">Bayer</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-05-03</td>
+          <td class="company">UCB</td>
+          <td><strong>Candid Therapeutics</strong></td>
+          <td class="value">Up to approx. $2.2B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds cizutamig, a BCMA x CD3 T-cell engager in development for autoimmune disease, expanding UCB’s immunology pipeline.</td>
+          <td><a href="https://www.ucb.com/" target="_blank" rel="noopener">UCB</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-29</td>
+          <td class="company">Chiesi Group</td>
+          <td><strong>KalVista Pharmaceuticals</strong></td>
+          <td class="value">Approx. $1.9B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds EKTERLY (sebetralstat), an oral treatment for hereditary angioedema, and expands Chiesi’s rare-disease portfolio.</td>
+          <td><a href="https://www.chiesi.com/" target="_blank" rel="noopener">Chiesi</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-29</td>
+          <td class="company">Teva</td>
+          <td><strong>Emalex Biosciences</strong></td>
+          <td class="value">Up to approx. $900M</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds ecopipam, a late-stage candidate for Tourette syndrome, strengthening Teva’s neuroscience pipeline.</td>
+          <td><a href="https://www.tevapharm.com/" target="_blank" rel="noopener">Teva</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-26</td>
+          <td class="company">Sun Pharmaceutical Industries</td>
+          <td><strong>Organon</strong></td>
+          <td class="value">Approx. $11.75B EV</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Would add Organon’s women’s health, biosimilars and established-brands portfolio. Sun Pharma expects the combination to broaden its global scale and innovative-medicines business.</td>
+          <td><a href="https://www.sunpharma.com/" target="_blank" rel="noopener">Sun Pharma</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-22</td>
+          <td class="company">Amneal Pharmaceuticals</td>
+          <td><strong>Kashiv BioSciences</strong></td>
+          <td class="value">Up to approx. $1.1B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Expands Amneal’s biosimilar pipeline and biologics development and manufacturing capabilities.</td>
+          <td><a href="https://amneal.com/" target="_blank" rel="noopener">Amneal</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-19</td>
+          <td class="company">Eli Lilly</td>
+          <td><strong>Kelonia Therapeutics</strong></td>
+          <td class="value">Up to approx. $7.0B</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds an in vivo CAR-T platform, including KLN-1010 for multiple myeloma. The deal expands Lilly’s cell-therapy capabilities beyond conventional ex vivo approaches.</td>
+          <td><a href="https://investor.lilly.com/" target="_blank" rel="noopener">Lilly</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-17</td>
+          <td class="company">UCB</td>
+          <td><strong>Neurona Therapeutics</strong></td>
+          <td class="value">Up to approx. $1.15B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds NRTX-1001, an investigational cell therapy for drug-resistant focal epilepsy, expanding UCB’s epilepsy pipeline.</td>
+          <td><a href="https://www.ucb.com/" target="_blank" rel="noopener">UCB</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-07</td>
+          <td class="company">Gilead Sciences</td>
+          <td><strong>Tubulis</strong></td>
+          <td class="value">Up to approx. $5.0B</td>
+          <td><span class="tag completed">Completed</span></td>
+          <td>Adds a next-generation antibody-drug conjugate platform and clinical-stage oncology programs, including TUB-040. Expands Gilead’s oncology pipeline and ADC capabilities.</td>
+          <td><a href="https://www.gilead.com/" target="_blank" rel="noopener">Gilead</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-04-06</td>
+          <td class="company">Neurocrine Biosciences</td>
+          <td><strong>Soleno Therapeutics</strong></td>
+          <td class="value">Approx. $2.9B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds VYKAT XR (diazoxide choline extended-release), an approved treatment for hyperphagia associated with Prader-Willi syndrome, and expands Neurocrine’s rare-disease portfolio.</td>
+          <td><a href="https://www.neurocrine.com/" target="_blank" rel="noopener">Neurocrine</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-03-31</td>
+          <td class="company">Biogen</td>
+          <td><strong>Apellis Pharmaceuticals</strong></td>
+          <td class="value">Approx. $5.6B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds EMPAVELI and SYFOVRE, complementing Biogen’s rare-disease and immunology portfolio through Apellis’ complement C3 platform.</td>
+          <td><a href="https://www.biogen.com/" target="_blank" rel="noopener">Biogen</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-03-31</td>
+          <td class="company">Eli Lilly</td>
+          <td><strong>Centessa Pharmaceuticals</strong></td>
+          <td class="value">Approx. $7.8B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds orexin-receptor agonists, including cleminorexton, for narcolepsy and other sleep-wake disorders.</td>
+          <td><a href="https://investor.lilly.com/" target="_blank" rel="noopener">Lilly</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-03-25</td>
+          <td class="company">Merck &amp; Co.</td>
+          <td><strong>Terns Pharmaceuticals</strong></td>
+          <td class="value">Approx. $6.7B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds TERN-701, an investigational allosteric BCR-ABL inhibitor for chronic myeloid leukemia, strengthening Merck’s oncology pipeline.</td>
+          <td><a href="https://www.merck.com/" target="_blank" rel="noopener">Merck</a></td>
+        </tr>
+        <tr>
+          <td class="date">2026-03-06</td>
+          <td class="company">Servier</td>
+          <td><strong>Day One Biopharmaceuticals</strong></td>
+          <td class="value">Approx. $2.5B</td>
+          <td><span class="tag pending">Announced</span></td>
+          <td>Adds OJEMDA (tovorafenib) for pediatric low-grade glioma and expands Servier’s rare-oncology portfolio.</td>
+          <td><a href="https://www.servier.com/" target="_blank" rel="noopener">Servier</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">
+    <strong>Scope and verification:</strong> This is a selected-deal tracker, not an exhaustive database of every asset purchase, licensing agreement, minority investment, reverse merger or divestiture. Some source links point to company news or investor-relations hubs where a stable individual release URL was not confirmed. Deal status and consideration can change; check the linked company release and regulatory filings before relying on a transaction detail.
+  </p>
+  <p class="footnote">
+    <strong>Market context:</strong> J.P. Morgan’s Q3 2026 biopharma report noted that disclosed upfront M&amp;A cash and equity reached $138.9B across 113 transactions through September 30, 2026, exceeding the full-year 2025 total. Q3 activity moderated from the Q2 peak. See the <a href="https://www.jpmorgan.com/content/dam/jpmorgan/documents/cb/insights/outlook/jpm-biopharma-deck-q3-2026.pdf" target="_blank" rel="noopener">J.P. Morgan Q3 2026 Biopharma report</a>.
+  </p>
 </section>
