@@ -191,12 +191,7 @@
      The worker owns all data; only aggregates + one page of rows cross threads. -->
 <script type="text/plain" id="workerSrc">
 'use strict';
-const BASE       = 'https://clinicaltrials.gov/api/v2/studies';
-const QUERY      = 'query.term=AREA[StartDate]RANGE[2020-01-01,MAX]+AND+AREA[OrgClass]INDUSTRY+AND+AREA[StudyType]INTERVENTIONAL';
-// Ask the API for ONLY the fields we use. This cuts the download size dramatically.
-const FIELDS     = 'NCTId,OfficialTitle,BriefTitle,OverallStatus,Phase,LeadSponsorName,StartDate,EnrollmentCount,Condition';
-const API_PAGE   = 1000;
-const MAX_PAGES  = 50;
+const API_BASE   = __API_BASE__;
 const CACHE_TTL  = 12 * 60 * 60 * 1000;   // 12 hours
 const CACHE_KEY  = 'trials-v2';
 
@@ -238,8 +233,9 @@ async function getJSON(url, tries = 3) {
     for (let i = 0; ; i++) {
         try {
             const r = await fetch(url);
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            return await r.json();
+            const payload = await r.json();
+            if (!r.ok) throw new Error(payload.error || 'HTTP ' + r.status);
+            return payload;
         } catch (e) {
             if (i >= tries - 1) throw e;
             await new Promise(ok => setTimeout(ok, 1000 * 2 ** i));   // 1s, 2s backoff
@@ -247,42 +243,30 @@ async function getJSON(url, tries = 3) {
     }
 }
 
-function toTrial(s) {
-    const p  = s.protocolSection || {};
-    const id = p.identificationModule || {};
-    const st = p.statusModule || {};
-    const d  = p.designModule || {};
-    const phases = d.phases;
+async function refreshDatabase() {
+    const response = await fetch(API_BASE + '/api/trials/refresh', { method: 'POST' });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || 'HTTP ' + response.status);
+    return payload;
+}
+
+function toTrial(row) {
     return {
-        nct:        id.nctId || 'N/A',
-        title:      id.officialTitle || id.briefTitle || 'No title',
-        status:     st.overallStatus || 'Unknown',
-        phase:      phases && phases.length ? phases[phases.length - 1] : 'Not Applicable',
-        sponsor:    (p.sponsorCollaboratorsModule && p.sponsorCollaboratorsModule.leadSponsor && p.sponsorCollaboratorsModule.leadSponsor.name) || 'N/A',
-        startDate:  (st.startDateStruct && st.startDateStruct.date) || 'N/A',
-        enrollment: (d.enrollmentInfo && d.enrollmentInfo.count) || 0,
-        conditions: (p.conditionsModule && p.conditionsModule.conditions) || []
+        nct:        row.nct_id || 'N/A',
+        title:      row.title || 'No title',
+        status:     row.status || 'Unknown',
+        phase:      row.phase || 'Not Applicable',
+        sponsor:    row.sponsor || 'N/A',
+        startDate:  row.start_date || 'N/A',
+        enrollment: row.enrollment || 0,
+        conditions: row.conditions ? row.conditions.split(' | ').filter(Boolean) : []
     };
 }
 
 async function fetchAll() {
-    const out = [];
-    let token = null, page = 0, pages = MAX_PAGES, total = null;
-    do {
-        const url = BASE + '?format=json&pageSize=' + API_PAGE + '&fields=' + FIELDS + '&' + QUERY +
-                    (page === 0 ? '&countTotal=true' : '') +
-                    (token ? '&pageToken=' + encodeURIComponent(token) : '');
-        const d = await getJSON(url);
-        if (page === 0 && d.totalCount) {
-            total = d.totalCount;
-            pages = Math.min(MAX_PAGES, Math.ceil(total / API_PAGE));
-        }
-        // Map each page as it arrives, so raw API objects can be garbage collected right away
-        if (d.studies) for (const s of d.studies) out.push(toTrial(s));
-        token = d.nextPageToken;
-        page++;
-        postMessage({ type: 'progress', page, pages, loaded: out.length, total });
-    } while (token && page < MAX_PAGES);
+    const payload = await getJSON(API_BASE + '/api/trials?limit=100000');
+    const out = (payload.data || []).map(toTrial);
+    postMessage({ type: 'progress', page: 1, pages: 1, loaded: out.length, total: payload.count });
 
     // Sort once by start date (newest first, N/A last). Filtering keeps this order for free.
     out.sort((a, b) => {
@@ -291,7 +275,10 @@ async function fetchAll() {
         if (B === 'N/A') return -1;
         return A < B ? 1 : A > B ? -1 : 0;
     });
-    return out;
+    const fetchedAt = payload.last_synced_at
+        ? Date.parse(payload.last_synced_at.replace(' ', 'T') + 'Z')
+        : Date.now();
+    return { trials: out, fetchedAt, lastSyncedAt: payload.last_synced_at };
 }
 
 // Build lookup arrays once, so filtering never lowercases or joins strings again
@@ -398,10 +385,19 @@ async function load(force, filters, pageSize) {
         try { data = await idbGet(); } catch (e) { /* IndexedDB not available, skip cache */ }
         let fromCache = !force && !!data && (Date.now() - data.fetchedAt < CACHE_TTL);
 
-        if (!fromCache) {
+        if (force) {
+            await refreshDatabase();
+            const fresh = await fetchAll();
+            data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials };
+            idbPut(data).catch(() => {});
+        } else if (!fromCache) {
             try {
-                const fresh = await fetchAll();
-                data = { fetchedAt: Date.now(), trials: fresh };
+                let fresh = await fetchAll();
+                if (!fresh.trials.length && !fresh.lastSyncedAt) {
+                    await refreshDatabase();
+                    fresh = await fetchAll();
+                }
+                data = { fetchedAt: fresh.fetchedAt, trials: fresh.trials };
                 idbPut(data).catch(() => {});
             } catch (e) {
                 if (!data) throw e;     // no fallback available
@@ -454,7 +450,8 @@ const queued = [];
 
 // ─── START WORKER IMMEDIATELY (fetch starts before charts/fonts finish) ───────
 try {
-    const blobUrl = URL.createObjectURL(new Blob([$('workerSrc').textContent], { type: 'application/javascript' }));
+    const workerSource = $('workerSrc').textContent.replace('__API_BASE__', JSON.stringify(location.origin));
+    const blobUrl = URL.createObjectURL(new Blob([workerSource], { type: 'application/javascript' }));
     worker = new Worker(blobUrl);
     URL.revokeObjectURL(blobUrl);
     worker.onmessage = e => booted ? handleMessage(e.data) : queued.push(e.data);
